@@ -42,7 +42,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: ./src/dist
+          path: ./dist
 
       - name: 서버로 정적 파일 복사
         uses: appleboy/scp-action@v0.1.4
