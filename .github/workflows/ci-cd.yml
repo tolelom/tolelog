@@ -7,7 +7,6 @@ on:
       - main
   workflow_dispatch:
 
-
 jobs:
   build:
     name: Build React App
@@ -51,8 +50,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          source: "./"
-          target: "/Users/tolelom/Desktop/projects/tolelog"
+          source: "./dist/"
+          target: "/opt/homebrew/var/www/tolelog"
+          strip_components: 1
 
       - name: Nginx 리로드 (프론트 반영)
         uses: appleboy/ssh-action@v0.1.8
@@ -62,4 +62,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
-            /opt/homebrew/bin/nginx -s reload
+            sudo /opt/homebrew/bin/nginx -s reload
