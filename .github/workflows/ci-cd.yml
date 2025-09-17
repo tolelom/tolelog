@@ -62,4 +62,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
-            sudo nginx -s reload
+            nginx -s reload
