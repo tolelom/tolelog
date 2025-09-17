@@ -21,17 +21,17 @@ jobs:
 
       - name: 의존성 설치
         run: npm ci
-        working-directory: ./frontend
+        working-directory: ./src
 
       - name: 빌드
         run: npm run build
-        working-directory: ./frontend
+        working-directory: ./src
 
       - name: 빌드 결과 아티팩트로 저장
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: ./frontend/dist
+          path: ./src/dist
 
   deploy:
     name: Deploy to macOS Server
