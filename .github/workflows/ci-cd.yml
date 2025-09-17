@@ -62,4 +62,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
-            nginx -s reload
+            brew services restart nginx
