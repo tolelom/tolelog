@@ -42,7 +42,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: ./dist
+          path: ./src/dist
 
       - name: 서버로 정적 파일 복사
         uses: appleboy/scp-action@v0.1.4
@@ -52,7 +52,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           source: "dist/"
-          target: "/Users/deploy/app/frontend/"
+          target: "/Users/tolelom/Desktop/projects/tolelog"
 
       - name: Nginx 리로드 (프론트 반영)
         uses: appleboy/ssh-action@v0.1.8
