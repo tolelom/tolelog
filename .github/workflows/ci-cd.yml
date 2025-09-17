@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
 
 jobs:
   build:
@@ -21,17 +23,15 @@ jobs:
 
       - name: 의존성 설치
         run: npm ci
-        working-directory: ./src
 
       - name: 빌드
         run: npm run build
-        working-directory: ./src
 
       - name: 빌드 결과 아티팩트로 저장
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: ./src/dist
+          path: ./dist
 
   deploy:
     name: Deploy to macOS Server
