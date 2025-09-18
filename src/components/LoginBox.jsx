@@ -74,7 +74,7 @@ export default function LoginBox() {
                     <input
                         ref={idRef}
                         type="text"
-                        name="id"
+                        name="username"
                         value={formData.username}
                         onChange={handleChange}
                         className={errors.username ? 'invalid' : ''}
