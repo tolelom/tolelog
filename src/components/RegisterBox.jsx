@@ -45,7 +45,7 @@ export default function RegisterBox() {
             const result = await fetch('/api/register', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({formData}),
+                body: JSON.stringify(formData),
             });
             const data = await result.json();
             if (!result.ok) {
