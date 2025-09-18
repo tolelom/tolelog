@@ -4,7 +4,7 @@ import {useNavigate} from "react-router-dom";
 
 export default function LoginBox() {
     const [formData, setFormData] = useState({
-        id: '',
+        username: '',
         password: '',
     })
     const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function LoginBox() {
 
     const validate = () => {
         const newErrors = {};
-        if (!formData.id) newErrors.id = "아이디를 입력해주세요.";
+        if (!formData.username) newErrors.username = "아이디를 입력해주세요.";
         if (!formData.password) newErrors.password = "비밀번호를 입력해주세요.";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -75,11 +75,11 @@ export default function LoginBox() {
                         ref={idRef}
                         type="text"
                         name="id"
-                        value={formData.id}
+                        value={formData.username}
                         onChange={handleChange}
-                        className={errors.id ? 'invalid' : ''}
+                        className={errors.username ? 'invalid' : ''}
                     />
-                    {errors.id && <small className="error">{errors.id}</small>}
+                    {errors.username && <small className="error">{errors.username}</small>}
                 </div>
                 <div className="input-group">
                     <label>비밀번호</label>

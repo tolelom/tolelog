@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 
 export default function RegisterBox() {
     const [formData, setFormData] = useState({
-        id: '',
+        username: '',
         password: '',
         confirmPassword: '',
     });
@@ -28,7 +28,7 @@ export default function RegisterBox() {
 
     const validate = () => {
         const newErrors = {};
-        if (!formData.id) newErrors.id = "아이디를 입력해주세요.";
+        if (!formData.username) newErrors.username = "아이디를 입력해주세요.";
         if (!formData.password) newErrors.password = "비밀번호를 입력해주세요";
         if (formData.confirmPassword !== formData.confirmPassword) newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
 
@@ -72,11 +72,11 @@ export default function RegisterBox() {
                         ref={idRef}
                         type="text"
                         name="id"
-                        value={formData.id}
+                        value={formData.username}
                         onChange={handleChange}
-                        className={errors.id ? 'invalid' : ''}
+                        className={errors.username ? 'invalid' : ''}
                     />
-                    {errors.id && <small className="error">{errors.id}</small>}
+                    {errors.username && <small className="error">{errors.username}</small>}
                 </div>
                 <div className="input-group">
                     <label>비밀번호</label>
