@@ -1,3 +1,7 @@
 export default function HomePage() {
-    return <h1>홈 - tolelom</h1>;
+    return (
+        <>
+            <h1>tolelog</h1>
+        </>
+    );
 }

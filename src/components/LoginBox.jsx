@@ -1,15 +1,16 @@
-import {useEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {useNavigate} from "react-router-dom";
+import {AuthContext} from "../context/AuthContext.jsx";
 
 
 export default function LoginBox() {
+    const { login } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         username: '',
         password: '',
     })
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState({});
-
     const idRef = useRef();
     const navigate = useNavigate();
 
@@ -51,6 +52,7 @@ export default function LoginBox() {
                 setErrors({general: data.message});
             } else {
                 console.log("로그인 성공");
+                login(data.data.token);
                 navigate('/');
             }
         } catch {
