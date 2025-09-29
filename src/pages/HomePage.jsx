@@ -1,7 +1,9 @@
 import {Link} from 'react-router-dom';
-import {useState} from 'react';
+import {useContext, useState} from 'react';
+import {AuthContext} from "../context/AuthContext.jsx";
 
 export default function HomePage() {
+    const { username } = useContext(AuthContext);
     const [hovered, setHovered] = useState(false);
 
     const baseStyle = {
@@ -31,18 +33,24 @@ export default function HomePage() {
         <>
             <h1>tolelog</h1>
 
-            <Link
-                to="/login"
-                style={{
-                    ...baseStyle,
-                    ...(hovered ? hoveredStyle : normalStyle),
-                }}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
-            >
-                로그인
-            </Link>
 
+            {username ? (
+                <p style={{ marginTop: "20px", fontWeight: "500", color: "#fff" }}>
+                    안녕하세요, {username}님
+                </p>
+            ) : (
+                <Link
+                    to="/login"
+                    style={{
+                        ...baseStyle,
+                        ...(hovered ? hoveredStyle : normalStyle),
+                    }}
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                >
+                    로그인
+                </Link>
+            )}
         </>
     );
 }

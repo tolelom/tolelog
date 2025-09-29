@@ -49,11 +49,15 @@ export default function LoginBox() {
                 body: JSON.stringify(formData),
             });
             const data = await result.json();
+
             if (!result.ok) {
                 setErrors({general: data.message});
             } else {
                 console.log("로그인 성공");
-                login(data.data.token);
+                login({
+                    token: data.data.token,
+                    username: data.data.username,
+                });
                 navigate('/');
             }
         } catch {
