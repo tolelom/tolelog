@@ -1,6 +1,6 @@
 import {useContext, useEffect, useRef, useState} from 'react';
 import {useNavigate} from "react-router-dom";
-import {AuthContext} from "../context/AuthContext.jsx";
+import {AuthContext} from "../context/AuthContext.js";
 import './LoginBox.css';
 
 
