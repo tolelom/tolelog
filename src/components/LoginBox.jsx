@@ -1,10 +1,11 @@
 import {useContext, useEffect, useRef, useState} from 'react';
 import {useNavigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.jsx";
+import './LoginBox.css';
 
 
 export default function LoginBox() {
-    const { login } = useContext(AuthContext);
+    const {login} = useContext(AuthContext);
     const [formData, setFormData] = useState({
         username: '',
         password: '',

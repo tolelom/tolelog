@@ -1,0 +1,14 @@
+.signup-button {
+    margin-top: 12px;
+    background: none;
+    border: none;
+    color: #80b3ff;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.signup-button:hover {
+    color: #5590ff;
+}
