@@ -56,7 +56,7 @@ export default function LoginBox() {
                 console.log("로그인 성공");
                 login({
                     token: data.data.token,
-                    username: data.data.username,
+                    username: data.data.user.username,
                 });
                 navigate('/');
             }
