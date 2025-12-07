@@ -1,7 +1,10 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
 
 export default function EditorPage() {
@@ -16,6 +19,55 @@ export default function EditorPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+    // marked 설정
+    useEffect(() => {
+        marked.setOptions({
+            breaks: true,
+            gfm: true, // GitHub Flavored Markdown
+            pedantic: false,
+        });
+
+        // 코드 블록 하이라이팅 설정
+        marked.use({
+            async: false,
+            pedantic: false,
+            gfm: true,
+            breaks: true,
+            renderer: {
+                code(code, language) {
+                    const validLanguage = language && hljs.getLanguage(language) ? language : 'plaintext';
+                    const highlighted = hljs.highlight(code, { language: validLanguage, ignoreIllegals: true }).value;
+                    return `<pre><code class="hljs language-${validLanguage}">${highlighted}</code></pre>`;
+                },
+                codespan(code) {
+                    return `<code class="inline-code">${code}</code>`;
+                },
+                link(href, title, text) {
+                    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+                },
+                image(href, title, text) {
+                    return `<img src="${href}" alt="${text}" title="${title || ''}" style="max-width: 100%; height: auto;" />`;
+                },
+                table(header, body) {
+                    return `<table class="markdown-table"><thead>${header}</thead><tbody>${body}</tbody></table>`;
+                },
+                blockquote(quote) {
+                    return `<blockquote class="markdown-blockquote">${quote}</blockquote>`;
+                },
+                list(body, ordered) {
+                    const tag = ordered ? 'ol' : 'ul';
+                    return `<${tag} class="markdown-list">${body}</${tag}>`;
+                },
+                heading(text, level) {
+                    return `<h${level} class="markdown-heading">${text}</h${level}>`;
+                },
+                paragraph(text) {
+                    return `<p class="markdown-paragraph">${text}</p>`;
+                }
+            }
+        });
+    }, []);
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData((prev) => ({
@@ -24,23 +76,15 @@ export default function EditorPage() {
         }));
     };
 
-    // 마크다운을 HTML로 변환 (개선된 버전)
+    // 마크다운을 HTML로 변환
     const renderMarkdown = (text) => {
         if (!text) return '';
-
-        return text
-            // 제목
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            // 볼드
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            // 이탤릭
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            // 코드
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            // 줄바꿈
-            .replace(/\n/g, '<br>');
+        try {
+            return marked(text);
+        } catch (err) {
+            console.error('Markdown rendering error:', err);
+            return '<p class="error-preview">마크다운 렌더링 오류</p>';
+        }
     };
 
     const handleSave = async () => {
@@ -80,7 +124,7 @@ export default function EditorPage() {
                 navigate('/');
             }, 2000);
 
-            // 폰 초기화
+            // 폼 초기화
             setFormData({
                 title: '',
                 content: '',
@@ -115,20 +159,20 @@ export default function EditorPage() {
                 </div>
 
                 <div className="editor-container">
-                    {/* 외쪽: 편집기 */}
+                    {/* 좌측: 편집기 */}
                     <div className="editor-section">
-                        <label>내용</label>
+                        <label>마크다운 편집</label>
                         <textarea
                             id="content"
                             name="content"
                             value={formData.content}
                             onChange={handleChange}
-                            placeholder="# 제목&#10;## 부제목&#10;### 소제목&#10;&#10;**볼드**, *이탤릭*, `코드` 등 마크다운 문법을 사용하세요..."
+                            placeholder={`# 제목\n## 부제목\n### 소제목\n\n**볼드**, *이탤릭*, ~~취소선~~\n\n\`\`\`javascript\nconst hello = () => {\n  console.log('Hello, World!');\n};\n\`\`\`\n\n- 리스트 1\n- 리스트 2\n  - 중첩 리스트\n\n> 인용문입니다\n\n[링크](https://example.com)\n\n![이미지](https://example.com/image.jpg)\n\n| 헤더1 | 헤더2 |\n|-------|-------|\n| 셀1   | 셀2   |`}
                             rows="20"
                         />
                     </div>
 
-                    {/* 오른쪽: 미리보기 */}
+                    {/* 우측: 미리보기 */}
                     <div className="preview-section">
                         <label>미리보기</label>
                         <div
@@ -140,7 +184,7 @@ export default function EditorPage() {
                     </div>
                 </div>
 
-                {/* 버큼 섹션 */}
+                {/* 버튼 섹션 */}
                 <div className="button-section">
                     <div className="checkbox-group">
                         <label>
