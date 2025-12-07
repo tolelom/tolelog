@@ -19,6 +19,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/editor" element={<EditorPage />} />
+                <Route path="/editor/:postId" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
                 <Route path="/editor_private" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
 
                 <Route path="*" element={<div>페이지를 찾을 수 없습니다.(404)</div>} />
