@@ -1,8 +1,9 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { useAutoSave } from '../hooks/useAutoSave';
+import ImageUploadButton from '../components/ImageUploadButton';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
@@ -12,6 +13,7 @@ export default function EditorPage() {
     const navigate = useNavigate();
     const { postId } = useParams();
     const { token } = useContext(AuthContext);
+    const textareaRef = useRef(null);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -136,6 +138,30 @@ export default function EditorPage() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
         }));
+    };
+
+    // 이미지 삽입 핸들러
+    const handleImageInsert = (base64Data, fileName) => {
+        if (!textareaRef.current) return;
+
+        const textarea = textareaRef.current;
+        const { selectionStart, selectionEnd } = textarea;
+        const beforeText = formData.content.substring(0, selectionStart);
+        const afterText = formData.content.substring(selectionEnd);
+        const markdownImage = `![${fileName}](${base64Data})`;
+        const newContent = `${beforeText}${markdownImage}${afterText}`;
+
+        setFormData((prev) => ({
+            ...prev,
+            content: newContent,
+        }));
+
+        // 커서 위치 업데이트
+        setTimeout(() => {
+            textarea.selectionStart = selectionStart + markdownImage.length;
+            textarea.selectionEnd = selectionStart + markdownImage.length;
+            textarea.focus();
+        }, 0);
     };
 
     // 마크다운을 HTML로 변환
@@ -271,13 +297,17 @@ export default function EditorPage() {
                 <div className="editor-container">
                     {/* 좌측: 편집기 */}
                     <div className="editor-section">
-                        <label>마크다운 편집</label>
+                        <div className="editor-header">
+                            <label>마크다운 편집</label>
+                            <ImageUploadButton onImageInsert={handleImageInsert} />
+                        </div>
                         <textarea
+                            ref={textareaRef}
                             id="content"
                             name="content"
                             value={formData.content}
                             onChange={handleChange}
-                            placeholder={`# 제목\n## 부제목\n### 소제목\n\n**볼드**, *이탤릭*, ~~취소선~~\n\n\`\`\`javascript\nconst hello = () => {\n  console.log('Hello, World!');\n};\n\`\`\`\n\n- 리스트 1\n- 리스트 2\n  - 중첩 리스트\n\n> 인용문입니다\n\n[링크](https://example.com)\n\n![이미지](https://example.com/image.jpg)\n\n| 헤더1 | 헤더2 |\n|-------|-------|\n| 셀1   | 셀2   |`}
+                            placeholder={`# 제목\n## 부제목\n### 소제목\n\n**볼드**, *이탤릭*, ~~취소선~~\n\n\`\`\`javascript\nconst hello = () => {\n  console.log('Hello, World!');\n};\n\`\`\`\n\n- 리스트 1\n- 리스트 2\n  - 중첩 리스트\n\n> 인용문입니다\n\n[링크](https://example.com)\n\n![이미지](https://example.com/image.jpg)\n\n| 헤더 1 | 헤더 2 |\n|-------|-------|\n| 셀12   | 셀22   |`}
                             rows="20"
                         />
                     </div>
