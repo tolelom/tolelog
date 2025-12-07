@@ -3,6 +3,7 @@ import {useNavigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
 import './LoginBox.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function LoginBox() {
     const {login} = useContext(AuthContext);
@@ -41,9 +42,8 @@ export default function LoginBox() {
         e.preventDefault();
         if (!validate()) return;
         setIsLoading(true);
-        // TODO: API 호출
         try {
-            const result = await fetch("/api/login", {
+            const result = await fetch(`${API_BASE_URL}/login`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(formData),
@@ -51,16 +51,20 @@ export default function LoginBox() {
             const data = await result.json();
 
             if (!result.ok) {
-                setErrors({general: data.message});
-            } else {
+                setErrors({general: data.error || "로그인에 실패했습니다"});
+            } else if (data.status === 'success' && data.data) {
                 console.log("로그인 성공");
                 login({
                     token: data.data.token,
-                    username: data.data.user.username,
+                    username: data.data.username,
+                    userId: data.data.user_id,
                 });
                 navigate('/');
+            } else {
+                setErrors({general: "로그인 처리 중 오류가 발생했습니다"});
             }
-        } catch {
+        } catch (error) {
+            console.error('Login error:', error);
             setErrors({general: "네트워크 오류 발생"});
         } finally {
             setIsLoading(false);
