@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
+import { useAutoSave } from '../hooks/useAutoSave';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
@@ -18,16 +19,20 @@ export default function EditorPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+    const [draftInfo, setDraftInfo] = useState(null);
+
+    // 자동 저장 훅
+    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
 
     // marked 설정
     useEffect(() => {
         marked.setOptions({
             breaks: true,
-            gfm: true, // GitHub Flavored Markdown
+            gfm: true,
             pedantic: false,
         });
 
-        // 코드 블록 하이라이팅 설정
         marked.use({
             async: false,
             pedantic: false,
@@ -67,6 +72,33 @@ export default function EditorPage() {
             }
         });
     }, []);
+
+    // 페이지 로드 시 백업 확인
+    useEffect(() => {
+        if (hasDraft()) {
+            const draft = loadDraft();
+            setDraftInfo(draft);
+            setShowRestorePrompt(true);
+        }
+    }, []);
+
+    const handleRestoreDraft = () => {
+        const draft = loadDraft();
+        if (draft) {
+            setFormData({
+                title: draft.title,
+                content: draft.content,
+                is_public: draft.is_public,
+            });
+        }
+        setShowRestorePrompt(false);
+    };
+
+    const handleDiscardDraft = () => {
+        clearDraft();
+        setShowRestorePrompt(false);
+        setDraftInfo(null);
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -119,6 +151,9 @@ export default function EditorPage() {
             }
 
             setSuccess('글이 저장되었습니다!');
+            // 백업 초기화
+            clearDraft();
+            
             // 2초 후 목록 페이지로 이동
             setTimeout(() => {
                 navigate('/');
@@ -140,6 +175,24 @@ export default function EditorPage() {
     return (
         <div className="editor-page">
             <h1>새 글 작성</h1>
+
+            {/* 백업 복구 프롬프트 */}
+            {showRestorePrompt && draftInfo && (
+                <div className="restore-prompt">
+                    <div className="restore-content">
+                        <h3>저장된 임시 글이 있습니다</h3>
+                        <p>마지막 저장: {getFormattedSaveTime()}</p>
+                        <div className="restore-actions">
+                            <button className="btn-restore" onClick={handleRestoreDraft}>
+                                복구하기
+                            </button>
+                            <button className="btn-discard" onClick={handleDiscardDraft}>
+                                버리기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {error && <div className="error-message">{error}</div>}
             {success && <div className="success-message">{success}</div>}
@@ -186,16 +239,29 @@ export default function EditorPage() {
 
                 {/* 버튼 섹션 */}
                 <div className="button-section">
-                    <div className="checkbox-group">
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="is_public"
-                                checked={formData.is_public}
-                                onChange={handleChange}
-                            />
-                            공개 발행
-                        </label>
+                    <div className="left-content">
+                        <div className="checkbox-group">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name="is_public"
+                                    checked={formData.is_public}
+                                    onChange={handleChange}
+                                />
+                                공개 발행
+                            </label>
+                        </div>
+                        <div className="save-indicator">
+                            {saveStatus === 'saving' && (
+                                <span className="save-status saving">저장 중...</span>
+                            )}
+                            {saveStatus === 'saved' && (
+                                <span className="save-status saved">✓ 저장됨</span>
+                            )}
+                            {saveStatus === 'error' && (
+                                <span className="save-status error">✗ 저장 실패</span>
+                            )}
+                        </div>
                     </div>
                     <button
                         type="button"
