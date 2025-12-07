@@ -7,6 +7,10 @@ export function AuthProvider({children}) {
         const userStr = localStorage.getItem("user");
         return userStr ? JSON.parse(userStr).username : null;
     });
+    const [userId, setUserId] = useState(() => {
+        const userStr = localStorage.getItem("user");
+        return userStr ? JSON.parse(userStr).user_id : null;
+    });
 
     useEffect(() => {
         if (token) {
@@ -17,25 +21,27 @@ export function AuthProvider({children}) {
     }, [token]);
 
     useEffect(() => {
-        if (username) {
-            localStorage.setItem("user", JSON.stringify({username}));
+        if (username && userId) {
+            localStorage.setItem("user", JSON.stringify({username, user_id: userId}));
         } else {
             localStorage.removeItem("user");
         }
-    }, [username]);
+    }, [username, userId]);
 
 
-    const login = ({token: newToken, username: newUsername}) => {
+    const login = ({token: newToken, username: newUsername, userId: newUserId}) => {
         setToken(newToken);
         setUsername(newUsername);
+        setUserId(newUserId);
     }
     const logout = () => {
         setToken(null);
         setUsername(null);
+        setUserId(null);
     }
 
     return (
-        <AuthContext.Provider value={{token, username, login, logout}}>
+        <AuthContext.Provider value={{token, username, userId, login, logout}}>
             {children}
         </AuthContext.Provider>
     );
