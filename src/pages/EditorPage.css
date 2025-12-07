@@ -29,6 +29,100 @@
     border-left: 4px solid #c3e6cb;
 }
 
+/* 백업 복구 프롬프트 */
+.restore-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.restore-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.restore-content h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.restore-content p {
+    margin: 0 0 24px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.restore-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-restore,
+.btn-discard {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-restore {
+    background-color: #0066cc;
+    color: white;
+}
+
+.btn-restore:hover {
+    background-color: #0052a3;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.btn-discard {
+    background-color: #f5f5f5;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.btn-discard:hover {
+    background-color: #efefef;
+    border-color: #ccc;
+}
+
 .title-section {
     margin-bottom: 20px;
 }
@@ -290,6 +384,14 @@
     background-color: #f9f9f9;
     border-radius: 8px;
     border: 1px solid #ddd;
+    gap: 16px;
+}
+
+.left-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
 }
 
 .checkbox-group {
@@ -304,11 +406,53 @@
     color: #555;
     font-weight: 500;
     margin: 0;
+    white-space: nowrap;
 }
 
 .checkbox-group input[type="checkbox"] {
     margin-right: 8px;
     cursor: pointer;
+}
+
+/* 저장 상태 표시 */
+.save-indicator {
+    display: flex;
+    align-items: center;
+    min-width: 100px;
+}
+
+.save-status {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.save-status.saving {
+    color: #ff9800;
+    background-color: #fff3cd;
+    animation: pulse 1.5s infinite;
+}
+
+.save-status.saved {
+    color: #27ae60;
+    background-color: #d4edda;
+}
+
+.save-status.error {
+    color: #c0392b;
+    background-color: #f8d7da;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .save-button {
@@ -321,6 +465,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    white-space: nowrap;
 }
 
 .save-button:hover:not(:disabled) {
@@ -369,9 +514,25 @@
     .button-section {
         flex-direction: column;
         gap: 12px;
+        align-items: stretch;
+    }
+
+    .left-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .save-indicator {
+        width: 100%;
+        justify-content: center;
     }
 
     .save-button {
         width: 100%;
+    }
+
+    .restore-content {
+        max-width: 90%;
+        padding: 24px;
     }
 }
