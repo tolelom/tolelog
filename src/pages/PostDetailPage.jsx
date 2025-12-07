@@ -134,7 +134,8 @@ export default function PostDetailPage() {
                 </div>
             </div>
         );
-     n
+    }
+
     // 본인 사용자가 중스일기
     const isOwner = user && user.id === post.user_id;
     const createdAt = new Date(post.created_at).toLocaleDateString('ko-KR', {
