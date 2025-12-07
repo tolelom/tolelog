@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { useAutoSave } from '../hooks/useAutoSave';
@@ -10,6 +10,7 @@ import './EditorPage.css';
 
 export default function EditorPage() {
     const navigate = useNavigate();
+    const { postId } = useParams();
     const { token } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         title: '',
@@ -17,10 +18,12 @@ export default function EditorPage() {
         is_public: true,
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(!!postId);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showRestorePrompt, setShowRestorePrompt] = useState(false);
     const [draftInfo, setDraftInfo] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(!!postId);
 
     // 자동 저장 훅
     const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
@@ -73,14 +76,41 @@ export default function EditorPage() {
         });
     }, []);
 
-    // 페이지 로드 시 백업 확인
+    // 글 수정 모드: 기존 글 불러오기
     useEffect(() => {
-        if (hasDraft()) {
-            const draft = loadDraft();
-            setDraftInfo(draft);
-            setShowRestorePrompt(true);
+        if (postId) {
+            const loadPost = async () => {
+                try {
+                    setIsLoading(true);
+                    const response = await POST_API.getPost(postId);
+                    if (response.status === 'success') {
+                        const post = response.data;
+                        setFormData({
+                            title: post.title,
+                            content: post.content,
+                            is_public: post.is_public,
+                        });
+                        setIsEditMode(true);
+                    } else {
+                        setError('글을 불러올 수 없습니다.');
+                    }
+                } catch (err) {
+                    setError(err.message || '글 불러오기에 실패했습니다.');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            loadPost();
+        } else {
+            // 신규 글 모드: 백업 확인
+            if (hasDraft()) {
+                const draft = loadDraft();
+                setDraftInfo(draft);
+                setShowRestorePrompt(true);
+            }
+            setIsLoading(false);
         }
-    }, []);
+    }, [postId]);
 
     const handleRestoreDraft = () => {
         const draft = loadDraft();
@@ -139,32 +169,40 @@ export default function EditorPage() {
         setSuccess('');
 
         try {
-            const response = await POST_API.createPost(
-                formData.title,
-                formData.content,
-                formData.is_public,
-                token
-            );
+            let response;
+            if (isEditMode && postId) {
+                // 수정 모드
+                response = await POST_API.updatePost(
+                    postId,
+                    formData.title,
+                    formData.content,
+                    formData.is_public,
+                    token
+                );
+            } else {
+                // 신규 모드
+                response = await POST_API.createPost(
+                    formData.title,
+                    formData.content,
+                    formData.is_public,
+                    token
+                );
+            }
 
             if (!response.status || response.status !== 'success') {
                 throw new Error(response.error || '글 저장에 실패했습니다');
             }
 
-            setSuccess('글이 저장되었습니다!');
+            const successMsg = isEditMode ? '글이 수정되었습니다!' : '글이 저장되었습니다!';
+            setSuccess(successMsg);
             // 백업 초기화
             clearDraft();
             
-            // 2초 후 목록 페이지로 이동
+            // 2초 후 글 상세 페이지로 이동
             setTimeout(() => {
-                navigate('/');
+                const postIdToNavigate = isEditMode ? postId : response.data.id;
+                navigate(`/post/${postIdToNavigate}`);
             }, 2000);
-
-            // 폼 초기화
-            setFormData({
-                title: '',
-                content: '',
-                is_public: true,
-            });
         } catch (err) {
             setError(err.message || '글 저장에 실패했습니다');
         } finally {
@@ -172,12 +210,31 @@ export default function EditorPage() {
         }
     };
 
+    const handleCancel = () => {
+        if (isEditMode && postId) {
+            navigate(`/post/${postId}`);
+        } else {
+            navigate('/');
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="editor-page">
+                <div className="loading-spinner">
+                    <div className="spinner"></div>
+                    <p>글을 불러오는 중...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="editor-page">
-            <h1>새 글 작성</h1>
+            <h1>{isEditMode ? '글 수정' : '새 글 작성'}</h1>
 
             {/* 백업 복구 프롬프트 */}
-            {showRestorePrompt && draftInfo && (
+            {showRestorePrompt && draftInfo && !isEditMode && (
                 <div className="restore-prompt">
                     <div className="restore-content">
                         <h3>저장된 임시 글이 있습니다</h3>
@@ -252,25 +309,35 @@ export default function EditorPage() {
                             </label>
                         </div>
                         <div className="save-indicator">
-                            {saveStatus === 'saving' && (
+                            {!isEditMode && saveStatus === 'saving' && (
                                 <span className="save-status saving">저장 중...</span>
                             )}
-                            {saveStatus === 'saved' && (
+                            {!isEditMode && saveStatus === 'saved' && (
                                 <span className="save-status saved">✓ 저장됨</span>
                             )}
-                            {saveStatus === 'error' && (
+                            {!isEditMode && saveStatus === 'error' && (
                                 <span className="save-status error">✗ 저장 실패</span>
                             )}
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        className="save-button"
-                        onClick={handleSave}
-                        disabled={isSaving}
-                    >
-                        {isSaving ? '저장 중...' : '글 발행'}
-                    </button>
+                    <div className="button-group">
+                        <button
+                            type="button"
+                            className="cancel-button"
+                            onClick={handleCancel}
+                            disabled={isSaving}
+                        >
+                            취소
+                        </button>
+                        <button
+                            type="button"
+                            className="save-button"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정 완료' : '글 발행')}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
