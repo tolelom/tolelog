@@ -1,52 +1,47 @@
-/* 로그인 박스 컨테이너 */
-.login-box {
+/* 인증 폼 공통 스타일 */
+.auth-box {
     max-width: 360px;
     margin: 80px auto;
     padding: 24px 32px;
-    background-color: #222;       /* 어두운 배경 */
-    color: #fff;                  /* 흰색 텍스트 */
+    background-color: #222;
+    color: #fff;
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* 제목 스타일 */
-.login-box h1 {
+.auth-box h1 {
     margin-bottom: 24px;
     font-weight: 600;
     font-size: 1.8rem;
     text-align: center;
 }
 
-/* 에러 메세지 */
-.error {
+.auth-box .error {
     color: #ff6b6b;
     font-size: 0.9rem;
     margin-top: 6px;
 }
 
-.general-error {
+.auth-box .general-error {
     margin-bottom: 12px;
     text-align: center;
     font-weight: 600;
 }
 
-/* 입력 그룹 */
-.input-group {
+.auth-box .input-group {
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
 }
 
-/* 라벨 */
-.input-group label {
+.auth-box .input-group label {
     margin-bottom: 6px;
     font-weight: 500;
     font-size: 0.95rem;
 }
 
-/* 텍스트 인풋 */
-.input-group input {
+.auth-box .input-group input {
     padding: 10px 12px;
     border-radius: 6px;
     border: 1px solid #555;
@@ -56,20 +51,18 @@
     transition: border-color 0.25s ease;
 }
 
-.input-group input:focus {
+.auth-box .input-group input:focus {
     border-color: #80b3ff;
     outline: none;
     box-shadow: 0 0 6px #80b3ffa0;
 }
 
-/* 에러 있을때 인풋 변화 */
-.input-group input.invalid {
+.auth-box .input-group input.invalid {
     border-color: #ff6b6b;
     box-shadow: 0 0 6px #ff6b6ba0;
 }
 
-/* 버튼 */
-button[type="submit"] {
+.auth-box button[type="submit"] {
     width: 100%;
     padding: 12px 0;
     background-color: transparent;
@@ -82,12 +75,12 @@ button[type="submit"] {
     transition: background-color 0.3s, color 0.3s;
 }
 
-button[type="submit"]:hover:not(:disabled) {
+.auth-box button[type="submit"]:hover:not(:disabled) {
     background-color: #fff;
     color: #222;
 }
 
-button[type="submit"]:disabled {
+.auth-box button[type="submit"]:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }

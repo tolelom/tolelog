@@ -2,65 +2,21 @@ import { useState, useContext, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
-import { marked } from 'marked';
-import hljs from 'highlight.js';
+import { configureMarked, renderMarkdown } from '../utils/markdown';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
 
 export default function PostDetailPage() {
     const { postId } = useParams();
     const navigate = useNavigate();
-    const { user, token } = useContext(AuthContext);
+    const { userId, token } = useContext(AuthContext);
     const [post, setPost] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
     // marked 설정
     useEffect(() => {
-        marked.setOptions({
-            breaks: true,
-            gfm: true,
-            pedantic: false,
-        });
-
-        marked.use({
-            async: false,
-            pedantic: false,
-            gfm: true,
-            breaks: true,
-            renderer: {
-                code(code, language) {
-                    const validLanguage = language && hljs.getLanguage(language) ? language : 'plaintext';
-                    const highlighted = hljs.highlight(code, { language: validLanguage, ignoreIllegals: true }).value;
-                    return `<pre><code class="hljs language-${validLanguage}">${highlighted}</code></pre>`;
-                },
-                codespan(code) {
-                    return `<code class="inline-code">${code}</code>`;
-                },
-                link(href, title, text) {
-                    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-                },
-                image(href, title, text) {
-                    return `<img src="${href}" alt="${text}" title="${title || ''}" style="max-width: 100%; height: auto;" />`;
-                },
-                table(header, body) {
-                    return `<table class="markdown-table"><thead>${header}</thead><tbody>${body}</tbody></table>`;
-                },
-                blockquote(quote) {
-                    return `<blockquote class="markdown-blockquote">${quote}</blockquote>`;
-                },
-                list(body, ordered) {
-                    const tag = ordered ? 'ol' : 'ul';
-                    return `<${tag} class="markdown-list">${body}</${tag}>`;
-                },
-                heading(text, level) {
-                    return `<h${level} class="markdown-heading">${text}</h${level}>`;
-                },
-                paragraph(text) {
-                    return `<p class="markdown-paragraph">${text}</p>`;
-                }
-            }
-        });
+        configureMarked();
     }, []);
 
     // 글 로드
@@ -101,16 +57,6 @@ export default function PostDetailPage() {
         }
     };
 
-    const renderMarkdown = (text) => {
-        if (!text) return '';
-        try {
-            return marked(text);
-        } catch (err) {
-            console.error('Markdown rendering error:', err);
-            return '<p class="error-preview">마크다운 렌더링 오류</p>';
-        }
-    };
-
     // 로드 중
     if (isLoading) {
         return (
@@ -136,8 +82,8 @@ export default function PostDetailPage() {
         );
     }
 
-    // 본인 사용자가 중스일기
-    const isOwner = user && user.id === post.user_id;
+    // 본인 글인지 확인
+    const isOwner = userId && userId === post.user_id;
     const createdAt = new Date(post.created_at).toLocaleDateString('ko-KR', {
         year: 'numeric',
         month: 'long',
@@ -176,7 +122,7 @@ export default function PostDetailPage() {
                     }}
                 />
 
-                {/* 단추기 */}
+                {/* 수정/삭제 버튼 */}
                 {isOwner && (
                     <div className="post-actions">
                         <Link to={`/editor/${postId}`} className="btn-edit">
@@ -188,7 +134,7 @@ export default function PostDetailPage() {
                     </div>
                 )}
 
-                {/* 낤만 검색 */}
+                {/* 목록으로 돌아가기 */}
                 <Link to="/" className="back-link">글 목록으로 돌아가기</Link>
             </article>
         </div>

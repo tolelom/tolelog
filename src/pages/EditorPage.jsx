@@ -3,9 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { useAutoSave } from '../hooks/useAutoSave';
+import { configureMarked, renderMarkdown } from '../utils/markdown';
 import ImageUploadButton from '../components/ImageUploadButton';
-import { marked } from 'marked';
-import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
 
@@ -25,57 +24,14 @@ export default function EditorPage() {
     const [success, setSuccess] = useState('');
     const [showRestorePrompt, setShowRestorePrompt] = useState(false);
     const [draftInfo, setDraftInfo] = useState(null);
-    const [isEditMode, setIsEditMode] = useState(!!postId);
+    const isEditMode = !!postId;
 
     // 자동 저장 훅
     const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
 
     // marked 설정
     useEffect(() => {
-        marked.setOptions({
-            breaks: true,
-            gfm: true,
-            pedantic: false,
-        });
-
-        marked.use({
-            async: false,
-            pedantic: false,
-            gfm: true,
-            breaks: true,
-            renderer: {
-                code(code, language) {
-                    const validLanguage = language && hljs.getLanguage(language) ? language : 'plaintext';
-                    const highlighted = hljs.highlight(code, { language: validLanguage, ignoreIllegals: true }).value;
-                    return `<pre><code class="hljs language-${validLanguage}">${highlighted}</code></pre>`;
-                },
-                codespan(code) {
-                    return `<code class="inline-code">${code}</code>`;
-                },
-                link(href, title, text) {
-                    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-                },
-                image(href, title, text) {
-                    return `<img src="${href}" alt="${text}" title="${title || ''}" style="max-width: 100%; height: auto;" />`;
-                },
-                table(header, body) {
-                    return `<table class="markdown-table"><thead>${header}</thead><tbody>${body}</tbody></table>`;
-                },
-                blockquote(quote) {
-                    return `<blockquote class="markdown-blockquote">${quote}</blockquote>`;
-                },
-                list(body, ordered) {
-                    const tag = ordered ? 'ol' : 'ul';
-                    return `<${tag} class="markdown-list">${body}</${tag}>`;
-                },
-                heading(text, level) {
-                    return `<h${level} class="markdown-heading">${text}</h${level}>`;
-                },
-                paragraph(text) {
-                    return `<p class="markdown-paragraph">${text}</p>`;
-                }
-            }
-        });
+        configureMarked();
     }, []);
 
     // 글 수정 모드: 기존 글 불러오기
@@ -92,7 +48,6 @@ export default function EditorPage() {
                             content: post.content,
                             is_public: post.is_public,
                         });
-                        setIsEditMode(true);
                     } else {
                         setError('글을 불러올 수 없습니다.');
                     }
@@ -164,17 +119,6 @@ export default function EditorPage() {
         }, 0);
     };
 
-    // 마크다운을 HTML로 변환
-    const renderMarkdown = (text) => {
-        if (!text) return '';
-        try {
-            return marked(text);
-        } catch (err) {
-            console.error('Markdown rendering error:', err);
-            return '<p class="error-preview">마크다운 렌더링 오류</p>';
-        }
-    };
-
     const handleSave = async () => {
         if (!formData.title.trim()) {
             setError('제목을 입력해주세요');
@@ -196,8 +140,7 @@ export default function EditorPage() {
 
         try {
             let response;
-            if (isEditMode && postId) {
-                // 수정 모드
+            if (isEditMode) {
                 response = await POST_API.updatePost(
                     postId,
                     formData.title,
@@ -206,7 +149,6 @@ export default function EditorPage() {
                     token
                 );
             } else {
-                // 신규 모드
                 response = await POST_API.createPost(
                     formData.title,
                     formData.content,
@@ -221,10 +163,8 @@ export default function EditorPage() {
 
             const successMsg = isEditMode ? '글이 수정되었습니다!' : '글이 저장되었습니다!';
             setSuccess(successMsg);
-            // 백업 초기화
             clearDraft();
-            
-            // 2초 후 글 상세 페이지로 이동
+
             setTimeout(() => {
                 const postIdToNavigate = isEditMode ? postId : response.data.id;
                 navigate(`/post/${postIdToNavigate}`);
@@ -237,7 +177,7 @@ export default function EditorPage() {
     };
 
     const handleCancel = () => {
-        if (isEditMode && postId) {
+        if (isEditMode) {
             navigate(`/post/${postId}`);
         } else {
             navigate('/');

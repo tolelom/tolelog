@@ -1,10 +1,9 @@
-import {useContext} from 'react';
-import {AuthContext} from "../context/AuthContext.js"
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext.js';
+import { API_BASE_URL } from './constants';
 
 export function useApi() {
-    const {token, logout} = useContext(AuthContext);
+    const { token, logout } = useContext(AuthContext);
 
     async function request(path, options = {}) {
         const headers = {
@@ -18,7 +17,7 @@ export function useApi() {
         const res = await fetch(`${API_BASE_URL}${path}`, {
             ...options,
             headers,
-        })
+        });
 
         if (res.status === 401) {
             logout();
@@ -33,11 +32,34 @@ export function useApi() {
         return data;
     }
 
-    return {request};
+    return { request };
+}
+
+async function authenticatedFetch(url, method, token, body = null) {
+    if (!token) {
+        throw new Error('토큰이 필요합니다');
+    }
+
+    const headers = { 'Authorization': `Bearer ${token}` };
+    if (body) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(url, {
+        method,
+        headers,
+        ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to ${method.toLowerCase()} post: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
+    }
+
+    return response.json();
 }
 
 export const POST_API = {
-    // 공개 글 목록
     getPublicPosts: async (page = 1, pageSize = 10) => {
         const response = await fetch(
             `${API_BASE_URL}/posts?page=${page}&page_size=${pageSize}`
@@ -48,7 +70,6 @@ export const POST_API = {
         return response.json();
     },
 
-    // 글 상세 조회
     getPost: async (postId) => {
         const response = await fetch(`${API_BASE_URL}/posts/${postId}`);
         if (!response.ok) {
@@ -57,7 +78,6 @@ export const POST_API = {
         return response.json();
     },
 
-    // 사용자 글 목록
     getUserPosts: async (userId, page = 1, pageSize = 10) => {
         const response = await fetch(
             `${API_BASE_URL}/users/${userId}/posts?page=${page}&page_size=${pageSize}`
@@ -68,93 +88,29 @@ export const POST_API = {
         return response.json();
     },
 
-    // 글 생성
     createPost: async (title, content, isPublic = true, token) => {
-        if (!token) {
-            throw new Error('토큰이 필요합니다');
-        }
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/posts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    title,
-                    content,
-                    is_public: isPublic,
-                }),
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Failed to create post: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
-            }
-            
-            return response.json();
-        } catch (error) {
-            console.error('Create post error:', error);
-            throw error;
-        }
+        return authenticatedFetch(
+            `${API_BASE_URL}/posts`,
+            'POST',
+            token,
+            { title, content, is_public: isPublic }
+        );
     },
 
-    // 글 수정
     updatePost: async (postId, title, content, isPublic = true, token) => {
-        if (!token) {
-            throw new Error('토큰이 필요합니다');
-        }
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    title,
-                    content,
-                    is_public: isPublic,
-                }),
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Failed to update post: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
-            }
-            
-            return response.json();
-        } catch (error) {
-            console.error('Update post error:', error);
-            throw error;
-        }
+        return authenticatedFetch(
+            `${API_BASE_URL}/posts/${postId}`,
+            'PUT',
+            token,
+            { title, content, is_public: isPublic }
+        );
     },
 
-    // 글 삭제
     deletePost: async (postId, token) => {
-        if (!token) {
-            throw new Error('토큰이 필요합니다');
-        }
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Failed to delete post: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
-            }
-            
-            return response.json();
-        } catch (error) {
-            console.error('Delete post error:', error);
-            throw error;
-        }
+        return authenticatedFetch(
+            `${API_BASE_URL}/posts/${postId}`,
+            'DELETE',
+            token
+        );
     },
 };

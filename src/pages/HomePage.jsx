@@ -1,66 +1,26 @@
-import {Link} from 'react-router-dom';
-import {useContext, useState} from 'react';
-import {AuthContext} from "../context/AuthContext.js";
+import { Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext.js';
+import './HomePage.css';
 
 export default function HomePage() {
-    const {username} = useContext(AuthContext);
-    const [hovered, setHovered] = useState(false);
-
-    const baseStyle = {
-        display: 'inline-block',
-        padding: '8px 16px',
-        borderRadius: '6px',
-        textDecoration: 'none',
-        marginTop: '20px',
-        border: '1px solid #fff',
-        fontWeight: '500',
-        transition: 'background 0.2s, color 0.2s',
-        cursor: 'pointer',
-    };
-
-    const hoveredStyle = {
-        background: '#fff',
-        color: '#222',
-    };
-
-    const normalStyle = {
-        background: 'none',
-        color: '#fff',
-    };
-
+    const { username } = useContext(AuthContext);
 
     return (
         <>
             <h1>tolelog</h1>
 
-
             {username ? (
                 <>
-                    <p style={{marginTop: "20px", fontWeight: "500", color: "#fff"}}>
+                    <p className="home-greeting">
                         안녕하세요, {username}님
                     </p>
-                    <Link
-                        to="/editor_private"
-                        style={{
-                            ...baseStyle,
-                            ...(hovered ? hoveredStyle : normalStyle),
-                        }}
-                        onMouseEnter={() => setHovered(true)}
-                        onMouseLeave={() => setHovered(false)}
-                    >
-                    글쓰기
+                    <Link to="/editor_private" className="home-action-link">
+                        글쓰기
                     </Link>
                 </>
             ) : (
-                <Link
-                    to="/login"
-                    style={{
-                        ...baseStyle,
-                        ...(hovered ? hoveredStyle : normalStyle),
-                    }}
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
-                >
+                <Link to="/login" className="home-action-link">
                     로그인
                 </Link>
             )}

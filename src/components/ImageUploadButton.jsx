@@ -64,7 +64,7 @@ export default function ImageUploadButton({ onImageInsert }) {
                 className="image-btn"
                 onClick={handleClick}
                 disabled={isLoading}
-                title="을른 딩 또는 날드로 Ctrl+G / ⌘+G"
+                title="이미지 업로드 (Ctrl+G / ⌘+G)"
             >
                 {isLoading ? (
                     <>
@@ -73,7 +73,7 @@ export default function ImageUploadButton({ onImageInsert }) {
                     </>
                 ) : (
                     <>
-                        🖼﻿ 이미지 추가
+                        {"🖼 이미지 추가"}
                     </>
                 )}
             </button>

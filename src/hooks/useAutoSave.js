@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-
-const STORAGE_KEY = 'tolelog_draft';
-const SAVE_DELAY = 1000; // 1초
+import { STORAGE_KEYS, AUTO_SAVE_DELAY_MS } from '../utils/constants';
 
 export function useAutoSave(formData) {
-    const [saveStatus, setSaveStatus] = useState('saved'); // 'saving', 'saved', 'error'
+    const [saveStatus, setSaveStatus] = useState('saved');
     const saveTimeoutRef = useRef(null);
     const lastSavedRef = useRef(null);
 
-    // 자동 저장 함수
     const saveDraft = (data) => {
         try {
             const draftData = {
@@ -17,7 +14,7 @@ export function useAutoSave(formData) {
                 is_public: data.is_public,
                 savedAt: new Date().toISOString(),
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+            localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draftData));
             lastSavedRef.current = draftData;
             setSaveStatus('saved');
         } catch (error) {
@@ -26,7 +23,6 @@ export function useAutoSave(formData) {
         }
     };
 
-    // formData 변경 시 자동 저장 (디바운싱)
     useEffect(() => {
         setSaveStatus('saving');
 
@@ -36,7 +32,7 @@ export function useAutoSave(formData) {
 
         saveTimeoutRef.current = setTimeout(() => {
             saveDraft(formData);
-        }, SAVE_DELAY);
+        }, AUTO_SAVE_DELAY_MS);
 
         return () => {
             if (saveTimeoutRef.current) {
@@ -45,10 +41,9 @@ export function useAutoSave(formData) {
         };
     }, [formData]);
 
-    // 저장된 백업 로드
     const loadDraft = () => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
             if (saved) {
                 return JSON.parse(saved);
             }
@@ -59,10 +54,9 @@ export function useAutoSave(formData) {
         }
     };
 
-    // 백업 초기화
     const clearDraft = () => {
         try {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.DRAFT);
             lastSavedRef.current = null;
             setSaveStatus('saved');
         } catch (error) {
@@ -70,17 +64,15 @@ export function useAutoSave(formData) {
         }
     };
 
-    // 백업 존재 여부 확인
     const hasDraft = () => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
             return saved !== null;
-        } catch (error) {
+        } catch {
             return false;
         }
     };
 
-    // 저장 시간 포맷팅
     const getFormattedSaveTime = () => {
         const draft = loadDraft();
         if (!draft || !draft.savedAt) return '';

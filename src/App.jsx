@@ -1,20 +1,15 @@
 import './App.css'
-import {BrowserRouter, Routes, Link, Route} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage.jsx';
-import LoginPage from "./pages/LoginPage.jsx";
-import RegisterPage from "./pages/RegisterPage.jsx";
-import EditorPage from "./pages/EditorPage.jsx";
-import PostDetailPage from "./pages/PostDetailPage.jsx";
-import PrivateRoute from "./components/PrivateRoute.jsx";
+import LoginPage from './pages/LoginPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+import EditorPage from './pages/EditorPage.jsx';
+import PostDetailPage from './pages/PostDetailPage.jsx';
+import PrivateRoute from './components/PrivateRoute.jsx';
 
 function App() {
     return (
         <BrowserRouter>
-            {/*<nav>*/}
-            {/*    <Link to='/'>홈</Link>*/}
-            {/*    <Link to="/contact">문의</Link>*/}
-            {/*</nav>*/}
-
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/post/:postId" element={<PostDetailPage />} />

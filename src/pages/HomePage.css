@@ -1,0 +1,24 @@
+.home-greeting {
+    margin-top: 20px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.home-action-link {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-top: 20px;
+    border: 1px solid #fff;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    background: none;
+    color: #fff;
+}
+
+.home-action-link:hover {
+    background: #fff;
+    color: #222;
+}
