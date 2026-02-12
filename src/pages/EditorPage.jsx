@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { useAutoSave } from '../hooks/useAutoSave';
-import { configureMarked, renderMarkdown } from '../utils/markdown';
+import BlockEditor from '../components/BlockEditor';
 import ImageUploadButton from '../components/ImageUploadButton';
 import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
@@ -12,7 +12,7 @@ export default function EditorPage() {
     const navigate = useNavigate();
     const { postId } = useParams();
     const { token } = useContext(AuthContext);
-    const textareaRef = useRef(null);
+    const imageInsertRef = useRef(null);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -28,11 +28,6 @@ export default function EditorPage() {
 
     // 자동 저장 훅
     const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
-
-    // marked 설정
-    useEffect(() => {
-        configureMarked();
-    }, []);
 
     // 글 수정 모드: 기존 글 불러오기
     useEffect(() => {
@@ -95,28 +90,19 @@ export default function EditorPage() {
         }));
     };
 
-    // 이미지 삽입 핸들러
-    const handleImageInsert = (base64Data, fileName) => {
-        if (!textareaRef.current) return;
-
-        const textarea = textareaRef.current;
-        const { selectionStart, selectionEnd } = textarea;
-        const beforeText = formData.content.substring(0, selectionStart);
-        const afterText = formData.content.substring(selectionEnd);
-        const markdownImage = `![${fileName}](${base64Data})`;
-        const newContent = `${beforeText}${markdownImage}${afterText}`;
-
+    // BlockEditor content 변경
+    const handleContentChange = (newContent) => {
         setFormData((prev) => ({
             ...prev,
             content: newContent,
         }));
+    };
 
-        // 커서 위치 업데이트
-        setTimeout(() => {
-            textarea.selectionStart = selectionStart + markdownImage.length;
-            textarea.selectionEnd = selectionStart + markdownImage.length;
-            textarea.focus();
-        }, 0);
+    // 이미지 삽입 핸들러
+    const handleImageInsert = (base64Data, fileName) => {
+        if (imageInsertRef.current) {
+            imageInsertRef.current(base64Data, fileName);
+        }
     };
 
     const handleSave = async () => {
@@ -234,35 +220,17 @@ export default function EditorPage() {
                     />
                 </div>
 
-                <div className="editor-container">
-                    {/* 좌측: 편집기 */}
-                    <div className="editor-section">
-                        <div className="editor-header">
-                            <label>마크다운 편집</label>
-                            <ImageUploadButton onImageInsert={handleImageInsert} />
-                        </div>
-                        <textarea
-                            ref={textareaRef}
-                            id="content"
-                            name="content"
-                            value={formData.content}
-                            onChange={handleChange}
-                            placeholder={`# 제목\n## 부제목\n### 소제목\n\n**볼드**, *이탤릭*, ~~취소선~~\n\n\`\`\`javascript\nconst hello = () => {\n  console.log('Hello, World!');\n};\n\`\`\`\n\n- 리스트 1\n- 리스트 2\n  - 중첩 리스트\n\n> 인용문입니다\n\n[링크](https://example.com)\n\n![이미지](https://example.com/image.jpg)\n\n| 헤더 1 | 헤더 2 |\n|-------|-------|\n| 셀12   | 셀22   |`}
-                            rows="20"
-                        />
-                    </div>
-
-                    {/* 우측: 미리보기 */}
-                    <div className="preview-section">
-                        <label>미리보기</label>
-                        <div
-                            className="markdown-preview"
-                            dangerouslySetInnerHTML={{
-                                __html: renderMarkdown(formData.content) || '<p class="empty-preview">미리보기가 여기에 표시됩니다...</p>'
-                            }}
-                        />
-                    </div>
+                {/* 에디터 툴바 */}
+                <div className="editor-toolbar">
+                    <ImageUploadButton onImageInsert={handleImageInsert} />
                 </div>
+
+                {/* 블록 에디터 */}
+                <BlockEditor
+                    content={formData.content}
+                    onChange={handleContentChange}
+                    onImageInsert={imageInsertRef}
+                />
 
                 {/* 버튼 섹션 */}
                 <div className="button-section">
@@ -283,10 +251,10 @@ export default function EditorPage() {
                                 <span className="save-status saving">저장 중...</span>
                             )}
                             {!isEditMode && saveStatus === 'saved' && (
-                                <span className="save-status saved">✓ 저장됨</span>
+                                <span className="save-status saved">&#10003; 저장됨</span>
                             )}
                             {!isEditMode && saveStatus === 'error' && (
-                                <span className="save-status error">✗ 저장 실패</span>
+                                <span className="save-status error">&#10007; 저장 실패</span>
                             )}
                         </div>
                     </div>

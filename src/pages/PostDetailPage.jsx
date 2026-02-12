@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
-import { configureMarked, renderMarkdown } from '../utils/markdown';
+import { renderMarkdown } from '../utils/markdown';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
 
@@ -14,10 +14,6 @@ export default function PostDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // marked 설정
-    useEffect(() => {
-        configureMarked();
-    }, []);
 
     // 글 로드
     useEffect(() => {
