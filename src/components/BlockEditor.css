@@ -1,9 +1,9 @@
 .block-editor {
     min-height: 400px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 16px;
-    background-color: #fff;
+    background-color: var(--bg-card);
     margin-bottom: 20px;
 }
 
@@ -15,7 +15,7 @@
 }
 
 .block-wrapper:hover {
-    background-color: #fafafa;
+    background-color: var(--bg-hover);
 }
 
 .block-wrapper.active {
@@ -28,16 +28,16 @@
     padding: 4px 8px;
     min-height: 1.6em;
     line-height: 1.8;
-    color: #333;
+    color: var(--text-secondary);
 }
 
 .block-rendered:hover {
-    background-color: #f5f7fa;
+    background-color: var(--bg-hover);
     border-radius: 4px;
 }
 
 .block-empty-text {
-    color: #ccc;
+    color: var(--text-muted);
     min-height: 1.6em;
 }
 
@@ -51,16 +51,17 @@
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     font-size: 14px;
     line-height: 1.6;
-    background-color: #f8f9ff;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
     border-radius: 4px;
-    border-left: 3px solid #0066cc;
+    border-left: 3px solid var(--accent-color);
     overflow: hidden;
     min-height: 1.6em;
     box-sizing: border-box;
 }
 
 .block-textarea::placeholder {
-    color: #bbb;
+    color: var(--text-muted);
 }
 
 /* 빈 영역 */
@@ -73,7 +74,7 @@
 }
 
 .block-placeholder {
-    color: #bbb;
+    color: var(--text-muted);
     font-size: 14px;
     padding: 4px 8px;
 }
@@ -83,35 +84,35 @@
 .block-rendered h1, .block-rendered h2 {
     margin: 8px 0;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-primary);
 }
 .block-rendered h1 {
     font-size: 32px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-light);
     padding-bottom: 8px;
 }
 .block-rendered h2 { font-size: 24px; }
-.block-rendered h3 { font-size: 20px; font-weight: 600; margin: 6px 0; color: #333; }
+.block-rendered h3 { font-size: 20px; font-weight: 600; margin: 6px 0; color: var(--text-secondary); }
 .block-rendered h4, .block-rendered h5, .block-rendered h6 {
-    font-weight: 600; margin: 4px 0; color: #333;
+    font-weight: 600; margin: 4px 0; color: var(--text-secondary);
 }
 
-.block-rendered p { margin: 4px 0; color: #555; line-height: 1.8; }
-.block-rendered strong { font-weight: 700; color: #1a1a1a; }
-.block-rendered em { font-style: italic; color: #666; }
-.block-rendered del { text-decoration: line-through; color: #999; }
+.block-rendered p { margin: 4px 0; color: var(--text-secondary); line-height: 1.8; }
+.block-rendered strong { font-weight: 700; color: var(--text-primary); }
+.block-rendered em { font-style: italic; color: var(--text-muted); }
+.block-rendered del { text-decoration: line-through; color: var(--text-muted); }
 
 .block-rendered code {
-    background-color: #f4f4f4;
+    background-color: var(--code-bg);
     padding: 2px 6px;
     border-radius: 3px;
     font-family: monospace;
     font-size: 13px;
-    color: #d63384;
+    color: var(--code-text);
 }
 
 .block-rendered pre {
-    background-color: #282c34;
+    background-color: var(--code-block-bg);
     padding: 16px;
     border-radius: 8px;
     overflow-x: auto;
@@ -119,20 +120,20 @@
 }
 .block-rendered pre code {
     background-color: transparent;
-    color: #abb2bf;
+    color: var(--code-block-text);
     padding: 0;
     border-radius: 0;
 }
 
 .block-rendered a {
-    color: #0066cc;
+    color: var(--accent-color);
     text-decoration: none;
     border-bottom: 1px solid rgba(0, 102, 204, 0.3);
     transition: all 0.2s;
 }
 .block-rendered a:hover {
-    color: #0052a3;
-    border-bottom-color: #0052a3;
+    color: var(--accent-hover);
+    border-bottom-color: var(--accent-hover);
 }
 
 .block-rendered img {
@@ -148,45 +149,64 @@
     width: 100%;
     margin: 8px 0;
 }
-.block-rendered table thead { background-color: #f5f5f5; }
+.block-rendered table thead { background-color: var(--table-header-bg); }
 .block-rendered table th, .block-rendered table td {
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     padding: 8px 12px;
     text-align: left;
 }
-.block-rendered table th { font-weight: 600; color: #333; }
-.block-rendered table tr:hover { background-color: #f9f9f9; }
+.block-rendered table th { font-weight: 600; color: var(--text-primary); }
+.block-rendered table tr:hover { background-color: var(--table-row-hover); }
 
 .block-rendered ul, .block-rendered ol {
     margin: 4px 0;
     padding-left: 32px;
 }
-.block-rendered li { margin: 4px 0; color: #555; }
+.block-rendered li { margin: 4px 0; color: var(--text-secondary); }
 
 .block-rendered blockquote {
-    border-left: 4px solid #ddd;
+    border-left: 4px solid var(--blockquote-border);
     padding: 8px 12px;
     margin: 8px 0;
-    color: #666;
+    color: var(--text-muted);
     font-style: italic;
-    background-color: #f9f9f9;
+    background-color: var(--blockquote-bg);
     border-radius: 4px;
 }
 
 .block-rendered hr {
     border: none;
     height: 1px;
-    background-color: #ddd;
+    background-color: var(--border-color);
     margin: 16px 0;
 }
+
+/* 체크리스트 */
+.block-rendered .markdown-checklist { list-style: none; padding-left: 8px; margin: 4px 0; }
+.block-rendered .checklist-item {
+    display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; color: var(--text-secondary);
+}
+.block-rendered .checklist-item input[type="checkbox"] {
+    margin-top: 4px; accent-color: var(--accent-color); pointer-events: none;
+}
+
+/* 각주 */
+.block-rendered .footnotes { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+.block-rendered .footnote-list { padding-left: 24px; }
+.block-rendered .footnote-item { margin: 4px 0; }
+.block-rendered .footnote-ref a { color: var(--accent-color); text-decoration: none; font-size: 12px; }
+.block-rendered .footnote-backref { color: var(--accent-color); text-decoration: none; margin-left: 4px; }
+
+/* 수식 */
+.block-rendered .math-block { margin: 8px 0; text-align: center; overflow-x: auto; }
 
 /* hljs 스타일 오버라이드 */
 .block-rendered .hljs {
     display: block;
     overflow-x: auto;
     padding: 16px;
-    background: #282c34;
-    color: #abb2bf;
+    background: var(--code-block-bg);
+    color: var(--code-block-text);
     border-radius: 8px;
 }
 

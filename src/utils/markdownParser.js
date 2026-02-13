@@ -1,4 +1,33 @@
-import hljs from 'highlight.js';
+import hljs from 'highlight.js/lib/common';
+
+// ─── KaTeX 동적 로드 ───
+
+let katexModule = null;
+let katexLoading = null;
+
+async function loadKatex() {
+    if (katexModule) return katexModule;
+    if (katexLoading) return katexLoading;
+    katexLoading = import('katex').then(m => {
+        katexModule = m.default || m;
+        return katexModule;
+    });
+    return katexLoading;
+}
+
+function renderKatex(expr, displayMode) {
+    if (!katexModule) return escapeHtml(expr);
+    try {
+        return katexModule.renderToString(expr, { displayMode, throwOnError: false });
+    } catch {
+        return `<span class="katex-error">${escapeHtml(expr)}</span>`;
+    }
+}
+
+// KaTeX 초기화 (앱 시작 시 호출)
+export function initKatex() {
+    return loadKatex();
+}
 
 // ─── 인라인 파싱 ───
 
@@ -9,6 +38,9 @@ function escapeHtml(text) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
+
+// 각주 참조를 수집하는 컨텍스트
+let footnoteRefs = new Set();
 
 export function parseInline(text) {
     if (!text) return '';
@@ -27,6 +59,20 @@ export function parseInline(text) {
                     const url = text.slice(altEnd + 2, urlEnd);
                     result += `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="max-width: 100%; height: auto;" />`;
                     i = urlEnd + 1;
+                    continue;
+                }
+            }
+        }
+
+        // 각주 참조: [^id]
+        if (text[i] === '[' && text[i + 1] === '^') {
+            const end = text.indexOf(']', i + 2);
+            if (end !== -1 && text[end + 1] !== ':') {
+                const id = text.slice(i + 2, end);
+                if (id && /^[\w-]+$/.test(id)) {
+                    footnoteRefs.add(id);
+                    result += `<sup class="footnote-ref"><a href="#fn-${escapeHtml(id)}" id="fnref-${escapeHtml(id)}">${escapeHtml(id)}</a></sup>`;
+                    i = end + 1;
                     continue;
                 }
             }
@@ -53,6 +99,17 @@ export function parseInline(text) {
             if (end !== -1) {
                 const code = escapeHtml(text.slice(i + 1, end));
                 result += `<code class="inline-code">${code}</code>`;
+                i = end + 1;
+                continue;
+            }
+        }
+
+        // 인라인 수식: $...$  ($$로 시작하지 않는 경우)
+        if (text[i] === '$' && text[i + 1] !== '$') {
+            const end = text.indexOf('$', i + 1);
+            if (end !== -1 && end > i + 1) {
+                const expr = text.slice(i + 1, end);
+                result += renderKatex(expr, false);
                 i = end + 1;
                 continue;
             }
@@ -120,6 +177,42 @@ export function parseBlocks(text) {
         // 빈 줄 건너뛰기
         if (line.trim() === '') {
             i++;
+            continue;
+        }
+
+        // 각주 정의: [^id]: text (블록으로 수집)
+        const footnoteDefMatch = line.match(/^\[\^([\w-]+)\]:\s+(.+)$/);
+        if (footnoteDefMatch) {
+            const id = footnoteDefMatch[1];
+            const fnText = footnoteDefMatch[2];
+            blocks.push({
+                type: 'footnote_def',
+                id,
+                text: fnText,
+                raw: line,
+            });
+            i++;
+            continue;
+        }
+
+        // 수식 블록: $$...$$
+        if (line.trim().startsWith('$$')) {
+            if (line.trim().endsWith('$$') && line.trim().length > 4) {
+                // 한 줄짜리 블록 수식
+                const expr = line.trim().slice(2, -2).trim();
+                blocks.push({ type: 'math_block', expr, raw: line });
+                i++;
+                continue;
+            }
+            const mathLines = [];
+            i++;
+            while (i < lines.length && !lines[i].trim().startsWith('$$')) {
+                mathLines.push(lines[i]);
+                i++;
+            }
+            const raw = '$$\n' + mathLines.join('\n') + '\n$$';
+            blocks.push({ type: 'math_block', expr: mathLines.join('\n'), raw });
+            i++; // 닫는 $$ 건너뛰기
             continue;
         }
 
@@ -218,6 +311,26 @@ export function parseBlocks(text) {
             continue;
         }
 
+        // 체크리스트: - [ ] 또는 - [x]
+        if (/^\s*[-*+]\s+\[[ xX]\]\s/.test(line)) {
+            const checkItems = [];
+            while (i < lines.length && /^\s*[-*+]\s+\[[ xX]\]\s/.test(lines[i])) {
+                const match = lines[i].match(/^\s*[-*+]\s+\[([ xX])\]\s+(.*)$/);
+                if (match) {
+                    checkItems.push({
+                        checked: match[1].toLowerCase() === 'x',
+                        text: match[2],
+                    });
+                }
+                i++;
+            }
+            const raw = checkItems.map(item =>
+                `- [${item.checked ? 'x' : ' '}] ${item.text}`
+            ).join('\n');
+            blocks.push({ type: 'checklist', items: checkItems, raw });
+            continue;
+        }
+
         // 순서 없는 리스트: - 또는 * 또는 +
         if (/^\s*[-*+]\s+/.test(line)) {
             const listResult = parseList(lines, i, 'unordered');
@@ -239,12 +352,14 @@ export function parseBlocks(text) {
         while (i < lines.length && lines[i].trim() !== '' &&
             !lines[i].trimStart().startsWith('#') &&
             !lines[i].trimStart().startsWith('```') &&
+            !lines[i].trimStart().startsWith('$$') &&
             !lines[i].trimStart().startsWith('>') &&
             !lines[i].trimStart().startsWith('|') &&
             !/^\s*[-*+]\s+/.test(lines[i]) &&
             !/^\s*\d+\.\s+/.test(lines[i]) &&
             !/^(\s*[-*_]\s*){3,}$/.test(lines[i]) &&
-            !lines[i].trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/)) {
+            !lines[i].trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/) &&
+            !lines[i].match(/^\[\^[\w-]+\]:\s+/)) {
             paraLines.push(lines[i]);
             i++;
         }
@@ -326,8 +441,16 @@ export function renderBlock(block) {
             return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
         }
 
+        case 'math_block':
+            return `<div class="math-block">${renderKatex(block.expr, true)}</div>`;
+
         case 'blockquote':
             return `<blockquote class="markdown-blockquote">${renderMarkdown(block.text)}</blockquote>`;
+
+        case 'checklist':
+            return `<ul class="markdown-checklist">${block.items.map(item =>
+                `<li class="checklist-item"><input type="checkbox" ${item.checked ? 'checked' : ''} disabled /><span>${parseInline(item.text)}</span></li>`
+            ).join('')}</ul>`;
 
         case 'unordered_list':
             return `<ul class="markdown-list">${block.items.map(item => `<li>${parseInline(item)}</li>`).join('')}</ul>`;
@@ -355,6 +478,9 @@ export function renderBlock(block) {
         case 'image':
             return `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="max-width: 100%; height: auto;" />`;
 
+        case 'footnote_def':
+            return ''; // renderMarkdown에서 별도 처리
+
         default:
             return `<p>${parseInline(block.raw || '')}</p>`;
     }
@@ -363,8 +489,23 @@ export function renderBlock(block) {
 export function renderMarkdown(text) {
     if (!text) return '';
     try {
+        footnoteRefs = new Set();
         const blocks = parseBlocks(text);
-        return blocks.map(renderBlock).join('\n');
+        let html = blocks.map(renderBlock).join('\n');
+
+        // 각주 정의 수집
+        const footnoteDefs = blocks.filter(b => b.type === 'footnote_def');
+        if (footnoteDefs.length > 0) {
+            html += '<section class="footnotes"><hr><ol class="footnote-list">';
+            for (const fn of footnoteDefs) {
+                html += `<li id="fn-${escapeHtml(fn.id)}" class="footnote-item">`;
+                html += `${parseInline(fn.text)} <a href="#fnref-${escapeHtml(fn.id)}" class="footnote-backref">↩</a>`;
+                html += '</li>';
+            }
+            html += '</ol></section>';
+        }
+
+        return html;
     } catch (err) {
         console.error('Markdown rendering error:', err);
         return '<p class="error-preview">마크다운 렌더링 오류</p>';

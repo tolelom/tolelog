@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
     TOKEN: 'token',
     USER: 'user',
     DRAFT: 'tolelog_draft',
+    THEME: 'tolelog_theme',
 };
 
 export const AUTO_SAVE_DELAY_MS = 1000;

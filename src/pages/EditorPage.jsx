@@ -13,6 +13,7 @@ export default function EditorPage() {
     const { postId } = useParams();
     const { token } = useContext(AuthContext);
     const imageInsertRef = useRef(null);
+    const editorRef = useRef(null);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -102,6 +103,31 @@ export default function EditorPage() {
     const handleImageInsert = (base64Data, fileName) => {
         if (imageInsertRef.current) {
             imageInsertRef.current(base64Data, fileName);
+        }
+    };
+
+    // 툴바 포맷 버튼 핸들러
+    const handleFormat = (type) => {
+        if (!editorRef.current) return;
+        switch (type) {
+            case 'bold':
+                editorRef.current.wrapSelection('**', '**');
+                break;
+            case 'italic':
+                editorRef.current.wrapSelection('*', '*');
+                break;
+            case 'code':
+                editorRef.current.wrapSelection('`', '`');
+                break;
+            case 'link':
+                editorRef.current.wrapSelection('[', '](url)');
+                break;
+            case 'heading':
+                editorRef.current.wrapSelection('## ', '');
+                break;
+            case 'strikethrough':
+                editorRef.current.wrapSelection('~~', '~~');
+                break;
         }
     };
 
@@ -222,11 +248,63 @@ export default function EditorPage() {
 
                 {/* 에디터 툴바 */}
                 <div className="editor-toolbar">
+                    <div className="toolbar-format-buttons">
+                        <button
+                            type="button"
+                            className="toolbar-btn"
+                            onClick={() => handleFormat('heading')}
+                            title="제목 (Heading)"
+                        >
+                            H
+                        </button>
+                        <button
+                            type="button"
+                            className="toolbar-btn toolbar-btn-bold"
+                            onClick={() => handleFormat('bold')}
+                            title="굵게 (Ctrl+B)"
+                        >
+                            B
+                        </button>
+                        <button
+                            type="button"
+                            className="toolbar-btn toolbar-btn-italic"
+                            onClick={() => handleFormat('italic')}
+                            title="기울임 (Ctrl+I)"
+                        >
+                            I
+                        </button>
+                        <button
+                            type="button"
+                            className="toolbar-btn toolbar-btn-strike"
+                            onClick={() => handleFormat('strikethrough')}
+                            title="취소선"
+                        >
+                            S
+                        </button>
+                        <button
+                            type="button"
+                            className="toolbar-btn toolbar-btn-code"
+                            onClick={() => handleFormat('code')}
+                            title="인라인 코드 (Ctrl+`)"
+                        >
+                            {'</>'}
+                        </button>
+                        <button
+                            type="button"
+                            className="toolbar-btn toolbar-btn-link"
+                            onClick={() => handleFormat('link')}
+                            title="링크 (Ctrl+K)"
+                        >
+                            🔗
+                        </button>
+                        <span className="toolbar-sep" />
+                    </div>
                     <ImageUploadButton onImageInsert={handleImageInsert} />
                 </div>
 
                 {/* 블록 에디터 */}
                 <BlockEditor
+                    ref={editorRef}
                     content={formData.content}
                     onChange={handleContentChange}
                     onImageInsert={imageInsertRef}

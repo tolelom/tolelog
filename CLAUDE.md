@@ -21,7 +21,7 @@ Environment: Node.js 20, npm. Copy `.env.example` to `.env` and set `VITE_API_UR
 
 **Stack:** React 19 + Vite 7 + React Router 7. No TypeScript — all source is JSX/JS.
 
-**State management:** React Context API via `AuthContext`/`AuthProvider`. Auth tokens and user info persisted in `localStorage` using keys from `src/utils/constants.js`.
+**State management:** React Context API via `AuthContext`/`AuthProvider` and `ThemeContext`/`ThemeProvider`. Auth tokens, user info, and theme preference persisted in `localStorage` using keys from `src/utils/constants.js`.
 
 **API layer:** `src/utils/api.js` provides two patterns:
 - `useApi()` hook — returns a `request()` function that auto-attaches Bearer token and handles 401 logout. Used for authenticated operations within components.
@@ -30,8 +30,9 @@ Environment: Node.js 20, npm. Copy `.env.example` to `.env` and set `VITE_API_UR
 Auth-specific API calls (`loginUser`, `registerUser`) live in `src/utils/authApi.js`.
 
 **Shared utilities:**
-- `src/utils/constants.js` — `API_BASE_URL`, `STORAGE_KEYS`, `AUTO_SAVE_DELAY_MS`, `IMAGE_CONSTRAINTS`
-- `src/utils/markdown.js` — `configureMarked()` and `renderMarkdown()` (shared between EditorPage and PostDetailPage)
+- `src/utils/constants.js` — `API_BASE_URL`, `STORAGE_KEYS` (incl. `THEME`), `AUTO_SAVE_DELAY_MS`, `IMAGE_CONSTRAINTS`
+- `src/utils/markdownParser.js` — custom markdown parser with `parseBlocks()`, `renderBlock()`, `renderMarkdown()`, `parseInline()`. Supports headings, lists, tables, code blocks (highlight.js/lib/common), blockquotes, images, checklists, footnotes, and KaTeX math ($inline$, $$block$$).
+- `src/utils/markdown.js` — re-exports `renderMarkdown` from markdownParser
 - `src/utils/imageUpload.js` — image validation, compression, Base64 conversion
 - `src/utils/authApi.js` — `loginUser()`, `registerUser()` fetch wrappers
 
@@ -39,6 +40,8 @@ Auth-specific API calls (`loginUser`, `registerUser`) live in `src/utils/authApi
 - `AuthForm` (`src/components/AuthForm.jsx`) — shared form component used by both LoginBox and RegisterBox. Styled via `AuthForm.css`.
 - `LoginBox` / `RegisterBox` — thin wrappers around AuthForm with field config, validation, and submit handlers.
 - `ImageUploadButton` — image upload with compression and Base64 encoding.
+- `BlockEditor` — Typora/Notion-style block-based inline markdown editor with `forwardRef`. Exposes `wrapSelection()` via `useImperativeHandle`. Supports Ctrl+B/I/K/` shortcuts.
+- `ThemeToggle` — dark/light mode toggle button.
 
 **Routing:** React Router DOM with `BrowserRouter` in `App.jsx`. Protected routes wrapped with `PrivateRoute` component (redirects to `/login` if no token).
 
@@ -52,7 +55,9 @@ Auth-specific API calls (`loginUser`, `registerUser`) live in `src/utils/authApi
 | `/editor/:postId` | EditorPage (edit) | Yes |
 | `/editor_private` | EditorPage (private post) | Yes |
 
-**Editor:** Split-pane markdown editor with live preview. Uses `marked` + `highlight.js` for rendering. Images are Base64-encoded (max 5MB, compressed to 1200px width). Drafts auto-saved to `localStorage` via `useAutoSave` hook (1s debounce).
+**Editor:** Block-based inline markdown editor (Typora/Notion style) via `BlockEditor` component. Uses custom `markdownParser.js` + `highlight.js/lib/common` for rendering. Toolbar with format buttons (Bold, Italic, Heading, Code, Link, Strikethrough) and keyboard shortcuts (Ctrl+B/I/K/`). Images are Base64-encoded (max 5MB, compressed to 1200px width). Drafts auto-saved to `localStorage` via `useAutoSave` hook (1s debounce).
+
+**Theming:** CSS custom properties defined in `src/index.css` (`:root` for light, `[data-theme="dark"]` for dark). Theme toggle in HomePage header. All CSS files use CSS variables (`--bg-primary`, `--text-primary`, `--accent-color`, etc.).
 
 ## Backend API (for reference)
 

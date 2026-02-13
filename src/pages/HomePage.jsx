@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext.js';
 import { POST_API } from '../utils/api.js';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
@@ -60,7 +61,10 @@ export default function HomePage() {
 
     return (
         <div className="home-page">
-            <h1 className="home-title">tolelog</h1>
+            <div className="home-header">
+                <h1 className="home-title">tolelog</h1>
+                <ThemeToggle />
+            </div>
 
             <div className="home-actions">
                 {username ? (

@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { parseBlocks, renderBlock } from '../utils/markdownParser';
 import './BlockEditor.css';
 
-export default function BlockEditor({ content, onChange, onImageInsert }) {
+const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImageInsert }, ref) {
     const [blocks, setBlocks] = useState(() => initBlocks(content));
     const [activeIndex, setActiveIndex] = useState(null);
     const textareaRefs = useRef({});
@@ -43,6 +43,38 @@ export default function BlockEditor({ content, onChange, onImageInsert }) {
         });
     }, [emitChange]);
 
+    // 선택 텍스트를 마크다운 문법으로 감싸기
+    const wrapSelection = useCallback((before, after) => {
+        if (activeIndex === null) return;
+        const ta = textareaRefs.current[activeIndex];
+        if (!ta) return;
+
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        const text = ta.value;
+        const selected = text.slice(start, end);
+        const newText = text.slice(0, start) + before + selected + after + text.slice(end);
+        updateBlock(activeIndex, newText);
+
+        // 커서 위치 복원
+        requestAnimationFrame(() => {
+            ta.focus();
+            if (selected) {
+                ta.selectionStart = start + before.length;
+                ta.selectionEnd = end + before.length;
+            } else {
+                ta.selectionStart = start + before.length;
+                ta.selectionEnd = start + before.length;
+            }
+        });
+    }, [activeIndex, updateBlock]);
+
+    // 외부에서 호출 가능한 메서드 노출
+    useImperativeHandle(ref, () => ({
+        wrapSelection,
+        getActiveTextarea: () => activeIndex !== null ? textareaRefs.current[activeIndex] : null,
+    }), [wrapSelection, activeIndex]);
+
     // 블록 클릭 → 활성화
     const handleBlockClick = (index) => {
         setActiveIndex(index);
@@ -65,6 +97,28 @@ export default function BlockEditor({ content, onChange, onImageInsert }) {
 
         // 코드 블록 감지
         const isCodeBlock = raw.trimStart().startsWith('```');
+
+        // 포맷 단축키 (Ctrl/Cmd + key)
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+                case 'b':
+                    e.preventDefault();
+                    wrapSelection('**', '**');
+                    return;
+                case 'i':
+                    e.preventDefault();
+                    wrapSelection('*', '*');
+                    return;
+                case 'k':
+                    e.preventDefault();
+                    wrapSelection('[', '](url)');
+                    return;
+                case '`':
+                    e.preventDefault();
+                    wrapSelection('`', '`');
+                    return;
+            }
+        }
 
         if (e.key === 'Enter' && !e.shiftKey && !isCodeBlock) {
             e.preventDefault();
@@ -189,7 +243,9 @@ export default function BlockEditor({ content, onChange, onImageInsert }) {
             </div>
         </div>
     );
-}
+});
+
+export default BlockEditor;
 
 // 초기 블록 생성
 function initBlocks(content) {

@@ -2,7 +2,7 @@
     margin-top: 12px;
     background: none;
     border: none;
-    color: #80b3ff;
+    color: var(--accent-color);
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 500;
@@ -10,5 +10,5 @@
 }
 
 .signup-link:hover {
-    color: #5590ff;
+    color: var(--accent-hover);
 }
