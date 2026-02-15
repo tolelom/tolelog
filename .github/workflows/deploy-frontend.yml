@@ -52,7 +52,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            rm -rf ~/server/sites/tolelog/*
+            rm -rf ~/server/sites/tolelog
+            mkdir -p ~/server/sites/tolelog
 
       - name: 서버로 정적 파일 복사
         uses: appleboy/scp-action@v0.1.4
