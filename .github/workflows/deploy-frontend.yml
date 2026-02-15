@@ -54,7 +54,7 @@ jobs:
           source: "./dist/*"
           target: "/Users/tolelom/server/sites/tolelog"
           strip_components: 1
-          sync: true
+          overwrite: true
 
       - name: Caddy 리로드
         uses: appleboy/ssh-action@v1
