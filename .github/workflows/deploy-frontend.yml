@@ -1,4 +1,3 @@
-# .github/workflows/ci-cd.yml
 name: Frontend CI/CD
 
 on:
@@ -35,7 +34,7 @@ jobs:
           path: ./dist
 
   deploy:
-    name: Deploy to macOS Server
+    name: Deploy to Mac Mini
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -45,35 +44,25 @@ jobs:
           name: frontend-build
           path: ./dist
 
-      - name: 서버 배포 디렉터리 초기화
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: 22
-          script: |
-            rm -rf /opt/homebrew/var/www/tolelog/*
-            mkdir -p /opt/homebrew/var/www/tolelog
-
-      - name: 서버로 정적 파일 복사 (sync)
+      - name: 서버로 정적 파일 복사
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           source: "./dist/*"
-          target: "/opt/homebrew/var/www/tolelog"
+          target: "/Users/tolelom/server/sites/tolelog"
           strip_components: 1
           sync: true
 
-      - name: Nginx 리로드 (프론트 반영)
-        uses: appleboy/ssh-action@v0.1.8
+      - name: Caddy 리로드
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            sudo /opt/homebrew/bin/nginx -s reload
+            cd ~/server
+            docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
