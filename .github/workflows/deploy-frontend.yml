@@ -76,4 +76,4 @@ jobs:
           script: |
             export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin:$HOME/.docker/bin
             cd ~/server
-            docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+            docker compose restart caddy
