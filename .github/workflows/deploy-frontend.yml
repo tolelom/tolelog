@@ -74,5 +74,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin:$HOME/.docker/bin
             cd ~/server
             docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
