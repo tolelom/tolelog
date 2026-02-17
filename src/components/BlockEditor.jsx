@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { parseBlocks, renderBlock } from '../utils/markdownParser';
+import DOMPurify from 'dompurify';
 import './BlockEditor.css';
 
 let nextBlockId = 1;
@@ -269,17 +270,19 @@ function initBlocks(content) {
     return parsed.map(b => ({ ...b, id: genBlockId() }));
 }
 
-// 안전한 블록 렌더링 (빈 블록 처리)
+// 안전한 블록 렌더링 (빈 블록 처리 + XSS 방어)
 function renderBlockSafe(block) {
     if (!block.raw || block.raw.trim() === '') {
         return '<p class="block-empty-text">&nbsp;</p>';
     }
-    // raw를 다시 파싱하여 최신 타입으로 렌더링
     const parsed = parseBlocks(block.raw);
+    let html;
     if (parsed.length > 0) {
-        return parsed.map(renderBlock).join('\n');
+        html = parsed.map(renderBlock).join('\n');
+    } else {
+        html = renderBlock(block);
     }
-    return renderBlock(block);
+    return DOMPurify.sanitize(html);
 }
 
 // textarea 자동 높이 조절

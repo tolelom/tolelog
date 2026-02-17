@@ -2,16 +2,22 @@ import { useEffect, useState } from 'react';
 import { AuthContext } from './AuthContext.js';
 import { STORAGE_KEYS } from '../utils/constants';
 
+function safeParseUser(key) {
+    try {
+        const str = localStorage.getItem(STORAGE_KEYS.USER);
+        if (!str) return null;
+        const parsed = JSON.parse(str);
+        return parsed?.[key] ?? null;
+    } catch {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        return null;
+    }
+}
+
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(() => localStorage.getItem(STORAGE_KEYS.TOKEN));
-    const [username, setUsername] = useState(() => {
-        const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-        return userStr ? JSON.parse(userStr).username : null;
-    });
-    const [userId, setUserId] = useState(() => {
-        const userStr = localStorage.getItem(STORAGE_KEYS.USER);
-        return userStr ? JSON.parse(userStr).user_id : null;
-    });
+    const [username, setUsername] = useState(() => safeParseUser('username'));
+    const [userId, setUserId] = useState(() => safeParseUser('user_id'));
 
     useEffect(() => {
         if (token) {

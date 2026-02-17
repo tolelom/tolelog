@@ -1,4 +1,5 @@
 import hljs from 'highlight.js/lib/common';
+import DOMPurify from 'dompurify';
 
 // ─── KaTeX 동적 로드 ───
 
@@ -505,7 +506,7 @@ export function renderMarkdown(text) {
             html += '</ol></section>';
         }
 
-        return html;
+        return DOMPurify.sanitize(html);
     } catch (err) {
         console.error('Markdown rendering error:', err);
         return '<p class="error-preview">마크다운 렌더링 오류</p>';
