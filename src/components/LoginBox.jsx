@@ -42,7 +42,7 @@ export default function LoginBox() {
         setIsLoading(true);
         // TODO: API 호출
         try {
-            const result = await fetch(`${API_BASE_URL}/auth/login`, {
+            const result = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(formData),

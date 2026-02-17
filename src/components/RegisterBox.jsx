@@ -45,7 +45,7 @@ export default function RegisterBox() {
         setIsLoading(true);
 
         try {
-            const result = await fetch(`${API_BASE_URL}/auth/register`, {
+            const result = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
