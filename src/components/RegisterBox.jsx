@@ -1,5 +1,6 @@
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
+import {AuthContext} from "../context/AuthContext.js";
 import {API_BASE_URL} from "../utils/constants.js";
 
 
@@ -16,6 +17,7 @@ export default function RegisterBox() {
 
     const idRef = useRef();
     const navigate = useNavigate();
+    const { login } = useContext(AuthContext);
 
     useEffect(() => {
         idRef.current.focus();
@@ -57,9 +59,11 @@ export default function RegisterBox() {
             if (!result.ok) {
                 setErrors({general: data.error || data.message});
             } else {
-                localStorage.setItem('token', data.data.token);
-                localStorage.setItem('username', data.data.username);
-                localStorage.setItem('user_id', data.data.user_id);
+                login({
+                    token: data.data.token,
+                    username: data.data.username,
+                    userId: data.data.user_id,
+                });
                 navigate('/');
             }
         } catch {
