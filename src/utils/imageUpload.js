@@ -1,13 +1,5 @@
 import { IMAGE_CONSTRAINTS } from './constants';
-
-export const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-};
+import { IMAGE_API } from './api';
 
 export const validateImageFile = (file) => {
     if (!IMAGE_CONSTRAINTS.ALLOWED_TYPES.includes(file.type)) {
@@ -25,10 +17,6 @@ export const validateImageFile = (file) => {
     }
 
     return { valid: true };
-};
-
-export const createMarkdownImage = (base64Data, fileName = '이미지') => {
-    return `![${fileName}](${base64Data})`;
 };
 
 export const compressImage = async (file, maxWidth = IMAGE_CONSTRAINTS.MAX_WIDTH, quality = IMAGE_CONSTRAINTS.QUALITY) => {
@@ -53,7 +41,7 @@ export const compressImage = async (file, maxWidth = IMAGE_CONSTRAINTS.MAX_WIDTH
 
                 canvas.toBlob(
                     (blob) => {
-                        resolve(blob);
+                        resolve(new File([blob], file.name, { type: 'image/jpeg' }));
                     },
                     'image/jpeg',
                     quality
@@ -63,4 +51,16 @@ export const compressImage = async (file, maxWidth = IMAGE_CONSTRAINTS.MAX_WIDTH
         };
         reader.readAsDataURL(file);
     });
+};
+
+export const uploadImageToServer = async (file, token) => {
+    const response = await IMAGE_API.upload(file, token);
+    if (response.status === 'success') {
+        return response.data.url;
+    }
+    throw new Error('이미지 업로드에 실패했습니다');
+};
+
+export const createMarkdownImage = (url, fileName = '이미지') => {
+    return `![${fileName}](${url})`;
 };

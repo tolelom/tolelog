@@ -1,11 +1,14 @@
-import { useRef, useState } from 'react';
-import { validateImageFile, fileToBase64, compressImage } from '../utils/imageUpload';
+import { useRef, useState, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { validateImageFile, compressImage, uploadImageToServer } from '../utils/imageUpload';
+import { API_BASE_URL } from '../utils/constants';
 import './ImageUploadButton.css';
 
 export default function ImageUploadButton({ onImageInsert }) {
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const { token } = useContext(AuthContext);
 
     const handleFileSelect = async (e) => {
         const file = e.target.files?.[0];
@@ -15,7 +18,6 @@ export default function ImageUploadButton({ onImageInsert }) {
         setIsLoading(true);
 
         try {
-            // 파일 유효성 검사
             const validation = validateImageFile(file);
             if (!validation.valid) {
                 setError(validation.error);
@@ -23,23 +25,25 @@ export default function ImageUploadButton({ onImageInsert }) {
                 return;
             }
 
-            // 이미지 압축 (단차 처리)
+            // 이미지 압축
             const compressedFile = await compressImage(file);
-            
-            // Base64로 변환
-            const base64Data = await fileToBase64(compressedFile);
-            
-            // 편집기에 마크다운 주입
+
+            // 서버에 업로드
+            const imageUrl = await uploadImageToServer(compressedFile, token);
+
+            // API_BASE_URL에서 /api/v1 부분을 제거하여 서버 origin 추출
+            const serverOrigin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+            const fullUrl = `${serverOrigin}${imageUrl}`;
+
             if (onImageInsert) {
-                onImageInsert(base64Data, file.name);
+                onImageInsert(fullUrl, file.name);
             }
 
-            // 입력 초기화
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
         } catch (err) {
-            setError('이미지 처리 중 오류가 발생했습니다.');
+            setError(err.message || '이미지 업로드 중 오류가 발생했습니다.');
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -69,7 +73,7 @@ export default function ImageUploadButton({ onImageInsert }) {
                 {isLoading ? (
                     <>
                         <span className="spinner-small"></span>
-                        로드중...
+                        업로드중...
                     </>
                 ) : (
                     <>

@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import EditorPage from './pages/EditorPage.jsx';
 import PostDetailPage from './pages/PostDetailPage.jsx';
+import UserProfilePage from './pages/UserProfilePage.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/post/:postId" element={<PostDetailPage />} />
+                <Route path="/user/:userId" element={<UserProfilePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/editor" element={<EditorPage />} />

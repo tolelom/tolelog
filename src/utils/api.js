@@ -59,6 +59,42 @@ async function authenticatedFetch(url, method, token, body = null) {
     return response.json();
 }
 
+export const IMAGE_API = {
+    upload: async (file, token) => {
+        if (!token) {
+            throw new Error('토큰이 필요합니다');
+        }
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `이미지 업로드 실패: ${response.status}`);
+        }
+
+        return response.json();
+    },
+};
+
+export const USER_API = {
+    getProfile: async (userId) => {
+        const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user profile: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    },
+};
+
 export const POST_API = {
     getPublicPosts: async (page = 1, pageSize = 10) => {
         const response = await fetch(
