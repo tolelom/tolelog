@@ -2,6 +2,7 @@ import {useContext, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
 import {API_BASE_URL} from "../utils/constants.js";
+import './AuthForm.css';
 
 
 export default function RegisterBox() {
@@ -74,7 +75,7 @@ export default function RegisterBox() {
     }
 
     return (
-        <div className="register-box">
+        <div className="auth-box">
             <h1>회원가입</h1>
             <form onSubmit={handleSubmit}>
                 {errors.general && <div className="error general-error">{errors.general}</div>}

@@ -2,6 +2,7 @@ import {useContext, useEffect, useRef, useState} from 'react';
 import {useNavigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
 import {API_BASE_URL} from "../utils/constants.js";
+import './AuthForm.css';
 
 
 export default function LoginBox() {
@@ -72,7 +73,7 @@ export default function LoginBox() {
     }, []);
 
     return (
-        <div className="login-box">
+        <div className="auth-box">
             <h1>로그인</h1>
             {errors.general && <div className="error general-error">{errors.general}</div>}
             <form onSubmit={handleSubmit}>

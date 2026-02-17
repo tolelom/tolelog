@@ -1,7 +1,7 @@
 .block-editor {
     min-height: 400px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 0 0 8px 8px;
     padding: 16px;
     background-color: var(--bg-card);
     margin-bottom: 20px;
@@ -51,7 +51,7 @@
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     font-size: 14px;
     line-height: 1.6;
-    background-color: var(--bg-secondary);
+    background-color: var(--editor-active-bg, var(--bg-secondary));
     color: var(--text-primary);
     border-radius: 4px;
     border-left: 3px solid var(--accent-color);
