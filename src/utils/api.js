@@ -62,7 +62,7 @@ async function authenticatedFetch(url, method, token, body = null) {
 export const POST_API = {
     getPublicPosts: async (page = 1, pageSize = 10) => {
         const response = await fetch(
-            `${API_BASE_URL}/posts?page=${page}&page_size=${pageSize}`
+            `${API_BASE_URL}/api/v1/posts?page=${page}&page_size=${pageSize}`
         );
         if (!response.ok) {
             throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
@@ -71,7 +71,7 @@ export const POST_API = {
     },
 
     getPost: async (postId) => {
-        const response = await fetch(`${API_BASE_URL}/posts/${postId}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch post: ${response.status} ${response.statusText}`);
         }
@@ -80,7 +80,7 @@ export const POST_API = {
 
     getUserPosts: async (userId, page = 1, pageSize = 10) => {
         const response = await fetch(
-            `${API_BASE_URL}/users/${userId}/posts?page=${page}&page_size=${pageSize}`
+            `${API_BASE_URL}/api/v1/users/${userId}/posts?page=${page}&page_size=${pageSize}`
         );
         if (!response.ok) {
             throw new Error(`Failed to fetch user posts: ${response.status} ${response.statusText}`);
@@ -90,7 +90,7 @@ export const POST_API = {
 
     createPost: async (title, content, isPublic = true, token) => {
         return authenticatedFetch(
-            `${API_BASE_URL}/posts`,
+            `${API_BASE_URL}/api/v1/posts`,
             'POST',
             token,
             { title, content, is_public: isPublic }
@@ -99,7 +99,7 @@ export const POST_API = {
 
     updatePost: async (postId, title, content, isPublic = true, token) => {
         return authenticatedFetch(
-            `${API_BASE_URL}/posts/${postId}`,
+            `${API_BASE_URL}/api/v1/posts/${postId}`,
             'PUT',
             token,
             { title, content, is_public: isPublic }
@@ -108,7 +108,7 @@ export const POST_API = {
 
     deletePost: async (postId, token) => {
         return authenticatedFetch(
-            `${API_BASE_URL}/posts/${postId}`,
+            `${API_BASE_URL}/api/v1/posts/${postId}`,
             'DELETE',
             token
         );
