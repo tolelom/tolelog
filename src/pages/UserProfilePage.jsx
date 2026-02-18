@@ -49,6 +49,7 @@ export default function UserProfilePage() {
             .then(([profileRes, postsRes]) => {
                 if (profileRes.status === 'success') {
                     setProfile(profileRes.data);
+                    document.title = `${profileRes.data.username} | Tolelog`;
                 }
 
                 const data = postsRes.data || postsRes;

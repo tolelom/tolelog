@@ -28,6 +28,10 @@ export default function EditorPage() {
     const [draftInfo, setDraftInfo] = useState(null);
     const isEditMode = !!postId;
 
+    useEffect(() => {
+        document.title = isEditMode ? '글 수정 | Tolelog' : '새 글 작성 | Tolelog';
+    }, [isEditMode]);
+
     // 자동 저장 훅
     const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
 

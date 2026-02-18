@@ -34,6 +34,8 @@ export default function HomePage() {
     const [error, setError] = useState(null);
     const [fetchKey, setFetchKey] = useState(0);
 
+    useEffect(() => { document.title = 'Tolelog'; }, []);
+
     useEffect(() => {
         const controller = new AbortController();
         setLoading(true);

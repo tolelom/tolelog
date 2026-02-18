@@ -50,6 +50,7 @@ export default function PostDetailPage() {
                 const response = await POST_API.getPost(postId);
                 if (response.status === 'success') {
                     setPost(response.data);
+                    document.title = `${response.data.title} | Tolelog`;
                 } else {
                     setError('글을 찾을 수 없습니다.');
                 }
