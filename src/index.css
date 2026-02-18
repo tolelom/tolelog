@@ -46,26 +46,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── CSS 변수: 다크 모드 ─── */
+/* ─── CSS 변수: 다크 모드 (블랙) ─── */
 [data-theme="dark"] {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #0f3460;
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --bg-card: #161616;
   --bg-hover: rgba(255, 255, 255, 0.06);
-  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-overlay: rgba(0, 0, 0, 0.8);
 
-  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-muted: rgba(255, 255, 255, 0.4);
 
   --border-color: rgba(255, 255, 255, 0.15);
   --border-light: rgba(255, 255, 255, 0.08);
   --accent-color: #4da6ff;
   --accent-hover: #80bfff;
 
-  --code-bg: rgba(255, 255, 255, 0.1);
+  --code-bg: rgba(255, 255, 255, 0.08);
   --code-text: #f0a0c0;
-  --code-block-bg: #1e1e2e;
+  --code-block-bg: #0a0a0a;
   --code-block-text: #abb2bf;
 
   --success-bg: rgba(39, 174, 96, 0.15);
@@ -77,12 +77,12 @@
   --warning-bg: rgba(255, 152, 0, 0.15);
   --warning-text: #ffb74d;
 
-  --blockquote-bg: rgba(255, 255, 255, 0.05);
+  --blockquote-bg: rgba(255, 255, 255, 0.04);
   --blockquote-border: rgba(255, 255, 255, 0.2);
-  --table-header-bg: rgba(255, 255, 255, 0.08);
+  --table-header-bg: rgba(255, 255, 255, 0.06);
   --table-row-hover: rgba(255, 255, 255, 0.04);
 
-  --editor-active-bg: #1a2744;
+  --editor-active-bg: #0d0d0d;
 
   color: var(--text-primary);
   background-color: var(--bg-primary);
