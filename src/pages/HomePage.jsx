@@ -35,13 +35,12 @@ export default function HomePage() {
     const [fetchKey, setFetchKey] = useState(0);
 
     useEffect(() => {
-        let cancelled = false;
+        const controller = new AbortController();
         setLoading(true);
         setError(null);
 
-        POST_API.getPublicPosts(page, PAGE_SIZE)
+        POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal })
             .then((res) => {
-                if (cancelled) return;
                 const data = res.data || res;
                 const list = Array.isArray(data) ? data : data.posts || [];
                 setPosts(list);
@@ -49,14 +48,14 @@ export default function HomePage() {
                 window.scrollTo(0, 0);
             })
             .catch((err) => {
-                if (cancelled) return;
+                if (err.name === 'AbortError') return;
                 setError(err.message);
             })
             .finally(() => {
-                if (!cancelled) setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             });
 
-        return () => { cancelled = true; };
+        return () => controller.abort();
     }, [page, fetchKey]);
 
     return (

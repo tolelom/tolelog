@@ -11,7 +11,7 @@ import './EditorPage.css';
 export default function EditorPage() {
     const navigate = useNavigate();
     const { postId } = useParams();
-    const { token } = useContext(AuthContext);
+    const { token, userId } = useContext(AuthContext);
     const imageInsertRef = useRef(null);
     const editorRef = useRef(null);
     const [formData, setFormData] = useState({
@@ -31,6 +31,17 @@ export default function EditorPage() {
     // 자동 저장 훅
     const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
 
+    // 편집 중 페이지 이탈 경고
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (formData.title || formData.content) {
+                e.preventDefault();
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [formData.title, formData.content]);
+
     // 글 수정 모드: 기존 글 불러오기
     useEffect(() => {
         if (postId) {
@@ -40,6 +51,11 @@ export default function EditorPage() {
                     const response = await POST_API.getPost(postId);
                     if (response.status === 'success') {
                         const post = response.data;
+                        // 본인 글이 아니면 상세 페이지로 리다이렉트
+                        if (userId && post.user_id !== userId) {
+                            navigate(`/post/${postId}`, { replace: true });
+                            return;
+                        }
                         setFormData({
                             title: post.title,
                             content: post.content,

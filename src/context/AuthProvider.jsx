@@ -35,6 +35,39 @@ export function AuthProvider({ children }) {
         }
     }, [username, userId]);
 
+    // 다른 탭에서 로그아웃/로그인 시 동기화
+    useEffect(() => {
+        const handleStorage = (e) => {
+            if (e.key === STORAGE_KEYS.TOKEN) {
+                if (!e.newValue) {
+                    setToken(null);
+                    setUsername(null);
+                    setUserId(null);
+                } else {
+                    setToken(e.newValue);
+                    const user = safeParseUser('username');
+                    const uid = safeParseUser('user_id');
+                    setUsername(user);
+                    setUserId(uid);
+                }
+            }
+            if (e.key === STORAGE_KEYS.USER) {
+                if (!e.newValue) {
+                    setUsername(null);
+                    setUserId(null);
+                } else {
+                    try {
+                        const parsed = JSON.parse(e.newValue);
+                        setUsername(parsed?.username ?? null);
+                        setUserId(parsed?.user_id ?? null);
+                    } catch { /* ignore */ }
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
+
     const login = ({ token: newToken, username: newUsername, userId: newUserId }) => {
         setToken(newToken);
         setUsername(newUsername);

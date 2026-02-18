@@ -38,17 +38,15 @@ export default function UserProfilePage() {
     const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
 
     useEffect(() => {
-        let cancelled = false;
+        const controller = new AbortController();
         setLoading(true);
         setError(null);
 
         Promise.all([
-            USER_API.getProfile(userId),
-            POST_API.getUserPosts(userId, page, PAGE_SIZE),
+            USER_API.getProfile(userId, { signal: controller.signal }),
+            POST_API.getUserPosts(userId, page, PAGE_SIZE, { signal: controller.signal }),
         ])
             .then(([profileRes, postsRes]) => {
-                if (cancelled) return;
-
                 if (profileRes.status === 'success') {
                     setProfile(profileRes.data);
                 }
@@ -59,14 +57,14 @@ export default function UserProfilePage() {
                 setHasMore(list.length === PAGE_SIZE);
             })
             .catch((err) => {
-                if (cancelled) return;
+                if (err.name === 'AbortError') return;
                 setError(err.message);
             })
             .finally(() => {
-                if (!cancelled) setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             });
 
-        return () => { cancelled = true; };
+        return () => controller.abort();
     }, [userId, page]);
 
     if (loading) {

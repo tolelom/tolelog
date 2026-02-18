@@ -32,6 +32,9 @@ export default function PostDetailPage() {
                 navigator.clipboard.writeText(code).then(() => {
                     btn.textContent = '복사됨!';
                     setTimeout(() => { btn.textContent = '복사'; }, 2000);
+                }).catch(() => {
+                    btn.textContent = '복사 실패';
+                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
                 });
             }
         };

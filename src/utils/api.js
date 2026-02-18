@@ -21,12 +21,12 @@ export function useApi() {
 
         if (res.status === 401) {
             logout();
-            throw new Error('Unauthorized');
+            throw new Error('인증이 만료되었습니다');
         }
 
         const data = await res.json();
         if (!res.ok) {
-            throw new Error(data.error || data.message || 'API Error');
+            throw new Error(data.error || data.message || '요청 처리에 실패했습니다');
         }
 
         return data;
@@ -53,7 +53,8 @@ async function authenticatedFetch(url, method, token, body = null) {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Failed to ${method.toLowerCase()} post: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
+        const message = errorData.error || errorData.message || `요청 실패 (${response.status})`;
+        throw new Error(message);
     }
 
     return response.json();
@@ -86,40 +87,42 @@ export const IMAGE_API = {
 };
 
 export const USER_API = {
-    getProfile: async (userId) => {
-        const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+    getProfile: async (userId, { signal } = {}) => {
+        const response = await fetch(`${API_BASE_URL}/users/${userId}`, { signal });
         if (!response.ok) {
-            throw new Error(`Failed to fetch user profile: ${response.status} ${response.statusText}`);
+            throw new Error(`사용자 프로필을 불러오지 못했습니다 (${response.status})`);
         }
         return response.json();
     },
 };
 
 export const POST_API = {
-    getPublicPosts: async (page = 1, pageSize = 10) => {
+    getPublicPosts: async (page = 1, pageSize = 10, { signal } = {}) => {
         const response = await fetch(
-            `${API_BASE_URL}/api/v1/posts?page=${page}&page_size=${pageSize}`
+            `${API_BASE_URL}/api/v1/posts?page=${page}&page_size=${pageSize}`,
+            { signal }
         );
         if (!response.ok) {
-            throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
+            throw new Error(`글 목록을 불러오지 못했습니다 (${response.status})`);
         }
         return response.json();
     },
 
-    getPost: async (postId) => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}`);
+    getPost: async (postId, { signal } = {}) => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}`, { signal });
         if (!response.ok) {
-            throw new Error(`Failed to fetch post: ${response.status} ${response.statusText}`);
+            throw new Error(`글을 불러오지 못했습니다 (${response.status})`);
         }
         return response.json();
     },
 
-    getUserPosts: async (userId, page = 1, pageSize = 10) => {
+    getUserPosts: async (userId, page = 1, pageSize = 10, { signal } = {}) => {
         const response = await fetch(
-            `${API_BASE_URL}/api/v1/users/${userId}/posts?page=${page}&page_size=${pageSize}`
+            `${API_BASE_URL}/api/v1/users/${userId}/posts?page=${page}&page_size=${pageSize}`,
+            { signal }
         );
         if (!response.ok) {
-            throw new Error(`Failed to fetch user posts: ${response.status} ${response.statusText}`);
+            throw new Error(`사용자 글 목록을 불러오지 못했습니다 (${response.status})`);
         }
         return response.json();
     },

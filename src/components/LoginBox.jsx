@@ -33,8 +33,18 @@ export default function LoginBox() {
 
     const validate = () => {
         const newErrors = {};
-        if (!formData.username) newErrors.username = "아이디를 입력해주세요.";
-        if (!formData.password) newErrors.password = "비밀번호를 입력해주세요.";
+        if (!formData.username) {
+            newErrors.username = "아이디를 입력해주세요.";
+        } else if (formData.username.length < 3) {
+            newErrors.username = "아이디는 3자 이상이어야 합니다.";
+        }
+
+        if (!formData.password) {
+            newErrors.password = "비밀번호를 입력해주세요.";
+        } else if (formData.password.length < 6) {
+            newErrors.password = "비밀번호는 6자 이상이어야 합니다.";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     }
