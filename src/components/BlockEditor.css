@@ -200,6 +200,29 @@
 /* 수식 */
 .block-rendered .math-block { margin: 8px 0; text-align: center; overflow-x: auto; }
 
+/* 코드 블록 복사 버튼 */
+.block-rendered .code-block-wrapper {
+    position: relative;
+}
+.block-rendered .code-copy-btn {
+    position: absolute; top: 8px; right: 8px; padding: 4px 10px; border: none;
+    border-radius: 4px; font-size: 12px; cursor: pointer; z-index: 1;
+    background-color: rgba(255, 255, 255, 0.15); color: var(--code-block-text);
+    opacity: 0; transition: opacity 0.2s;
+}
+.block-rendered .code-block-wrapper:hover .code-copy-btn {
+    opacity: 1;
+}
+.block-rendered .code-copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* 드래그 앤 드롭 */
+.block-editor.drag-over {
+    border: 2px dashed var(--accent-color);
+    background-color: var(--bg-hover);
+}
+
 /* hljs 스타일 오버라이드 */
 .block-rendered .hljs {
     display: block;

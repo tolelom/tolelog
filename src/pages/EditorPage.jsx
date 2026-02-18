@@ -18,6 +18,7 @@ export default function EditorPage() {
         title: '',
         content: '',
         is_public: true,
+        tags: '',
     });
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(!!postId);
@@ -43,6 +44,7 @@ export default function EditorPage() {
                             title: post.title,
                             content: post.content,
                             is_public: post.is_public,
+                            tags: post.tags || '',
                         });
                     } else {
                         setError('글을 불러올 수 없습니다.');
@@ -72,6 +74,7 @@ export default function EditorPage() {
                 title: draft.title,
                 content: draft.content,
                 is_public: draft.is_public,
+                tags: draft.tags || '',
             });
         }
         setShowRestorePrompt(false);
@@ -158,14 +161,16 @@ export default function EditorPage() {
                     formData.title,
                     formData.content,
                     formData.is_public,
-                    token
+                    token,
+                    formData.tags
                 );
             } else {
                 response = await POST_API.createPost(
                     formData.title,
                     formData.content,
                     formData.is_public,
-                    token
+                    token,
+                    formData.tags
                 );
             }
 
@@ -246,6 +251,26 @@ export default function EditorPage() {
                     />
                 </div>
 
+                {/* 태그 입력 */}
+                <div className="tags-section">
+                    <input
+                        type="text"
+                        name="tags"
+                        value={formData.tags}
+                        onChange={handleChange}
+                        placeholder="태그를 쉼표로 구분하여 입력 (예: React, JavaScript, 블로그)"
+                        className="tags-input"
+                    />
+                    {formData.tags && (
+                        <div className="tags-preview">
+                            {formData.tags.split(',').map((tag, i) => {
+                                const trimmed = tag.trim();
+                                return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
+                            })}
+                        </div>
+                    )}
+                </div>
+
                 {/* 에디터 툴바 */}
                 <div className="editor-toolbar">
                     <div className="toolbar-format-buttons">
@@ -308,6 +333,7 @@ export default function EditorPage() {
                     content={formData.content}
                     onChange={handleContentChange}
                     onImageInsert={imageInsertRef}
+                    token={token}
                 />
 
                 {/* 버튼 섹션 */}

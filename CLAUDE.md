@@ -9,13 +9,15 @@ Tolelog is a Korean-language markdown blog platform. This repository contains on
 ## Development Commands
 
 ```bash
-npm run dev       # Start dev server (port 5173, proxies /api to localhost:3000)
+npm run dev       # Start dev server (port 5173, proxies /api → localhost:3000, strips /api prefix)
 npm run build     # Production build (outputs to ./dist)
-npm run lint      # ESLint check
+npm run lint      # ESLint flat config (no-unused-vars ignores ^[A-Z_] pattern)
 npm run preview   # Preview production build locally
 ```
 
 Environment: Node.js 20, npm. Copy `.env.example` to `.env` and set `VITE_API_URL` (defaults to `http://localhost:3000`).
+
+Vite config includes manual chunk splitting: `highlight.js/lib/common` is extracted into a separate `hljs` chunk.
 
 ## Architecture
 
@@ -23,9 +25,11 @@ Environment: Node.js 20, npm. Copy `.env.example` to `.env` and set `VITE_API_UR
 
 **State management:** React Context API via `AuthContext`/`AuthProvider` and `ThemeContext`/`ThemeProvider`. Auth tokens, user info, and theme preference persisted in `localStorage` using keys from `src/utils/constants.js`.
 
-**API layer:** `src/utils/api.js` provides two patterns:
+**API layer:** `src/utils/api.js` provides several patterns:
 - `useApi()` hook — returns a `request()` function that auto-attaches Bearer token and handles 401 logout. Used for authenticated operations within components.
 - `POST_API` object — standalone async functions for post CRUD. Uses internal `authenticatedFetch` helper to reduce duplication.
+- `IMAGE_API.upload()` — FormData upload with Bearer token for server-side image storage.
+- `USER_API.getProfile()` — public user profile fetch.
 
 Auth-specific API calls (`loginUser`, `registerUser`) live in `src/utils/authApi.js`.
 
@@ -50,6 +54,7 @@ Auth-specific API calls (`loginUser`, `registerUser`) live in `src/utils/authApi
 |------|-----------|------|
 | `/` | HomePage | No |
 | `/post/:postId` | PostDetailPage | No |
+| `/user/:userId` | UserProfilePage | No |
 | `/login`, `/register` | LoginPage, RegisterPage | No |
 | `/editor` | EditorPage (new post) | No |
 | `/editor/:postId` | EditorPage (edit) | Yes |

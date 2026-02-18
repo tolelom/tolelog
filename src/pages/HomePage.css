@@ -146,6 +146,14 @@
     color: var(--text-muted);
 }
 
+.home-post-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
+}
+.home-post-tags .tag-chip {
+    display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px;
+    background-color: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color);
+}
+
 .home-post-preview {
     margin: 0;
     font-size: 14px;

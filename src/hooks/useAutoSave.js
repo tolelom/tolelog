@@ -12,6 +12,7 @@ export function useAutoSave(formData) {
                 title: data.title,
                 content: data.content,
                 is_public: data.is_public,
+                tags: data.tags || '',
                 savedAt: new Date().toISOString(),
             };
             localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draftData));

@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { parseBlocks, renderBlock } from '../utils/markdownParser';
+import { validateImageFile, compressImage, uploadImageToServer } from '../utils/imageUpload';
 import DOMPurify from 'dompurify';
 import './BlockEditor.css';
 
 let nextBlockId = 1;
 function genBlockId() { return `blk-${nextBlockId++}`; }
 
-const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImageInsert }, ref) {
+const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImageInsert, token }, ref) {
     const [blocks, setBlocks] = useState(() => initBlocks(content));
     const [activeIndex, setActiveIndex] = useState(null);
+    const [isDragOver, setIsDragOver] = useState(false);
     const textareaRefs = useRef({});
     const containerRef = useRef(null);
     const isInternalChange = useRef(false);
@@ -212,8 +214,78 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
         }
     }, [insertImage, onImageInsert]);
 
+    // 코드 블록 복사 버튼 이벤트 위임
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        const handleClick = (e) => {
+            const btn = e.target.closest('.code-copy-btn');
+            if (!btn) return;
+            e.stopPropagation();
+            const code = btn.getAttribute('data-code')
+                ?.replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+            if (code) {
+                navigator.clipboard.writeText(code).then(() => {
+                    btn.textContent = '복사됨!';
+                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
+                });
+            }
+        };
+        container.addEventListener('click', handleClick);
+        return () => container.removeEventListener('click', handleClick);
+    }, []);
+
+    // 드래그 앤 드롭 핸들러
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+    const handleDragLeave = (e) => {
+        if (!containerRef.current?.contains(e.relatedTarget)) {
+            setIsDragOver(false);
+        }
+    };
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (files.length === 0) return;
+
+        for (const file of files) {
+            const validation = validateImageFile(file);
+            if (!validation.valid) {
+                alert(validation.error);
+                continue;
+            }
+            try {
+                const compressed = await compressImage(file);
+                if (token) {
+                    const url = await uploadImageToServer(compressed, token);
+                    insertImage(url, file.name);
+                } else {
+                    // 토큰 없으면 Base64 폴백
+                    const reader = new FileReader();
+                    reader.onload = (ev) => insertImage(ev.target.result, file.name);
+                    reader.readAsDataURL(compressed);
+                }
+            } catch (err) {
+                alert('이미지 업로드 실패: ' + err.message);
+            }
+        }
+    };
+
     return (
-        <div className="block-editor" ref={containerRef}>
+        <div
+            className={`block-editor ${isDragOver ? 'drag-over' : ''}`}
+            ref={containerRef}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
             {blocks.map((block, index) => (
                 <div key={block.id || index} className={`block-wrapper ${activeIndex === index ? 'active' : ''}`}>
                     {activeIndex === index ? (

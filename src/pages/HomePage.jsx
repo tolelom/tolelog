@@ -119,6 +119,14 @@ export default function HomePage() {
                             <span className="home-post-sep">&middot;</span>
                             <span className="home-post-date">{formatDate(post.created_at)}</span>
                         </div>
+                        {post.tags && (
+                            <div className="home-post-tags">
+                                {post.tags.split(',').map((tag, i) => {
+                                    const trimmed = tag.trim();
+                                    return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
+                                })}
+                            </div>
+                        )}
                         {post.content && (
                             <p className="home-post-preview">
                                 {stripMarkdown(post.content).slice(0, 150)}

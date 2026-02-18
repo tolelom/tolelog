@@ -124,21 +124,21 @@ export const POST_API = {
         return response.json();
     },
 
-    createPost: async (title, content, isPublic = true, token) => {
+    createPost: async (title, content, isPublic = true, token, tags = '') => {
         return authenticatedFetch(
             `${API_BASE_URL}/api/v1/posts`,
             'POST',
             token,
-            { title, content, is_public: isPublic }
+            { title, content, is_public: isPublic, tags }
         );
     },
 
-    updatePost: async (postId, title, content, isPublic = true, token) => {
+    updatePost: async (postId, title, content, isPublic = true, token, tags = '') => {
         return authenticatedFetch(
             `${API_BASE_URL}/api/v1/posts/${postId}`,
             'PUT',
             token,
-            { title, content, is_public: isPublic }
+            { title, content, is_public: isPublic, tags }
         );
     },
 

@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
@@ -13,7 +13,31 @@ export default function PostDetailPage() {
     const [post, setPost] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const contentRef = useRef(null);
 
+    // 코드 블록 복사 버튼 이벤트 위임
+    useEffect(() => {
+        const container = contentRef.current;
+        if (!container) return;
+        const handleClick = (e) => {
+            const btn = e.target.closest('.code-copy-btn');
+            if (!btn) return;
+            const code = btn.getAttribute('data-code')
+                ?.replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+            if (code) {
+                navigator.clipboard.writeText(code).then(() => {
+                    btn.textContent = '복사됨!';
+                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
+                });
+            }
+        };
+        container.addEventListener('click', handleClick);
+        return () => container.removeEventListener('click', handleClick);
+    }, [post]);
 
     // 글 로드
     useEffect(() => {
@@ -110,8 +134,19 @@ export default function PostDetailPage() {
                     </div>
                 </header>
 
+                {/* 태그 */}
+                {post.tags && (
+                    <div className="post-tags">
+                        {post.tags.split(',').map((tag, i) => {
+                            const trimmed = tag.trim();
+                            return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
+                        })}
+                    </div>
+                )}
+
                 {/* 글 내용 */}
                 <div
+                    ref={contentRef}
                     className="post-content markdown-content"
                     dangerouslySetInnerHTML={{
                         __html: renderMarkdown(post.content)

@@ -121,6 +121,32 @@
 /* 수식 */
 .markdown-content .math-block { margin: 20px 0; text-align: center; overflow-x: auto; }
 
+/* 태그 */
+.post-tags {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+}
+.tag-chip {
+    display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 13px;
+    background-color: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color);
+}
+
+/* 코드 블록 복사 버튼 */
+.markdown-content .code-block-wrapper {
+    position: relative;
+}
+.markdown-content .code-copy-btn {
+    position: absolute; top: 8px; right: 8px; padding: 4px 10px; border: none;
+    border-radius: 4px; font-size: 12px; cursor: pointer; z-index: 1;
+    background-color: rgba(255, 255, 255, 0.15); color: var(--code-block-text);
+    opacity: 0; transition: opacity 0.2s;
+}
+.markdown-content .code-block-wrapper:hover .code-copy-btn {
+    opacity: 1;
+}
+.markdown-content .code-copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
 .post-actions {
     display: flex; gap: 12px; margin: 32px 0; padding-top: 24px; border-top: 1px solid var(--border-light);
 }

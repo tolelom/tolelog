@@ -439,7 +439,8 @@ export function renderBlock(block) {
         case 'code': {
             const lang = block.lang && hljs.getLanguage(block.lang) ? block.lang : 'plaintext';
             const highlighted = hljs.highlight(block.code, { language: lang, ignoreIllegals: true }).value;
-            return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
+            const escapedCode = escapeHtml(block.code).replace(/'/g, '&#39;');
+            return `<div class="code-block-wrapper"><button class="code-copy-btn" data-code="${escapedCode}">복사</button><pre><code class="hljs language-${lang}">${highlighted}</code></pre></div>`;
         }
 
         case 'math_block':
