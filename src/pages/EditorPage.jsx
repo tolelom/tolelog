@@ -230,8 +230,6 @@ export default function EditorPage() {
 
     return (
         <div className="editor-page">
-            <h1>{isEditMode ? '글 수정' : '새 글 작성'}</h1>
-
             {/* 백업 복구 프롬프트 */}
             {showRestorePrompt && draftInfo && !isEditMode && (
                 <div className="restore-prompt">
