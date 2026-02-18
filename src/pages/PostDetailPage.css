@@ -153,20 +153,19 @@
 }
 
 .btn-edit, .btn-delete {
-    flex: 1; padding: 10px 24px; border-radius: 6px; font-size: 13px;
+    flex: 1; padding: 10px 24px; border: none; border-radius: 6px; font-size: 13px;
     font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center;
-    background-color: transparent;
 }
 
 .btn-edit {
-    border: 1px solid var(--accent-color); color: var(--accent-color);
+    background-color: #5b8dd9; color: white;
 }
-.btn-edit:hover { background-color: var(--accent-color); color: white; }
+.btn-edit:hover { background-color: #4a7ac8; }
 
 .btn-delete {
-    border: 1px solid #aaa; color: var(--text-secondary, #888);
+    background-color: #c96a6a; color: white;
 }
-.btn-delete:hover { border-color: #c82333; color: #c82333; }
+.btn-delete:hover { background-color: #b85a5a; }
 
 .back-link {
     display: inline-block; margin-top: 24px; color: var(--accent-color); text-decoration: none;
