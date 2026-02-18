@@ -137,6 +137,29 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
             }
         }
 
+        // 코드 블록에서 마지막 줄이 빈 줄일 때 Enter → 코드 블록 탈출
+        if (e.key === 'Enter' && !e.shiftKey && isCodeBlock) {
+            const cursorPos = ta ? ta.selectionStart : raw.length;
+            const lines = raw.slice(0, cursorPos).split('\n');
+            const lastLine = lines[lines.length - 1];
+            // 커서가 맨 끝에 있고, 마지막 줄이 빈 줄이면 탈출
+            if (cursorPos === raw.length && lastLine.trim() === '' && lines.length > 1) {
+                e.preventDefault();
+                // 빈 마지막 줄 제거
+                const trimmedRaw = lines.slice(0, -1).join('\n');
+                setBlocks(prev => {
+                    const newBlocks = [...prev];
+                    newBlocks[index] = { ...newBlocks[index], raw: trimmedRaw };
+                    newBlocks.splice(index + 1, 0, { raw: '', type: 'paragraph', id: genBlockId() });
+                    pendingCursorPos.current = 0;
+                    setActiveIndex(index + 1);
+                    emitChange(newBlocks);
+                    return newBlocks;
+                });
+                return;
+            }
+        }
+
         if (e.key === 'Enter' && !e.shiftKey && !isCodeBlock) {
             e.preventDefault();
             const cursorPos = ta ? ta.selectionStart : raw.length;
