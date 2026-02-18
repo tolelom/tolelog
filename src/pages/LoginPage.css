@@ -1,14 +1,21 @@
-.signup-link {
-    margin-top: 12px;
-    background: none;
-    border: none;
-    color: var(--accent-color);
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    text-decoration: underline;
+.auth-page {
+    max-width: 360px;
+    margin: 0 auto;
 }
 
-.signup-link:hover {
-    color: var(--accent-hover);
+.signup-link {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.signup-link a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
 }

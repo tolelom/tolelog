@@ -1,7 +1,7 @@
 /* 인증 폼 공통 스타일 */
 .auth-box {
     max-width: 360px;
-    margin: 80px auto;
+    margin: 80px auto 0;
     padding: 24px 32px;
     background-color: var(--bg-card);
     color: var(--text-primary);

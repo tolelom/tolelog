@@ -4,10 +4,10 @@ import './LoginPage.css';
 
 export default function LoginPage() {
     return (
-        <div>
+        <div className="auth-page">
             <LoginBox/>
-            <div className="signup-link">
+            <p className="signup-link">
                 계정이 없으신가요? <Link to="/register">회원가입</Link>
-            </div>
+            </p>
         </div>);
 }
