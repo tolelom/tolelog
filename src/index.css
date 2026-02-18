@@ -17,8 +17,8 @@
 
   --code-bg: #f4f4f4;
   --code-text: #d63384;
-  --code-block-bg: #282c34;
-  --code-block-text: #abb2bf;
+  --code-block-bg: #fafafa;
+  --code-block-text: #383a42;
 
   --success-bg: #d4edda;
   --success-text: #155724;
@@ -45,6 +45,32 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── highlight.js 라이트 모드 오버라이드 (atom-one-light) ─── */
+:root .hljs {
+  background: var(--code-block-bg);
+  color: var(--code-block-text);
+}
+:root .hljs-comment,
+:root .hljs-quote { color: #a0a1a7; font-style: italic; }
+:root .hljs-keyword,
+:root .hljs-selector-tag,
+:root .hljs-deletion { color: #a626a4; }
+:root .hljs-string,
+:root .hljs-addition { color: #50a14f; }
+:root .hljs-number,
+:root .hljs-literal { color: #986801; }
+:root .hljs-built_in,
+:root .hljs-type { color: #c18401; }
+:root .hljs-title,
+:root .hljs-section,
+:root .hljs-attr { color: #4078f2; }
+:root .hljs-name,
+:root .hljs-tag { color: #e45649; }
+:root .hljs-variable,
+:root .hljs-template-variable { color: #e45649; }
+:root .hljs-params { color: #383a42; }
+:root .hljs-meta { color: #4078f2; }
 
 /* ─── CSS 변수: 다크 모드 (블랙) ─── */
 [data-theme="dark"] {

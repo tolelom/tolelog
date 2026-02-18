@@ -117,6 +117,7 @@
     border-radius: 8px;
     overflow-x: auto;
     margin: 8px 0;
+    border: 1px solid var(--border-light);
 }
 .block-rendered pre code {
     background-color: transparent;
@@ -205,16 +206,17 @@
     position: relative;
 }
 .block-rendered .code-copy-btn {
-    position: absolute; top: 8px; right: 8px; padding: 4px 10px; border: none;
-    border-radius: 4px; font-size: 12px; cursor: pointer; z-index: 1;
-    background-color: rgba(255, 255, 255, 0.15); color: var(--code-block-text);
+    position: absolute; top: 8px; right: 8px; padding: 4px 10px;
+    border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px;
+    cursor: pointer; z-index: 1;
+    background-color: var(--bg-secondary); color: var(--text-muted);
     opacity: 0; transition: opacity 0.2s;
 }
 .block-rendered .code-block-wrapper:hover .code-copy-btn {
     opacity: 1;
 }
 .block-rendered .code-copy-btn:hover {
-    background-color: rgba(255, 255, 255, 0.25);
+    background-color: var(--bg-hover); color: var(--text-primary);
 }
 
 /* 드래그 앤 드롭 */
