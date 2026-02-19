@@ -69,7 +69,7 @@ export const IMAGE_API = {
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await fetch(`${API_BASE_URL}/upload`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
