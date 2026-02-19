@@ -17,7 +17,7 @@ function App() {
                 <Route path="/user/:userId" element={<UserProfilePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/editor" element={<EditorPage />} />
+                <Route path="/editor" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
                 <Route path="/editor/:postId" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
                 <Route path="/editor_private" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
 
