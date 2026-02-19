@@ -66,6 +66,18 @@ export default function PostDetailPage() {
         loadPost();
     }, [postId]);
 
+    useEffect(() => {
+        if (!deleteConfirm) return;
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setDeleteConfirm(false);
+                setDeleteError('');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [deleteConfirm]);
+
     const handleDeleteClick = () => setDeleteConfirm(true);
 
     const handleDeleteCancel = () => {

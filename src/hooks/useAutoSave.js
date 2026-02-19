@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { STORAGE_KEYS, AUTO_SAVE_DELAY_MS } from '../utils/constants';
 
 export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
@@ -42,7 +42,7 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
         };
     }, [formData]);
 
-    const loadDraft = () => {
+    const loadDraft = useCallback(() => {
         try {
             const saved = localStorage.getItem(storageKey);
             if (saved) {
@@ -53,9 +53,9 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
             console.error('백업 로드 실패:', error);
             return null;
         }
-    };
+    }, [storageKey]);
 
-    const clearDraft = () => {
+    const clearDraft = useCallback(() => {
         try {
             localStorage.removeItem(storageKey);
             lastSavedRef.current = null;
@@ -63,16 +63,16 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
         } catch (error) {
             console.error('백업 초기화 실패:', error);
         }
-    };
+    }, [storageKey]);
 
-    const hasDraft = () => {
+    const hasDraft = useCallback(() => {
         try {
             const saved = localStorage.getItem(storageKey);
             return saved !== null;
         } catch {
             return false;
         }
-    };
+    }, [storageKey]);
 
     const getFormattedSaveTime = () => {
         const draft = loadDraft();

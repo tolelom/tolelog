@@ -93,7 +93,7 @@ export default function EditorPage() {
             }
             setIsLoading(false);
         }
-    }, [postId]);
+    }, [postId, hasDraft, loadDraft]);
 
     const handleRestoreDraft = () => {
         const draft = loadDraft();
