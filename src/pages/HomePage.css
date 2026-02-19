@@ -186,15 +186,15 @@
     border-radius: 8px;
     border: 1px solid var(--border-color);
     background: var(--bg-secondary);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    transition: background 0.2s, border-color 0.2s;
 }
 
 .home-page-btn:hover:not(:disabled) {
     background: var(--bg-hover);
-    color: var(--text-primary);
     border-color: var(--text-muted);
 }
 
