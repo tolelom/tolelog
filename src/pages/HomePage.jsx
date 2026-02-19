@@ -116,7 +116,7 @@ export default function HomePage() {
                     >
                         <h2 className="home-post-title">{post.title}</h2>
                         <div className="home-post-meta">
-                            <span className="home-post-author">{post.author_name || post.username}</span>
+                            <span className="home-post-author">{post.author}</span>
                             <span className="home-post-sep">&middot;</span>
                             <span className="home-post-date">{formatDate(post.created_at)}</span>
                         </div>
