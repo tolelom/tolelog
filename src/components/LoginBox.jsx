@@ -1,7 +1,7 @@
 import {useContext, useEffect, useRef, useState} from 'react';
 import {useNavigate, useLocation} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
-import {API_BASE_URL} from "../utils/constants.js";
+import {AUTH_API} from "../utils/api.js";
 import './AuthForm.css';
 
 
@@ -54,27 +54,17 @@ export default function LoginBox() {
         e.preventDefault();
         if (!validate()) return;
         setIsLoading(true);
-        // TODO: API 호출
         try {
-            const result = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(formData),
+            const data = await AUTH_API.login(formData.username, formData.password);
+            login({
+                token: data.data.token,
+                username: data.data.username,
+                userId: data.data.user_id,
             });
-            const data = await result.json();
-            if (!result.ok) {
-                setErrors({general: data.error || data.message});
-            } else {
-                login({
-                    token: data.data.token,
-                    username: data.data.username,
-                    userId: data.data.user_id,
-                });
-                const from = location.state?.from?.pathname || '/';
-                navigate(from, { replace: true });
-            }
-        } catch {
-            setErrors({general: "네트워크 오류 발생"});
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
+        } catch (err) {
+            setErrors({general: err.message || '네트워크 오류 발생'});
         } finally {
             setIsLoading(false);
         }

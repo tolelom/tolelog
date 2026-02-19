@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API } from '../utils/api';
 import ThemeToggle from '../components/ThemeToggle.jsx';
@@ -28,9 +28,10 @@ function formatDate(dateStr) {
 export default function UserProfilePage() {
     const { userId } = useParams();
     const { userId: currentUserId } = useContext(AuthContext);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
-    const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -146,7 +147,7 @@ export default function UserProfilePage() {
                         <button
                             className="profile-page-btn"
                             disabled={page <= 1}
-                            onClick={() => setPage(page - 1)}
+                            onClick={() => setSearchParams(page - 1 <= 1 ? {} : { page: page - 1 })}
                         >
                             &larr; 이전
                         </button>
@@ -154,7 +155,7 @@ export default function UserProfilePage() {
                         <button
                             className="profile-page-btn"
                             disabled={!hasMore}
-                            onClick={() => setPage(page + 1)}
+                            onClick={() => setSearchParams({ page: page + 1 })}
                         >
                             다음 &rarr;
                         </button>

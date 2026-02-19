@@ -86,6 +86,21 @@ export const IMAGE_API = {
     },
 };
 
+export const AUTH_API = {
+    login: async (username, password) => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || data.message || '로그인에 실패했습니다');
+        }
+        return data;
+    },
+};
+
 export const USER_API = {
     getProfile: async (userId, { signal } = {}) => {
         const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, { signal });
