@@ -88,7 +88,7 @@ export const IMAGE_API = {
 
 export const USER_API = {
     getProfile: async (userId, { signal } = {}) => {
-        const response = await fetch(`${API_BASE_URL}/users/${userId}`, { signal });
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, { signal });
         if (!response.ok) {
             throw new Error(`사용자 프로필을 불러오지 못했습니다 (${response.status})`);
         }
