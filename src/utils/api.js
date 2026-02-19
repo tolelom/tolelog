@@ -99,6 +99,19 @@ export const AUTH_API = {
         }
         return data;
     },
+
+    register: async (username, password) => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || data.message || '회원가입에 실패했습니다');
+        }
+        return data;
+    },
 };
 
 export const USER_API = {

@@ -2,28 +2,11 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API } from '../utils/api';
+import { stripMarkdown, formatDate } from '../utils/format.js';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
-
-function stripMarkdown(text) {
-    return text
-        .replace(/!\[.*?\]\(.*?\)/g, '')
-        .replace(/\[([^\]]*)\]\(.*?\)/g, '$1')
-        .replace(/#{1,6}\s/g, '')
-        .replace(/[*_~`>]/g, '')
-        .replace(/\n+/g, ' ')
-        .trim();
-}
-
-function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
-}
 
 export default function UserProfilePage() {
     const { userId } = useParams();

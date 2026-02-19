@@ -1,7 +1,7 @@
 import {useContext, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
-import {API_BASE_URL} from "../utils/constants.js";
+import {AUTH_API} from "../utils/api.js";
 import './AuthForm.css';
 
 
@@ -66,27 +66,15 @@ export default function RegisterBox() {
         setIsLoading(true);
 
         try {
-            const result = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: formData.username,
-                    password: formData.password,
-                }),
+            const data = await AUTH_API.register(formData.username, formData.password);
+            login({
+                token: data.data.token,
+                username: data.data.username,
+                userId: data.data.user_id,
             });
-            const data = await result.json();
-            if (!result.ok) {
-                setErrors({general: data.error || data.message});
-            } else {
-                login({
-                    token: data.data.token,
-                    username: data.data.username,
-                    userId: data.data.user_id,
-                });
-                navigate('/');
-            }
-        } catch {
-            setErrors({general: "네트워크 오류"});
+            navigate('/');
+        } catch (err) {
+            setErrors({general: err.message || '네트워크 오류'});
         } finally {
             setIsLoading(false);
         }
