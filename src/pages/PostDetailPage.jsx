@@ -7,6 +7,22 @@ import { slugifyHeading } from '../utils/markdownParser';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
 
+function getPlainText(content, maxLength = 160) {
+    return content
+        .replace(/!\[.*?\]\([^)]*\)/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/[*_~`>]/g, '')
+        .replace(/\n+/g, ' ')
+        .trim()
+        .slice(0, maxLength);
+}
+
+function getFirstHttpImage(content) {
+    const match = content.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
+    return match ? match[1] : null;
+}
+
 function extractToc(content) {
     const lines = content.split('\n');
     const toc = [];
@@ -36,6 +52,7 @@ export default function PostDetailPage() {
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState('');
+    const [activeTocId, setActiveTocId] = useState(null);
     const contentRef = useRef(null);
 
     // 코드 블록 복사 버튼 이벤트 위임
@@ -67,10 +84,11 @@ export default function PostDetailPage() {
 
     // 글 로드
     useEffect(() => {
+        const controller = new AbortController();
         const loadPost = async () => {
             try {
                 setIsLoading(true);
-                const response = await POST_API.getPost(postId);
+                const response = await POST_API.getPost(postId, { signal: controller.signal });
                 if (response.status === 'success') {
                     setPost(response.data);
                     document.title = `${response.data.title} | Tolelog`;
@@ -78,13 +96,59 @@ export default function PostDetailPage() {
                     setError('글을 찾을 수 없습니다.');
                 }
             } catch (err) {
+                if (err.name === 'AbortError') return;
                 setError(err.message || '글 로드에 실패했습니다.');
             } finally {
                 setIsLoading(false);
             }
         };
         loadPost();
+        return () => controller.abort();
     }, [postId]);
+
+    // OG / SEO 메타 태그
+    useEffect(() => {
+        if (!post) return;
+        const description = getPlainText(post.content);
+        const ogImage = getFirstHttpImage(post.content);
+        const created = [];
+        const setMeta = (attr, attrValue, content) => {
+            if (!content) return;
+            let el = document.querySelector(`meta[${attr}="${attrValue}"]`);
+            if (!el) {
+                el = document.createElement('meta');
+                el.setAttribute(attr, attrValue);
+                document.head.appendChild(el);
+                created.push(el);
+            }
+            el.setAttribute('content', content);
+        };
+        setMeta('name', 'description', description);
+        setMeta('property', 'og:title', post.title);
+        setMeta('property', 'og:description', description);
+        setMeta('property', 'og:url', window.location.href);
+        setMeta('property', 'og:type', 'article');
+        if (ogImage) setMeta('property', 'og:image', ogImage);
+        setMeta('name', 'twitter:card', ogImage ? 'summary_large_image' : 'summary');
+        return () => { created.forEach(el => el.parentNode?.removeChild(el)); };
+    }, [post]);
+
+    // TOC 현재 섹션 하이라이트
+    useEffect(() => {
+        if (toc.length === 0) return;
+        const headingEls = toc.map(item => document.getElementById(item.id)).filter(Boolean);
+        if (headingEls.length === 0) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) setActiveTocId(entry.target.id);
+                });
+            },
+            { rootMargin: '0px 0px -80% 0px', threshold: 0 }
+        );
+        headingEls.forEach(el => observer.observe(el));
+        return () => observer.disconnect();
+    }, [toc]);
 
     useEffect(() => {
         if (!deleteConfirm) return;
@@ -173,7 +237,7 @@ export default function PostDetailPage() {
                     <ul className="toc-list">
                         {toc.map((item, i) => (
                             <li key={i} className={`toc-item toc-level-${item.level}`}>
-                                <a href={`#${item.id}`} className="toc-link">{item.text}</a>
+                                <a href={`#${item.id}`} className={`toc-link${activeTocId === item.id ? ' toc-link-active' : ''}`}>{item.text}</a>
                             </li>
                         ))}
                     </ul>

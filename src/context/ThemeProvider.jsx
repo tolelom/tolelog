@@ -5,7 +5,8 @@ import { STORAGE_KEYS } from '../utils/constants';
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(() => {
         const saved = localStorage.getItem(STORAGE_KEYS.THEME);
-        return saved || 'light';
+        if (saved) return saved;
+        return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     });
 
     useEffect(() => {

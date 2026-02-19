@@ -274,6 +274,11 @@
     border-bottom: none;
 }
 
+.toc-link-active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
 @media (max-width: 768px) {
     .post-detail-page { padding: 20px 16px; }
     .post-article { padding: 24px; }

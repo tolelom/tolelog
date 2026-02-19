@@ -50,11 +50,13 @@ export default function EditorPage() {
 
     // 글 수정 모드: 기존 글 불러오기
     useEffect(() => {
+        const controller = new AbortController();
+
         if (postId) {
             const loadPost = async () => {
                 try {
                     setIsLoading(true);
-                    const response = await POST_API.getPost(postId);
+                    const response = await POST_API.getPost(postId, { signal: controller.signal });
                     if (response.status === 'success') {
                         const post = response.data;
                         // 본인 글이 아니면 상세 페이지로 리다이렉트
@@ -78,6 +80,7 @@ export default function EditorPage() {
                         setError('글을 불러올 수 없습니다.');
                     }
                 } catch (err) {
+                    if (err.name === 'AbortError') return;
                     setError(err.message || '글 불러오기에 실패했습니다.');
                 } finally {
                     setIsLoading(false);
@@ -93,6 +96,8 @@ export default function EditorPage() {
             }
             setIsLoading(false);
         }
+
+        return () => controller.abort();
     }, [postId, hasDraft, loadDraft, navigate, userId]);
 
     const handleRestoreDraft = () => {
