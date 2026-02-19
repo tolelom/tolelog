@@ -2,6 +2,7 @@ import { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
+import { STORAGE_KEYS } from '../utils/constants';
 import { useAutoSave } from '../hooks/useAutoSave';
 import BlockEditor from '../components/BlockEditor';
 import ImageUploadButton from '../components/ImageUploadButton';
@@ -32,8 +33,9 @@ export default function EditorPage() {
         document.title = isEditMode ? '글 수정 | Tolelog' : '새 글 작성 | Tolelog';
     }, [isEditMode]);
 
-    // 자동 저장 훅
-    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData);
+    // 자동 저장 훅 (수정 모드는 별도 키로 저장)
+    const draftKey = isEditMode ? STORAGE_KEYS.DRAFT_EDIT : STORAGE_KEYS.DRAFT;
+    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData, draftKey);
 
     // 편집 중 페이지 이탈 경고
     useEffect(() => {
@@ -66,6 +68,12 @@ export default function EditorPage() {
                             is_public: post.is_public,
                             tags: post.tags || '',
                         });
+                        // 수정 모드 임시저장 확인
+                        if (hasDraft()) {
+                            const draft = loadDraft();
+                            setDraftInfo(draft);
+                            setShowRestorePrompt(true);
+                        }
                     } else {
                         setError('글을 불러올 수 없습니다.');
                     }
@@ -235,10 +243,10 @@ export default function EditorPage() {
     return (
         <div className="editor-page">
             {/* 백업 복구 프롬프트 */}
-            {showRestorePrompt && draftInfo && !isEditMode && (
+            {showRestorePrompt && draftInfo && (
                 <div className="restore-prompt">
                     <div className="restore-content">
-                        <h3>저장된 임시 글이 있습니다</h3>
+                        <h3>{isEditMode ? '이전에 수정하던 내용이 있습니다' : '저장된 임시 글이 있습니다'}</h3>
                         <p>마지막 저장: {getFormattedSaveTime()}</p>
                         <div className="restore-actions">
                             <button className="btn-restore" onClick={handleRestoreDraft}>
@@ -369,13 +377,13 @@ export default function EditorPage() {
                             </label>
                         </div>
                         <div className="save-indicator">
-                            {!isEditMode && saveStatus === 'saving' && (
+                            {saveStatus === 'saving' && (
                                 <span className="save-status saving">저장 중...</span>
                             )}
-                            {!isEditMode && saveStatus === 'saved' && (
+                            {saveStatus === 'saved' && (
                                 <span className="save-status saved">&#10003; 저장됨</span>
                             )}
-                            {!isEditMode && saveStatus === 'error' && (
+                            {saveStatus === 'error' && (
                                 <span className="save-status error">&#10007; 저장 실패</span>
                             )}
                         </div>

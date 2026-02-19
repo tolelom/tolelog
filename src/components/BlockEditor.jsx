@@ -177,6 +177,18 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
             return;
         }
 
+        // Backspace: 첫 번째 빈 블록 삭제
+        if (e.key === 'Backspace' && raw === '' && index === 0 && blocks.length > 1) {
+            e.preventDefault();
+            setBlocks(prev => {
+                const newBlocks = prev.filter((_, i) => i !== 0);
+                setActiveIndex(0);
+                emitChange(newBlocks);
+                return newBlocks;
+            });
+            return;
+        }
+
         // Backspace: 블록 시작에서 이전 블록과 병합 (빈 블록 삭제 포함)
         if (e.key === 'Backspace' && ta && ta.selectionStart === 0 && ta.selectionEnd === 0 && index > 0) {
             e.preventDefault();

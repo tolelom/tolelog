@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { STORAGE_KEYS, AUTO_SAVE_DELAY_MS } from '../utils/constants';
 
-export function useAutoSave(formData) {
+export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
     const [saveStatus, setSaveStatus] = useState('saved');
     const saveTimeoutRef = useRef(null);
     const lastSavedRef = useRef(null);
@@ -15,7 +15,7 @@ export function useAutoSave(formData) {
                 tags: data.tags || '',
                 savedAt: new Date().toISOString(),
             };
-            localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draftData));
+            localStorage.setItem(storageKey, JSON.stringify(draftData));
             lastSavedRef.current = draftData;
             setSaveStatus('saved');
         } catch (error) {
@@ -44,7 +44,7 @@ export function useAutoSave(formData) {
 
     const loadDraft = () => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
+            const saved = localStorage.getItem(storageKey);
             if (saved) {
                 return JSON.parse(saved);
             }
@@ -57,7 +57,7 @@ export function useAutoSave(formData) {
 
     const clearDraft = () => {
         try {
-            localStorage.removeItem(STORAGE_KEYS.DRAFT);
+            localStorage.removeItem(storageKey);
             lastSavedRef.current = null;
             setSaveStatus('saved');
         } catch (error) {
@@ -67,7 +67,7 @@ export function useAutoSave(formData) {
 
     const hasDraft = () => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
+            const saved = localStorage.getItem(storageKey);
             return saved !== null;
         } catch {
             return false;

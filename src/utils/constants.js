@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
     TOKEN: 'token',
     USER: 'user',
     DRAFT: 'tolelog_draft',
+    DRAFT_EDIT: 'tolelog_draft_edit',
     THEME: 'tolelog_theme',
 };
 
