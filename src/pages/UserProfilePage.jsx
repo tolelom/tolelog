@@ -13,6 +13,7 @@ export default function UserProfilePage() {
     const { userId: currentUserId } = useContext(AuthContext);
     const [searchParams, setSearchParams] = useSearchParams();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const tag = searchParams.get('tag') || '';
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
     const [hasMore, setHasMore] = useState(false);
@@ -28,7 +29,7 @@ export default function UserProfilePage() {
 
         Promise.all([
             USER_API.getProfile(userId, { signal: controller.signal }),
-            POST_API.getUserPosts(userId, page, PAGE_SIZE, { signal: controller.signal }),
+            POST_API.getUserPosts(userId, page, PAGE_SIZE, { signal: controller.signal, tag }),
         ])
             .then(([profileRes, postsRes]) => {
                 if (profileRes.status === 'success') {
@@ -50,7 +51,7 @@ export default function UserProfilePage() {
             });
 
         return () => controller.abort();
-    }, [userId, page]);
+    }, [userId, page, tag]);
 
     if (loading) {
         return (
@@ -98,6 +99,13 @@ export default function UserProfilePage() {
                     {isOwnProfile ? '내 글' : `${profile?.username || ''}의 글`}
                 </h2>
 
+                {tag && (
+                    <div className="profile-tag-filter">
+                        <span>태그: <strong>{tag}</strong></span>
+                        <button className="profile-tag-clear" onClick={() => setSearchParams({})}>×</button>
+                    </div>
+                )}
+
                 {posts.length === 0 && (
                     <div className="profile-status">
                         <p>아직 작성된 글이 없습니다.</p>
@@ -113,6 +121,18 @@ export default function UserProfilePage() {
                         <h3 className="profile-post-title">{post.title}</h3>
                         <div className="profile-post-meta">
                             <span className="profile-post-date">{formatDate(post.created_at)}</span>
+                            {post.tags && post.tags.split(',').map((t, i) => {
+                                const trimmed = t.trim();
+                                return trimmed ? (
+                                    <span
+                                        key={i}
+                                        className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
+                                    >
+                                        {trimmed}
+                                    </span>
+                                ) : null;
+                            })}
                             {!post.is_public && (
                                 <span className="profile-post-private">비공개</span>
                             )}

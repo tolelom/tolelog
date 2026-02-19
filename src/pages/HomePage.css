@@ -158,6 +158,24 @@
     display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px;
     background-color: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color);
 }
+.home-post-tags .tag-chip-btn {
+    cursor: pointer; transition: background-color 0.15s, color 0.15s;
+}
+.home-post-tags .tag-chip-btn:hover { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+.home-post-tags .tag-chip-active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+.home-tag-filter {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    padding: 8px 12px; border-radius: 6px;
+    background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+    font-size: 14px; color: var(--text-secondary);
+}
+.home-tag-filter strong { color: var(--accent-color); }
+.home-tag-clear {
+    margin-left: auto; background: none; border: none; cursor: pointer;
+    font-size: 16px; color: var(--text-muted); line-height: 1; padding: 0 2px;
+}
+.home-tag-clear:hover { color: var(--text-primary); }
 
 .home-post-preview {
     margin: 0;

@@ -125,9 +125,11 @@ export const USER_API = {
 };
 
 export const POST_API = {
-    getPublicPosts: async (page = 1, pageSize = 10, { signal } = {}) => {
+    getPublicPosts: async (page = 1, pageSize = 10, { signal, tag } = {}) => {
+        const params = new URLSearchParams({ page, page_size: pageSize });
+        if (tag) params.append('tag', tag);
         const response = await fetch(
-            `${API_BASE_URL}/api/v1/posts?page=${page}&page_size=${pageSize}`,
+            `${API_BASE_URL}/api/v1/posts?${params}`,
             { signal }
         );
         if (!response.ok) {
@@ -144,9 +146,11 @@ export const POST_API = {
         return response.json();
     },
 
-    getUserPosts: async (userId, page = 1, pageSize = 10, { signal } = {}) => {
+    getUserPosts: async (userId, page = 1, pageSize = 10, { signal, tag } = {}) => {
+        const params = new URLSearchParams({ page, page_size: pageSize });
+        if (tag) params.append('tag', tag);
         const response = await fetch(
-            `${API_BASE_URL}/api/v1/users/${userId}/posts?page=${page}&page_size=${pageSize}`,
+            `${API_BASE_URL}/api/v1/users/${userId}/posts?${params}`,
             { signal }
         );
         if (!response.ok) {

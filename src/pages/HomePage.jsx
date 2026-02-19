@@ -13,6 +13,7 @@ export default function HomePage() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const tag = searchParams.get('tag') || '';
     const [posts, setPosts] = useState([]);
     const [totalPages, setTotalPages] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -27,7 +28,7 @@ export default function HomePage() {
         setLoading(true);
         setError(null);
 
-        POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal })
+        POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal, tag })
             .then((res) => {
                 const data = res.data || res;
                 const list = Array.isArray(data) ? data : data.posts || [];
@@ -50,7 +51,7 @@ export default function HomePage() {
             });
 
         return () => controller.abort();
-    }, [page, fetchKey]);
+    }, [page, tag, fetchKey]);
 
     return (
         <div className="home-page">
@@ -100,6 +101,13 @@ export default function HomePage() {
                     </div>
                 )}
 
+                {tag && (
+                    <div className="home-tag-filter">
+                        <span>태그: <strong>{tag}</strong></span>
+                        <button className="home-tag-clear" onClick={() => setSearchParams({})}>×</button>
+                    </div>
+                )}
+
                 {!loading && !error && posts.map((post) => (
                     <Link
                         key={post.id}
@@ -119,9 +127,17 @@ export default function HomePage() {
                         </div>
                         {post.tags && (
                             <div className="home-post-tags">
-                                {post.tags.split(',').map((tag, i) => {
-                                    const trimmed = tag.trim();
-                                    return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
+                                {post.tags.split(',').map((t, i) => {
+                                    const trimmed = t.trim();
+                                    return trimmed ? (
+                                        <span
+                                            key={i}
+                                            className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
+                                        >
+                                            {trimmed}
+                                        </span>
+                                    ) : null;
                                 })}
                             </div>
                         )}
