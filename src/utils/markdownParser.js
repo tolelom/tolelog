@@ -40,6 +40,14 @@ function escapeHtml(text) {
         .replace(/"/g, '&quot;');
 }
 
+export function slugifyHeading(text) {
+    return text
+        .replace(/[*_~`[\]()]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/["<>&]/g, '');
+}
+
 // 각주 참조를 수집하는 컨텍스트
 let footnoteRefs = new Set();
 
@@ -65,7 +73,7 @@ export function parseInline(text) {
                         widthStyle = `width: ${widthMatch[1]}; height: auto; max-width: 100%;`;
                         endIdx = urlEnd + 1 + widthMatch[0].length;
                     }
-                    result += `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="${widthStyle}" />`;
+                    result += `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="${widthStyle}" loading="lazy" />`;
                     i = endIdx;
                     continue;
                 }
@@ -438,8 +446,10 @@ function parseList(lines, startIndex, type) {
 
 export function renderBlock(block) {
     switch (block.type) {
-        case 'heading':
-            return `<h${block.level} class="markdown-heading">${parseInline(block.text)}</h${block.level}>`;
+        case 'heading': {
+            const headingId = slugifyHeading(block.text);
+            return `<h${block.level} id="${headingId}" class="markdown-heading">${parseInline(block.text)}</h${block.level}>`;
+        }
 
         case 'paragraph':
             return `<p class="markdown-paragraph">${parseInline(block.text)}</p>`;
@@ -492,7 +502,7 @@ export function renderBlock(block) {
             const widthStyle = block.width
                 ? `width: ${block.width}; height: auto; max-width: 100%;`
                 : 'max-width: 100%; height: auto;';
-            return `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="${widthStyle}" />`;
+            return `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="${widthStyle}" loading="lazy" />`;
         }
 
         case 'footnote_def':

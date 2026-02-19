@@ -1,10 +1,30 @@
-import { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { renderMarkdown } from '../utils/markdown';
+import { slugifyHeading } from '../utils/markdownParser';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
+
+function extractToc(content) {
+    const lines = content.split('\n');
+    const toc = [];
+    let inCode = false;
+    for (const line of lines) {
+        if (line.trimStart().startsWith('```')) { inCode = !inCode; continue; }
+        if (inCode) continue;
+        const match = line.match(/^(#{1,3})\s+(.+)$/);
+        if (match) {
+            toc.push({
+                level: match[1].length,
+                text: match[2].replace(/[*_~`[\]()]/g, '').trim(),
+                id: slugifyHeading(match[2]),
+            });
+        }
+    }
+    return toc;
+}
 
 export default function PostDetailPage() {
     const { postId } = useParams();
@@ -78,6 +98,9 @@ export default function PostDetailPage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [deleteConfirm]);
 
+    // 목차 추출 (early return 전에 호출해야 hooks 규칙 준수)
+    const toc = useMemo(() => (post ? extractToc(post.content) : []), [post]);
+
     const handleDeleteClick = () => setDeleteConfirm(true);
 
     const handleDeleteCancel = () => {
@@ -144,6 +167,18 @@ export default function PostDetailPage() {
 
     return (
         <div className="post-detail-page">
+            {toc.length > 1 && (
+                <nav className="toc-panel" aria-label="목차">
+                    <p className="toc-title">목차</p>
+                    <ul className="toc-list">
+                        {toc.map((item, i) => (
+                            <li key={i} className={`toc-item toc-level-${item.level}`}>
+                                <a href={`#${item.id}`} className="toc-link">{item.text}</a>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+            )}
             <article className="post-article">
                 {/* 글 메타 */}
                 <header className="post-header">
