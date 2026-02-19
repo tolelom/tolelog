@@ -1,0 +1,45 @@
+.not-found-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 12px;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.not-found-code {
+    font-size: 96px;
+    font-weight: 700;
+    color: var(--accent-color);
+    line-height: 1;
+    margin: 0;
+    opacity: 0.4;
+}
+
+.not-found-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.not-found-desc {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.not-found-link {
+    margin-top: 8px;
+    padding: 10px 24px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.not-found-link:hover { background-color: var(--accent-hover); }
