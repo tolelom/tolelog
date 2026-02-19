@@ -133,6 +133,9 @@ export default function PostDetailPage() {
         return () => { created.forEach(el => el.parentNode?.removeChild(el)); };
     }, [post]);
 
+    // 목차 추출 (early return 전에 호출해야 hooks 규칙 준수)
+    const toc = useMemo(() => (post ? extractToc(post.content) : []), [post]);
+
     // TOC 현재 섹션 하이라이트
     useEffect(() => {
         if (toc.length === 0) return;
@@ -161,9 +164,6 @@ export default function PostDetailPage() {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [deleteConfirm]);
-
-    // 목차 추출 (early return 전에 호출해야 hooks 규칙 준수)
-    const toc = useMemo(() => (post ? extractToc(post.content) : []), [post]);
 
     const handleDeleteClick = () => setDeleteConfirm(true);
 
