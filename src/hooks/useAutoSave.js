@@ -6,7 +6,7 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
     const saveTimeoutRef = useRef(null);
     const lastSavedRef = useRef(null);
 
-    const saveDraft = (data) => {
+    const saveDraft = useCallback((data) => {
         try {
             const draftData = {
                 title: data.title,
@@ -22,7 +22,7 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
             console.error('저장 실패:', error);
             setSaveStatus('error');
         }
-    };
+    }, [storageKey]);
 
     useEffect(() => {
         setSaveStatus('saving');
@@ -40,7 +40,7 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
                 clearTimeout(saveTimeoutRef.current);
             }
         };
-    }, [formData]);
+    }, [formData, saveDraft]);
 
     const loadDraft = useCallback(() => {
         try {
