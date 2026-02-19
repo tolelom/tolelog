@@ -30,6 +30,7 @@ export default function HomePage() {
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
     const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -46,8 +47,14 @@ export default function HomePage() {
             .then((res) => {
                 const data = res.data || res;
                 const list = Array.isArray(data) ? data : data.posts || [];
+                const pagination = data.pagination;
                 setPosts(list);
-                setHasMore(list.length === PAGE_SIZE);
+                if (pagination) {
+                    setTotalPages(pagination.total_pages || 0);
+                    setHasMore(page < pagination.total_pages);
+                } else {
+                    setHasMore(list.length === PAGE_SIZE);
+                }
                 window.scrollTo(0, 0);
             })
             .catch((err) => {
@@ -151,7 +158,9 @@ export default function HomePage() {
                         >
                             &larr; 이전
                         </button>
-                        <span className="home-page-num">{page}</span>
+                        <span className="home-page-num">
+                            {totalPages > 0 ? `${page} / ${totalPages}` : page}
+                        </span>
                         <button
                             className="home-page-btn"
                             disabled={!hasMore}
