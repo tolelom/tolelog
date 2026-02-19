@@ -135,6 +135,12 @@
 
 .home-post-author {
     color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.home-post-author:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
 }
 
 .home-post-sep {

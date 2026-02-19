@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext.js';
 import { POST_API } from '../utils/api.js';
@@ -26,7 +26,8 @@ function formatDate(dateStr) {
 }
 
 export default function HomePage() {
-    const { username, logout } = useContext(AuthContext);
+    const { username, userId, logout } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
@@ -70,7 +71,7 @@ export default function HomePage() {
             <div className="home-actions">
                 {username ? (
                     <>
-                        <span className="home-user">{username}님</span>
+                        <Link to={`/user/${userId}`} className="home-nav-link">{username}님</Link>
                         <span className="home-sep">&middot;</span>
                         <Link to="/editor_private" className="home-nav-link">글쓰기</Link>
                         <span className="home-sep">&middot;</span>
@@ -116,7 +117,12 @@ export default function HomePage() {
                     >
                         <h2 className="home-post-title">{post.title}</h2>
                         <div className="home-post-meta">
-                            <span className="home-post-author">{post.author}</span>
+                            <span
+                                className="home-post-author"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/user/${post.user_id}`); }}
+                            >
+                                {post.author}
+                            </span>
                             <span className="home-post-sep">&middot;</span>
                             <span className="home-post-date">{formatDate(post.created_at)}</span>
                         </div>
