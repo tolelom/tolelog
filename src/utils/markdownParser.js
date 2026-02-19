@@ -50,7 +50,7 @@ export function parseInline(text) {
     let i = 0;
 
     while (i < text.length) {
-        // 이미지: ![alt](url)
+        // 이미지: ![alt](url) 또는 ![alt](url){width=50%}
         if (text[i] === '!' && text[i + 1] === '[') {
             const altEnd = text.indexOf(']', i + 2);
             if (altEnd !== -1 && text[altEnd + 1] === '(') {
@@ -58,8 +58,15 @@ export function parseInline(text) {
                 if (urlEnd !== -1) {
                     const alt = text.slice(i + 2, altEnd);
                     const url = text.slice(altEnd + 2, urlEnd);
-                    result += `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="max-width: 100%; height: auto;" />`;
-                    i = urlEnd + 1;
+                    let endIdx = urlEnd + 1;
+                    let widthStyle = 'max-width: 100%; height: auto;';
+                    const widthMatch = text.slice(urlEnd + 1).match(/^\{width=([^}]+)\}/);
+                    if (widthMatch) {
+                        widthStyle = `width: ${widthMatch[1]}; height: auto; max-width: 100%;`;
+                        endIdx = urlEnd + 1 + widthMatch[0].length;
+                    }
+                    result += `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="${widthStyle}" />`;
+                    i = endIdx;
                     continue;
                 }
             }
@@ -257,13 +264,14 @@ export function parseBlocks(text) {
             continue;
         }
 
-        // 이미지 단독 라인: ![alt](src)
-        const imgMatch = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        // 이미지 단독 라인: ![alt](src) 또는 ![alt](src){width=50%}
+        const imgMatch = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)(\{width=([^}]+)\})?$/);
         if (imgMatch) {
             blocks.push({
                 type: 'image',
                 alt: imgMatch[1],
                 src: imgMatch[2],
+                width: imgMatch[4] || null,
                 raw: line,
             });
             i++;
@@ -359,7 +367,7 @@ export function parseBlocks(text) {
             !/^\s*[-*+]\s+/.test(lines[i]) &&
             !/^\s*\d+\.\s+/.test(lines[i]) &&
             !/^(\s*[-*_]\s*){3,}$/.test(lines[i]) &&
-            !lines[i].trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/) &&
+            !lines[i].trim().match(/^!\[([^\]]*)\]\(([^)]+)\)(\{width=[^}]+\})?$/) &&
             !lines[i].match(/^\[\^[\w-]+\]:\s+/)) {
             paraLines.push(lines[i]);
             i++;
@@ -477,8 +485,12 @@ export function renderBlock(block) {
         case 'hr':
             return '<hr>';
 
-        case 'image':
-            return `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="max-width: 100%; height: auto;" />`;
+        case 'image': {
+            const widthStyle = block.width
+                ? `width: ${block.width}; height: auto; max-width: 100%;`
+                : 'max-width: 100%; height: auto;';
+            return `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="${widthStyle}" />`;
+        }
 
         case 'footnote_def':
             return ''; // renderMarkdown에서 별도 처리

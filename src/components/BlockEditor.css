@@ -219,6 +219,51 @@
     background-color: var(--bg-hover); color: var(--text-primary);
 }
 
+/* 이미지 블록 에디터 */
+.block-image-editor {
+    outline: none;
+    border-radius: 4px;
+}
+
+.block-image-editor .block-rendered {
+    cursor: pointer;
+    border: 2px solid var(--accent-color);
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.image-resize-controls {
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px;
+    margin-top: 4px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.image-resize-btn {
+    padding: 3px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.image-resize-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.image-resize-btn.active {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
 /* 드래그 앤 드롭 */
 .block-editor.drag-over {
     border: 2px dashed var(--accent-color);

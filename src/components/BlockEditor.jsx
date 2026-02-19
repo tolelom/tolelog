@@ -7,6 +7,18 @@ import './BlockEditor.css';
 let nextBlockId = 1;
 function genBlockId() { return `blk-${nextBlockId++}`; }
 
+const SIZE_OPTIONS = [
+    { label: '작게', value: '25%' },
+    { label: '보통', value: '50%' },
+    { label: '크게', value: '75%' },
+    { label: '원본', value: null },
+];
+
+function getCurrentWidth(raw) {
+    const match = raw.match(/\{width=([^}]+)\}$/);
+    return match ? match[1] : null;
+}
+
 const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImageInsert, token }, ref) {
     const [blocks, setBlocks] = useState(() => initBlocks(content));
     const [activeIndex, setActiveIndex] = useState(null);
@@ -28,14 +40,16 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
     // 활성 블록에 포커스 + 커서 위치 복원
     useEffect(() => {
         if (activeIndex !== null && textareaRefs.current[activeIndex]) {
-            const ta = textareaRefs.current[activeIndex];
-            ta.focus();
-            if (pendingCursorPos.current !== null) {
-                ta.selectionStart = pendingCursorPos.current;
-                ta.selectionEnd = pendingCursorPos.current;
-                pendingCursorPos.current = null;
+            const el = textareaRefs.current[activeIndex];
+            el.focus();
+            if (el.tagName === 'TEXTAREA') {
+                if (pendingCursorPos.current !== null) {
+                    el.selectionStart = pendingCursorPos.current;
+                    el.selectionEnd = pendingCursorPos.current;
+                    pendingCursorPos.current = null;
+                }
+                autoResize(el);
             }
-            autoResize(ta);
         }
     }, [activeIndex, blocks]);
 
@@ -45,6 +59,19 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
         const raw = newBlocks.map(b => b.raw).join('\n\n');
         onChange(raw);
     }, [onChange]);
+
+    const handleImageResize = useCallback((index, widthValue) => {
+        setBlocks(prev => {
+            const newBlocks = [...prev];
+            const block = newBlocks[index];
+            const match = block.raw.match(/^(!\[([^\]]*)\]\(([^)]+)\))(?:\{width=[^}]+\})?$/);
+            if (!match) return prev;
+            const newRaw = widthValue ? `${match[1]}{width=${widthValue}}` : match[1];
+            newBlocks[index] = { ...block, raw: newRaw, width: widthValue };
+            emitChange(newBlocks);
+            return newBlocks;
+        });
+    }, [emitChange]);
 
     const updateBlock = useCallback((index, newRaw) => {
         setBlocks(prev => {
@@ -329,39 +356,70 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            {blocks.map((block, index) => (
-                <div key={block.id || index} className={`block-wrapper ${activeIndex === index ? 'active' : ''}`}>
-                    {activeIndex === index ? (
-                        <textarea
-                            ref={el => { textareaRefs.current[index] = el; }}
-                            className="block-textarea"
-                            value={block.raw}
-                            onChange={(e) => handleInput(e, index)}
-                            onKeyDown={(e) => handleKeyDown(e, index)}
-                            onBlur={(e) => {
-                                // 에디터 내부 클릭이면 blur 무시 (다른 블록/빈 영역 클릭 시)
-                                if (containerRef.current && containerRef.current.contains(e.relatedTarget)) {
-                                    return;
-                                }
-                                // 에디터 외부 클릭 시 비활성화
-                                setTimeout(() => {
-                                    setActiveIndex(prev => prev === index ? null : prev);
-                                }, 100);
-                            }}
-                            placeholder="내용을 입력하세요..."
-                            rows={1}
-                        />
-                    ) : (
-                        <div
-                            className="block-rendered"
-                            onClick={() => handleBlockClick(index)}
-                            dangerouslySetInnerHTML={{
-                                __html: renderBlockSafe(block)
-                            }}
-                        />
-                    )}
-                </div>
-            ))}
+            {blocks.map((block, index) => {
+                const isActive = activeIndex === index;
+                const isImageBlock = isActive && /^!\[([^\]]*)\]\(([^)]+)\)(\{width=[^}]+\})?$/.test(block.raw.trim());
+                return (
+                    <div key={block.id || index} className={`block-wrapper ${isActive ? 'active' : ''}`}>
+                        {isActive && isImageBlock ? (
+                            <div
+                                ref={el => { textareaRefs.current[index] = el; }}
+                                tabIndex={0}
+                                className="block-image-editor"
+                                onBlur={(e) => {
+                                    if (containerRef.current && containerRef.current.contains(e.relatedTarget)) return;
+                                    setTimeout(() => { setActiveIndex(prev => prev === index ? null : prev); }, 100);
+                                }}
+                            >
+                                <div
+                                    className="block-rendered"
+                                    dangerouslySetInnerHTML={{ __html: renderBlockSafe(block) }}
+                                />
+                                <div className="image-resize-controls">
+                                    {SIZE_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.label}
+                                            className={`image-resize-btn ${getCurrentWidth(block.raw) === opt.value ? 'active' : ''}`}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleImageResize(index, opt.value);
+                                            }}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : isActive ? (
+                            <textarea
+                                ref={el => { textareaRefs.current[index] = el; }}
+                                className="block-textarea"
+                                value={block.raw}
+                                onChange={(e) => handleInput(e, index)}
+                                onKeyDown={(e) => handleKeyDown(e, index)}
+                                onBlur={(e) => {
+                                    if (containerRef.current && containerRef.current.contains(e.relatedTarget)) {
+                                        return;
+                                    }
+                                    setTimeout(() => {
+                                        setActiveIndex(prev => prev === index ? null : prev);
+                                    }, 100);
+                                }}
+                                placeholder="내용을 입력하세요..."
+                                rows={1}
+                            />
+                        ) : (
+                            <div
+                                className="block-rendered"
+                                onClick={() => handleBlockClick(index)}
+                                dangerouslySetInnerHTML={{
+                                    __html: renderBlockSafe(block)
+                                }}
+                            />
+                        )}
+                    </div>
+                );
+            })}
             <div className="block-empty-area" onClick={handleEmptyClick}>
                 {blocks.length === 0 && (
                     <span className="block-placeholder">여기를 클릭하여 글을 작성하세요...</span>
