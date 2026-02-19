@@ -130,6 +130,10 @@
     display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 13px;
     background-color: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color);
 }
+.tag-chip-btn {
+    cursor: pointer; transition: background-color 0.15s, color 0.15s;
+}
+.tag-chip-btn:hover { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
 
 /* 코드 블록 복사 버튼 */
 .markdown-content .code-block-wrapper {

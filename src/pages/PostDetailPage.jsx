@@ -166,7 +166,15 @@ export default function PostDetailPage() {
                     <div className="post-tags">
                         {post.tags.split(',').map((tag, i) => {
                             const trimmed = tag.trim();
-                            return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
+                            return trimmed ? (
+                                <span
+                                    key={i}
+                                    className="tag-chip tag-chip-btn"
+                                    onClick={() => navigate(`/?tag=${encodeURIComponent(trimmed)}`)}
+                                >
+                                    {trimmed}
+                                </span>
+                            ) : null;
                         })}
                     </div>
                 )}

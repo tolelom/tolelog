@@ -1,5 +1,5 @@
 import {useContext, useEffect, useRef, useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useLocation} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
 import {AUTH_API} from "../utils/api.js";
 import './AuthForm.css';
@@ -18,6 +18,7 @@ export default function RegisterBox() {
 
     const idRef = useRef();
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useContext(AuthContext);
 
     useEffect(() => {
@@ -72,7 +73,8 @@ export default function RegisterBox() {
                 username: data.data.username,
                 userId: data.data.user_id,
             });
-            navigate('/');
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
         } catch (err) {
             setErrors({general: err.message || '네트워크 오류'});
         } finally {
