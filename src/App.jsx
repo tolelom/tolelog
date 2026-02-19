@@ -7,10 +7,12 @@ import EditorPage from './pages/EditorPage.jsx';
 import PostDetailPage from './pages/PostDetailPage.jsx';
 import UserProfilePage from './pages/UserProfilePage.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 function App() {
     return (
         <BrowserRouter>
+            <ErrorBoundary>
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/post/:postId" element={<PostDetailPage />} />
@@ -23,6 +25,7 @@ function App() {
 
                 <Route path="*" element={<div>페이지를 찾을 수 없습니다.(404)</div>} />
             </Routes>
+            </ErrorBoundary>
         </BrowserRouter>
     )
 }

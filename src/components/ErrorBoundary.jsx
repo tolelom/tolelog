@@ -1,45 +1,35 @@
 import { Component } from 'react';
+import { Link } from 'react-router-dom';
+import './ErrorBoundary.css';
 
 export default class ErrorBoundary extends Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null };
+        this.state = { hasError: false };
     }
 
-    static getDerivedStateFromError(error) {
-        return { hasError: true, error };
+    static getDerivedStateFromError() {
+        return { hasError: true };
     }
 
-    componentDidCatch(error, errorInfo) {
-        console.error('ErrorBoundary caught:', error, errorInfo);
+    componentDidCatch(error, info) {
+        console.error('ErrorBoundary caught:', error, info);
     }
-
-    handleReset = () => {
-        this.setState({ hasError: false, error: null });
-    };
 
     render() {
         if (this.state.hasError) {
             return (
-                <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'center', minHeight: '60vh', padding: '20px',
-                    textAlign: 'center', color: 'var(--text-primary)',
-                }}>
-                    <h2 style={{ marginBottom: '16px' }}>문제가 발생했습니다</h2>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                        페이지를 새로고침하거나 아래 버튼을 눌러주세요.
-                    </p>
-                    <button
-                        onClick={this.handleReset}
-                        style={{
-                            padding: '12px 24px', borderRadius: '6px', border: 'none',
-                            backgroundColor: 'var(--accent-color)', color: 'white',
-                            fontSize: '14px', fontWeight: '600', cursor: 'pointer',
-                        }}
-                    >
-                        다시 시도
-                    </button>
+                <div className="error-boundary">
+                    <h2>오류가 발생했습니다</h2>
+                    <p>예기치 않은 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+                    <div className="error-boundary-actions">
+                        <button onClick={() => this.setState({ hasError: false })}>
+                            다시 시도
+                        </button>
+                        <Link to="/" onClick={() => this.setState({ hasError: false })}>
+                            홈으로 돌아가기
+                        </Link>
+                    </div>
                 </div>
             );
         }
