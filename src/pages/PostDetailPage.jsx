@@ -126,7 +126,7 @@ export default function PostDetailPage() {
                 <header className="post-header">
                     <h1 className="post-title">{post.title}</h1>
                     <div className="post-meta">
-                        <span className="author">{post.author}</span>
+                        <span className="author" style={{ cursor: 'pointer' }} onClick={() => navigate(`/user/${post.user_id}`)}>{post.author}</span>
                         <span className="separator">•</span>
                         <span className="date">{createdAt}</span>
                         {updatedAt && createdAt !== updatedAt && (

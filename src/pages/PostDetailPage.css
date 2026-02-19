@@ -27,7 +27,8 @@
     flex-wrap: wrap;
 }
 
-.post-meta .author { font-weight: 600; color: var(--text-secondary); }
+.post-meta .author { font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+.post-meta .author:hover { color: var(--text-primary); text-decoration: underline; }
 .post-meta .separator { color: var(--border-color); }
 .post-meta .date { color: var(--text-muted); }
 .post-meta .updated { color: var(--accent-color); font-size: 12px; }
