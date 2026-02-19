@@ -14,11 +14,6 @@ const SIZE_OPTIONS = [
     { label: '원본', value: null },
 ];
 
-function getCurrentWidth(raw) {
-    const match = raw.match(/\{width=([^}]+)\}$/);
-    return match ? match[1] : null;
-}
-
 const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImageInsert, token }, ref) {
     const [blocks, setBlocks] = useState(() => initBlocks(content));
     const [activeIndex, setActiveIndex] = useState(null);
@@ -72,6 +67,42 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
             return newBlocks;
         });
     }, [emitChange]);
+
+    const handleResizeMouseDown = useCallback((e, index) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const wrapperEl = e.currentTarget.closest('.image-resize-wrapper');
+        if (!wrapperEl) return;
+
+        const editorEl = wrapperEl.closest('.block-image-editor');
+        const availableWidth = editorEl ? editorEl.getBoundingClientRect().width : 0;
+        if (!availableWidth) return;
+
+        const startX = e.clientX;
+        const startWidthPx = wrapperEl.getBoundingClientRect().width;
+
+        const onMouseMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const newWidthPx = Math.max(startWidthPx + dx, 40);
+            const newWidthPct = Math.min(Math.round((newWidthPx / availableWidth) * 100), 100);
+            wrapperEl.style.width = `${newWidthPct}%`;
+        };
+
+        const onMouseUp = (upEvent) => {
+            const dx = upEvent.clientX - startX;
+            const newWidthPx = Math.max(startWidthPx + dx, 40);
+            const newWidthPct = Math.min(Math.round((newWidthPx / availableWidth) * 100), 100);
+            handleImageResize(index, `${newWidthPct}%`);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.body.style.cursor = '';
+        };
+
+        document.body.style.cursor = 'col-resize';
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }, [handleImageResize]);
 
     const updateBlock = useCallback((index, newRaw) => {
         setBlocks(prev => {
@@ -358,10 +389,12 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
         >
             {blocks.map((block, index) => {
                 const isActive = activeIndex === index;
-                const isImageBlock = isActive && /^!\[([^\]]*)\]\(([^)]+)\)(\{width=[^}]+\})?$/.test(block.raw.trim());
+                const imgMatch = isActive
+                    ? block.raw.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)(\{width=([^}]+)\})?$/)
+                    : null;
                 return (
                     <div key={block.id || index} className={`block-wrapper ${isActive ? 'active' : ''}`}>
-                        {isActive && isImageBlock ? (
+                        {imgMatch ? (
                             <div
                                 ref={el => { textareaRefs.current[index] = el; }}
                                 tabIndex={0}
@@ -372,14 +405,25 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
                                 }}
                             >
                                 <div
-                                    className="block-rendered"
-                                    dangerouslySetInnerHTML={{ __html: renderBlockSafe(block) }}
-                                />
+                                    className="image-resize-wrapper"
+                                    style={imgMatch[4] ? { width: imgMatch[4] } : {}}
+                                >
+                                    <img
+                                        src={imgMatch[2]}
+                                        alt={imgMatch[1]}
+                                        style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '8px' }}
+                                        draggable={false}
+                                    />
+                                    <div
+                                        className="image-resize-handle"
+                                        onMouseDown={(e) => handleResizeMouseDown(e, index)}
+                                    />
+                                </div>
                                 <div className="image-resize-controls">
                                     {SIZE_OPTIONS.map(opt => (
                                         <button
                                             key={opt.label}
-                                            className={`image-resize-btn ${getCurrentWidth(block.raw) === opt.value ? 'active' : ''}`}
+                                            className={`image-resize-btn ${(imgMatch[4] || null) === opt.value ? 'active' : ''}`}
                                             onMouseDown={(e) => {
                                                 e.preventDefault();
                                                 handleImageResize(index, opt.value);
@@ -388,6 +432,7 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
                                             {opt.label}
                                         </button>
                                     ))}
+                                    <span className="image-size-label">{imgMatch[4] || '원본'}</span>
                                 </div>
                             </div>
                         ) : isActive ? (
