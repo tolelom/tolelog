@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext.js';
 import { POST_API } from '../utils/api.js';
@@ -28,8 +28,9 @@ function formatDate(dateStr) {
 export default function HomePage() {
     const { username, userId, logout } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const [posts, setPosts] = useState([]);
-    const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -154,7 +155,7 @@ export default function HomePage() {
                         <button
                             className="home-page-btn"
                             disabled={page <= 1}
-                            onClick={() => setPage(page - 1)}
+                            onClick={() => setSearchParams(page - 1 <= 1 ? {} : { page: page - 1 })}
                         >
                             &larr; 이전
                         </button>
@@ -164,7 +165,7 @@ export default function HomePage() {
                         <button
                             className="home-page-btn"
                             disabled={!hasMore}
-                            onClick={() => setPage(page + 1)}
+                            onClick={() => setSearchParams({ page: page + 1 })}
                         >
                             다음 &rarr;
                         </button>

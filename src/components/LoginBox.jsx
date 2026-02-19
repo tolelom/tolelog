@@ -1,5 +1,5 @@
 import {useContext, useEffect, useRef, useState} from 'react';
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useLocation} from "react-router-dom";
 import {AuthContext} from "../context/AuthContext.js";
 import {API_BASE_URL} from "../utils/constants.js";
 import './AuthForm.css';
@@ -15,6 +15,7 @@ export default function LoginBox() {
 
     const idRef = useRef();
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useContext(AuthContext);
 
     const handleChange = (e) => {
@@ -69,7 +70,8 @@ export default function LoginBox() {
                     username: data.data.username,
                     userId: data.data.user_id,
                 });
-                navigate('/');
+                const from = location.state?.from?.pathname || '/';
+                navigate(from, { replace: true });
             }
         } catch {
             setErrors({general: "네트워크 오류 발생"});
