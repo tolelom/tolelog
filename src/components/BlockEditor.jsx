@@ -177,13 +177,18 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
             return;
         }
 
-        // Backspace: 빈 블록 삭제
-        if (e.key === 'Backspace' && raw === '' && blocks.length > 1) {
+        // Backspace: 블록 시작에서 이전 블록과 병합 (빈 블록 삭제 포함)
+        if (e.key === 'Backspace' && ta && ta.selectionStart === 0 && ta.selectionEnd === 0 && index > 0) {
             e.preventDefault();
             setBlocks(prev => {
-                const newBlocks = prev.filter((_, i) => i !== index);
-                const newActive = Math.max(0, index - 1);
-                setActiveIndex(newActive);
+                const newBlocks = [...prev];
+                const prevBlock = newBlocks[index - 1];
+                const currBlock = newBlocks[index];
+                const prevLen = prevBlock.raw.length;
+                newBlocks[index - 1] = { ...prevBlock, raw: prevBlock.raw + currBlock.raw };
+                newBlocks.splice(index, 1);
+                pendingCursorPos.current = prevLen;
+                setActiveIndex(index - 1);
                 emitChange(newBlocks);
                 return newBlocks;
             });

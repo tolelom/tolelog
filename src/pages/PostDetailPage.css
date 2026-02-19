@@ -168,6 +168,24 @@
 }
 .btn-delete:hover { background-color: #b85a5a; }
 
+.delete-confirm-inline {
+    flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.delete-confirm-text { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+.btn-delete-confirm {
+    padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px;
+    font-weight: 500; cursor: pointer; background-color: #c96a6a; color: white; transition: all 0.2s;
+}
+.btn-delete-confirm:hover:not(:disabled) { background-color: #b85a5a; }
+.btn-delete-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-delete-cancel {
+    padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px;
+    font-weight: 500; cursor: pointer; background-color: var(--bg-secondary); color: var(--text-secondary); transition: all 0.2s;
+}
+.btn-delete-cancel:hover:not(:disabled) { background-color: var(--bg-hover); }
+.btn-delete-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+.delete-error { font-size: 13px; color: var(--error-text); align-self: center; }
+
 .back-link {
     display: inline-block; margin-top: 24px; color: var(--accent-color); text-decoration: none;
     font-size: 14px; transition: all 0.2s;

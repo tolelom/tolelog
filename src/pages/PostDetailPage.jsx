@@ -13,6 +13,9 @@ export default function PostDetailPage() {
     const [post, setPost] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
     const contentRef = useRef(null);
 
     // 코드 블록 복사 버튼 이벤트 위임
@@ -63,21 +66,29 @@ export default function PostDetailPage() {
         loadPost();
     }, [postId]);
 
-    const handleDelete = async () => {
-        if (!window.confirm('정말 이 글을 삭제하시겠습니까?')) {
-            return;
-        }
+    const handleDeleteClick = () => setDeleteConfirm(true);
 
+    const handleDeleteCancel = () => {
+        setDeleteConfirm(false);
+        setDeleteError('');
+    };
+
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        setDeleteError('');
         try {
             const response = await POST_API.deletePost(postId, token);
             if (response.status === 'success') {
-                alert('글이 삭제되었습니다.');
                 navigate('/');
             } else {
-                alert('글 삭제에 실패했습니다.');
+                setDeleteError('글 삭제에 실패했습니다.');
+                setDeleteConfirm(false);
             }
         } catch (err) {
-            alert(err.message || '글 삭제에 실패했습니다.');
+            setDeleteError(err.message || '글 삭제에 실패했습니다.');
+            setDeleteConfirm(false);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -163,9 +174,22 @@ export default function PostDetailPage() {
                         <Link to={`/editor/${postId}`} className="btn-edit">
                             수정
                         </Link>
-                        <button className="btn-delete" onClick={handleDelete}>
-                            삭제
-                        </button>
+                        {!deleteConfirm ? (
+                            <button className="btn-delete" onClick={handleDeleteClick}>
+                                삭제
+                            </button>
+                        ) : (
+                            <div className="delete-confirm-inline">
+                                <span className="delete-confirm-text">정말 삭제하시겠습니까?</span>
+                                <button className="btn-delete-confirm" onClick={handleDelete} disabled={isDeleting}>
+                                    {isDeleting ? '삭제 중...' : '삭제'}
+                                </button>
+                                <button className="btn-delete-cancel" onClick={handleDeleteCancel} disabled={isDeleting}>
+                                    취소
+                                </button>
+                            </div>
+                        )}
+                        {deleteError && <span className="delete-error">{deleteError}</span>}
                     </div>
                 )}
 
