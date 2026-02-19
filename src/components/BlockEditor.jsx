@@ -7,6 +7,42 @@ import './BlockEditor.css';
 let nextBlockId = 1;
 function genBlockId() { return `blk-${nextBlockId++}`; }
 
+function startImageDrag(startX, index, wrapperEl, handleImageResize) {
+    const editorEl = wrapperEl.closest('.block-image-editor');
+    const availableWidth = editorEl ? editorEl.getBoundingClientRect().width : 0;
+    if (!availableWidth) return;
+
+    const startWidthPx = wrapperEl.getBoundingClientRect().width;
+    const calcPct = (currentX) => {
+        const newWidthPx = Math.max(startWidthPx + (currentX - startX), 40);
+        return Math.min(Math.round((newWidthPx / availableWidth) * 100), 100);
+    };
+
+    const onMouseMove = (e) => { wrapperEl.style.width = `${calcPct(e.clientX)}%`; };
+    const onMouseUp = (e) => {
+        handleImageResize(index, `${calcPct(e.clientX)}%`);
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+    };
+
+    const onTouchMove = (e) => {
+        e.preventDefault();
+        wrapperEl.style.width = `${calcPct(e.touches[0].clientX)}%`;
+    };
+    const onTouchEnd = (e) => {
+        handleImageResize(index, `${calcPct(e.changedTouches[0].clientX)}%`);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+}
+
 const SIZE_OPTIONS = [
     { label: '작게', value: '25%' },
     { label: '보통', value: '50%' },
@@ -71,37 +107,15 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
     const handleResizeMouseDown = useCallback((e, index) => {
         e.preventDefault();
         e.stopPropagation();
-
         const wrapperEl = e.currentTarget.closest('.image-resize-wrapper');
-        if (!wrapperEl) return;
+        if (wrapperEl) startImageDrag(e.clientX, index, wrapperEl, handleImageResize);
+    }, [handleImageResize]);
 
-        const editorEl = wrapperEl.closest('.block-image-editor');
-        const availableWidth = editorEl ? editorEl.getBoundingClientRect().width : 0;
-        if (!availableWidth) return;
-
-        const startX = e.clientX;
-        const startWidthPx = wrapperEl.getBoundingClientRect().width;
-
-        const onMouseMove = (moveEvent) => {
-            const dx = moveEvent.clientX - startX;
-            const newWidthPx = Math.max(startWidthPx + dx, 40);
-            const newWidthPct = Math.min(Math.round((newWidthPx / availableWidth) * 100), 100);
-            wrapperEl.style.width = `${newWidthPct}%`;
-        };
-
-        const onMouseUp = (upEvent) => {
-            const dx = upEvent.clientX - startX;
-            const newWidthPx = Math.max(startWidthPx + dx, 40);
-            const newWidthPct = Math.min(Math.round((newWidthPx / availableWidth) * 100), 100);
-            handleImageResize(index, `${newWidthPct}%`);
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-            document.body.style.cursor = '';
-        };
-
-        document.body.style.cursor = 'col-resize';
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+    const handleResizeTouchStart = useCallback((e, index) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrapperEl = e.currentTarget.closest('.image-resize-wrapper');
+        if (wrapperEl) startImageDrag(e.touches[0].clientX, index, wrapperEl, handleImageResize);
     }, [handleImageResize]);
 
     const updateBlock = useCallback((index, newRaw) => {
@@ -417,6 +431,7 @@ const BlockEditor = forwardRef(function BlockEditor({ content, onChange, onImage
                                     <div
                                         className="image-resize-handle"
                                         onMouseDown={(e) => handleResizeMouseDown(e, index)}
+                                        onTouchStart={(e) => handleResizeTouchStart(e, index)}
                                     />
                                 </div>
                                 <div className="image-resize-controls">

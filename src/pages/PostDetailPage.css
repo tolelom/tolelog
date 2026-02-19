@@ -135,6 +135,25 @@
 }
 .tag-chip-btn:hover { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
 
+/* 코드 블록 언어 레이블 */
+.markdown-content .code-lang-label {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.7;
+}
+.markdown-content .has-lang pre {
+    padding-top: 36px;
+}
+
 /* 코드 블록 복사 버튼 */
 .markdown-content .code-block-wrapper {
     position: relative;

@@ -448,6 +448,9 @@ export function renderBlock(block) {
             const lang = block.lang && hljs.getLanguage(block.lang) ? block.lang : 'plaintext';
             const highlighted = hljs.highlight(block.code, { language: lang, ignoreIllegals: true }).value;
             const escapedCode = escapeHtml(block.code).replace(/'/g, '&#39;');
+            if (block.lang) {
+                return `<div class="code-block-wrapper has-lang"><span class="code-lang-label">${escapeHtml(block.lang)}</span><button class="code-copy-btn" data-code="${escapedCode}">복사</button><pre><code class="hljs language-${lang}">${highlighted}</code></pre></div>`;
+            }
             return `<div class="code-block-wrapper"><button class="code-copy-btn" data-code="${escapedCode}">복사</button><pre><code class="hljs language-${lang}">${highlighted}</code></pre></div>`;
         }
 
