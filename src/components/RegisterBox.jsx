@@ -22,7 +22,7 @@ export default function RegisterBox() {
     const { login } = useContext(AuthContext);
 
     useEffect(() => {
-        idRef.current.focus();
+        idRef.current?.focus();
     }, []);
 
     const handleChange = (e) => {

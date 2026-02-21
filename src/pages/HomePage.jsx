@@ -154,7 +154,12 @@ export default function HomePage() {
                         <button
                             className="home-page-btn"
                             disabled={page <= 1}
-                            onClick={() => setSearchParams(page - 1 <= 1 ? {} : { page: page - 1 })}
+                            onClick={() => {
+                                const params = {};
+                                if (tag) params.tag = tag;
+                                if (page - 1 > 1) params.page = page - 1;
+                                setSearchParams(params);
+                            }}
                         >
                             &larr; 이전
                         </button>
@@ -164,7 +169,11 @@ export default function HomePage() {
                         <button
                             className="home-page-btn"
                             disabled={!hasMore}
-                            onClick={() => setSearchParams({ page: page + 1 })}
+                            onClick={() => {
+                                const params = { page: page + 1 };
+                                if (tag) params.tag = tag;
+                                setSearchParams(params);
+                            }}
                         >
                             다음 &rarr;
                         </button>

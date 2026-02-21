@@ -101,13 +101,12 @@ export default function EditorPage() {
     }, [postId, hasDraft, loadDraft, navigate, userId]);
 
     const handleRestoreDraft = () => {
-        const draft = loadDraft();
-        if (draft) {
+        if (draftInfo) {
             setFormData({
-                title: draft.title,
-                content: draft.content,
-                is_public: draft.is_public,
-                tags: draft.tags || '',
+                title: draftInfo.title,
+                content: draftInfo.content,
+                is_public: draftInfo.is_public,
+                tags: draftInfo.tags || '',
             });
         }
         setShowRestorePrompt(false);

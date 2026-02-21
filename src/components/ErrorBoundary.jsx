@@ -1,5 +1,4 @@
 import { Component } from 'react';
-import { Link } from 'react-router-dom';
 import './ErrorBoundary.css';
 
 export default class ErrorBoundary extends Component {
@@ -26,9 +25,9 @@ export default class ErrorBoundary extends Component {
                         <button onClick={() => this.setState({ hasError: false })}>
                             다시 시도
                         </button>
-                        <Link to="/" onClick={() => this.setState({ hasError: false })}>
+                        <a href="/" onClick={() => this.setState({ hasError: false })}>
                             홈으로 돌아가기
-                        </Link>
+                        </a>
                     </div>
                 </div>
             );
