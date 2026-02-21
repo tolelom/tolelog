@@ -247,3 +247,23 @@
         font-size: 13px;
     }
 }
+
+@media (max-width: 480px) {
+    .home-page {
+        padding: 20px 12px;
+    }
+
+    .home-title {
+        font-size: 22px;
+    }
+
+    .home-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .home-post-card {
+        padding: 14px 12px;
+    }
+}

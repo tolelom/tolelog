@@ -76,6 +76,9 @@
     border: 1px solid var(--border-color);
     border-radius: 8px 8px 0 0;
     border-bottom: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
 }
 .toolbar-format-buttons {
     display: flex; align-items: center; gap: 2px;

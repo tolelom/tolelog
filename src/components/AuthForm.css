@@ -3,6 +3,7 @@
     max-width: 360px;
     margin: 80px auto 0;
     padding: 24px 32px;
+    box-sizing: border-box;
     background-color: var(--bg-card);
     color: var(--text-primary);
     border-radius: 10px;
@@ -83,4 +84,16 @@
 .auth-box button[type="submit"]:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .auth-box {
+        margin: 32px auto 0;
+        padding: 20px 20px;
+    }
+
+    .auth-box h1 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
 }

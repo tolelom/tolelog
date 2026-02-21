@@ -91,8 +91,16 @@
 }
 .markdown-content li { margin: 8px 0; color: var(--text-secondary); }
 
+.markdown-content .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
 .markdown-content table {
-    border-collapse: collapse; width: 100%; margin: 20px 0; border-radius: 8px; overflow: hidden;
+    border-collapse: collapse; width: 100%; margin: 0; border-radius: 8px; overflow: hidden;
+    min-width: 320px;
 }
 .markdown-content table thead { background-color: var(--table-header-bg); }
 .markdown-content table th, .markdown-content table td {
@@ -167,6 +175,11 @@
 }
 .markdown-content .code-block-wrapper:hover .code-copy-btn {
     opacity: 1;
+}
+@media (hover: none) {
+    .markdown-content .code-copy-btn {
+        opacity: 0.7;
+    }
 }
 .markdown-content .code-copy-btn:hover {
     background-color: var(--bg-hover); color: var(--text-primary);
@@ -293,12 +306,18 @@
 }
 
 @media (max-width: 768px) {
-    .post-detail-page { padding: 20px 16px; }
-    .post-article { padding: 24px; }
+    .post-detail-page { padding: 16px 12px; }
+    .post-article { padding: 20px 16px; }
     .post-title { font-size: 24px; }
     .post-meta { font-size: 12px; }
-    .markdown-content h1 { font-size: 24px; }
-    .markdown-content h2 { font-size: 20px; }
+    .markdown-content h1 { font-size: 22px; }
+    .markdown-content h2 { font-size: 18px; }
     .markdown-content h3 { font-size: 16px; }
     .post-actions { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+    .post-detail-page { padding: 12px 8px; }
+    .post-article { padding: 16px 12px; }
+    .post-title { font-size: 20px; }
 }

@@ -145,10 +145,17 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.block-rendered .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 8px 0;
+}
+
 .block-rendered table {
     border-collapse: collapse;
     width: 100%;
-    margin: 8px 0;
+    margin: 0;
+    min-width: 320px;
 }
 .block-rendered table thead { background-color: var(--table-header-bg); }
 .block-rendered table th, .block-rendered table td {

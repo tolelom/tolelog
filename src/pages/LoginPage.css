@@ -1,6 +1,8 @@
 .auth-page {
     max-width: 360px;
     margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
 }
 
 .signup-link {

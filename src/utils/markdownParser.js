@@ -492,7 +492,7 @@ export function renderBlock(block) {
                     return `<td style="text-align:${align}">${parseInline(cell)}</td>`;
                 }).join('') + '</tr>'
             ).join('');
-            return `<table class="markdown-table"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+            return `<div class="table-wrapper"><table class="markdown-table"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
         }
 
         case 'hr':
