@@ -1,8 +1,10 @@
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format.js';
+import { validateImageFile, compressImage } from '../utils/imageUpload.js';
+import { API_BASE_URL } from '../utils/constants';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import './UserProfilePage.css';
 
@@ -17,7 +19,7 @@ function getMemberDays(createdAt) {
 
 export default function UserProfilePage() {
     const { userId } = useParams();
-    const { userId: currentUserId } = useContext(AuthContext);
+    const { userId: currentUserId, token, setAvatarUrl: setGlobalAvatarUrl } = useContext(AuthContext);
     const [searchParams, setSearchParams] = useSearchParams();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const tag = searchParams.get('tag') || '';
@@ -28,6 +30,8 @@ export default function UserProfilePage() {
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const fileInputRef = useRef(null);
 
     const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
 
@@ -44,6 +48,37 @@ export default function UserProfilePage() {
         });
         return Object.entries(counts).sort((a, b) => b[1] - a[1]);
     }, [posts]);
+
+    const handleAvatarClick = () => {
+        if (isOwnProfile && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const validation = validateImageFile(file);
+        if (!validation.valid) {
+            alert(validation.error);
+            return;
+        }
+
+        setAvatarUploading(true);
+        try {
+            const compressed = await compressImage(file);
+            const result = await USER_API.uploadAvatar(compressed, token);
+            const newAvatarUrl = result.data.avatar_url;
+            setProfile(prev => ({ ...prev, avatar_url: newAvatarUrl }));
+            setGlobalAvatarUrl(newAvatarUrl);
+        } catch (err) {
+            alert(err.message || '프로필 이미지 업로드에 실패했습니다');
+        } finally {
+            setAvatarUploading(false);
+            e.target.value = '';
+        }
+    };
 
     useEffect(() => {
         const controller = new AbortController();
@@ -115,8 +150,33 @@ export default function UserProfilePage() {
 
             {profile && (
                 <div className="profile-info">
-                    <div className="profile-avatar">
-                        {profile.username.charAt(0).toUpperCase()}
+                    <div
+                        className={`profile-avatar${isOwnProfile ? ' profile-avatar-editable' : ''}`}
+                        onClick={handleAvatarClick}
+                    >
+                        {profile.avatar_url ? (
+                            <img
+                                src={`${API_BASE_URL}${profile.avatar_url}`}
+                                alt={profile.username}
+                                className="profile-avatar-img"
+                            />
+                        ) : (
+                            profile.username.charAt(0).toUpperCase()
+                        )}
+                        {isOwnProfile && (
+                            <div className="profile-avatar-overlay">
+                                {avatarUploading ? '...' : '변경'}
+                            </div>
+                        )}
+                        {isOwnProfile && (
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                onChange={handleAvatarChange}
+                                style={{ display: 'none' }}
+                            />
+                        )}
                     </div>
                     <h1 className="profile-username">{profile.username}</h1>
                     <div className="profile-stats">

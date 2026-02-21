@@ -72,6 +72,7 @@ export default function RegisterBox() {
                 token: data.data.token,
                 username: data.data.username,
                 userId: data.data.user_id,
+                avatarUrl: data.data.avatar_url,
             });
             const from = location.state?.from?.pathname || '/';
             navigate(from, { replace: true });

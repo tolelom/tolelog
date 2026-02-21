@@ -122,6 +122,30 @@ export const USER_API = {
         }
         return response.json();
     },
+
+    uploadAvatar: async (file, token) => {
+        if (!token) {
+            throw new Error('토큰이 필요합니다');
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/avatar`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `프로필 이미지 업로드 실패: ${response.status}`);
+        }
+
+        return response.json();
+    },
 };
 
 export const POST_API = {
