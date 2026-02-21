@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API } from '../utils/api';
@@ -8,6 +8,13 @@ import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
 
+function getMemberDays(createdAt) {
+    if (!createdAt) return 0;
+    const created = new Date(createdAt);
+    if (isNaN(created.getTime())) return 0;
+    return Math.max(1, Math.ceil((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24)));
+}
+
 export default function UserProfilePage() {
     const { userId } = useParams();
     const { userId: currentUserId } = useContext(AuthContext);
@@ -16,11 +23,27 @@ export default function UserProfilePage() {
     const tag = searchParams.get('tag') || '';
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
+    const [totalPosts, setTotalPosts] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
+
+    // 현재 보이는 글에서 태그 집계
+    const tagCloud = useMemo(() => {
+        const counts = {};
+        posts.forEach(post => {
+            if (post.tags) {
+                post.tags.split(',').forEach(t => {
+                    const trimmed = t.trim();
+                    if (trimmed) counts[trimmed] = (counts[trimmed] || 0) + 1;
+                });
+            }
+        });
+        return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    }, [posts]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -39,8 +62,16 @@ export default function UserProfilePage() {
 
                 const data = postsRes.data || postsRes;
                 const list = Array.isArray(data) ? data : data.posts || [];
+                const pagination = data.pagination;
                 setPosts(list);
-                setHasMore(list.length === PAGE_SIZE);
+                if (pagination) {
+                    setTotalPosts(pagination.total || list.length);
+                    setTotalPages(pagination.total_pages || 0);
+                    setHasMore(page < pagination.total_pages);
+                } else {
+                    setTotalPosts(list.length);
+                    setHasMore(list.length === PAGE_SIZE);
+                }
             })
             .catch((err) => {
                 if (err.name === 'AbortError') return;
@@ -88,15 +119,45 @@ export default function UserProfilePage() {
                         {profile.username.charAt(0).toUpperCase()}
                     </div>
                     <h1 className="profile-username">{profile.username}</h1>
-                    <p className="profile-join-date">
-                        가입일: {formatDate(profile.created_at)}
-                    </p>
+                    <div className="profile-stats">
+                        <div className="profile-stat-item">
+                            <span className="profile-stat-value">{totalPosts}</span>
+                            <span className="profile-stat-label">글</span>
+                        </div>
+                        <div className="profile-stat-item">
+                            <span className="profile-stat-value">{getMemberDays(profile.created_at)}</span>
+                            <span className="profile-stat-label">일째</span>
+                        </div>
+                        <div className="profile-stat-item">
+                            <span className="profile-stat-value">{tagCloud.length}</span>
+                            <span className="profile-stat-label">태그</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 태그 클라우드 */}
+            {tagCloud.length > 0 && !tag && (
+                <div className="profile-tag-cloud">
+                    <h3 className="profile-tag-cloud-title">태그</h3>
+                    <div className="profile-tag-cloud-list">
+                        {tagCloud.map(([tagName, count]) => (
+                            <span
+                                key={tagName}
+                                className="tag-chip tag-chip-btn"
+                                onClick={() => setSearchParams({ tag: tagName })}
+                            >
+                                {tagName} <span className="tag-count">{count}</span>
+                            </span>
+                        ))}
+                    </div>
                 </div>
             )}
 
             <div className="profile-posts-section">
                 <h2 className="profile-posts-title">
                     {isOwnProfile ? '내 글' : `${profile?.username || ''}의 글`}
+                    {totalPosts > 0 && <span className="profile-posts-count">{totalPosts}</span>}
                 </h2>
 
                 {tag && (
@@ -159,7 +220,9 @@ export default function UserProfilePage() {
                         >
                             &larr; 이전
                         </button>
-                        <span className="profile-page-num">{page}</span>
+                        <span className="profile-page-num">
+                            {totalPages > 0 ? `${page} / ${totalPages}` : page}
+                        </span>
                         <button
                             className="profile-page-btn"
                             disabled={!hasMore}
