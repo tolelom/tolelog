@@ -87,7 +87,7 @@ export default function UserProfilePage() {
 
         Promise.all([
             USER_API.getProfile(userId, { signal: controller.signal }),
-            POST_API.getUserPosts(userId, page, PAGE_SIZE, { signal: controller.signal, tag }),
+            POST_API.getUserPosts(userId, page, PAGE_SIZE, { signal: controller.signal, tag, token }),
         ])
             .then(([profileRes, postsRes]) => {
                 if (profileRes.status === 'success') {
@@ -117,7 +117,7 @@ export default function UserProfilePage() {
             });
 
         return () => controller.abort();
-    }, [userId, page, tag]);
+    }, [userId, page, tag, token]);
 
     if (loading) {
         return (

@@ -214,10 +214,8 @@ export default function EditorPage() {
             setSuccess(successMsg);
             clearDraft();
 
-            setTimeout(() => {
-                const postIdToNavigate = isEditMode ? postId : response.data.id;
-                navigate(`/post/${postIdToNavigate}`);
-            }, 2000);
+            const postIdToNavigate = isEditMode ? postId : response.data.id;
+            setTimeout(() => navigate(`/post/${postIdToNavigate}`), 1500);
         } catch (err) {
             if (err.status === 401) {
                 setError('로그인이 만료되었습니다. 다시 로그인해주세요.');
@@ -225,7 +223,6 @@ export default function EditorPage() {
                 return;
             }
             setError(err.message || '글 저장에 실패했습니다');
-        } finally {
             setIsSaving(false);
         }
     };

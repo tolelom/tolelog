@@ -178,12 +178,16 @@ export const POST_API = {
         return response.json();
     },
 
-    getUserPosts: async (userId, page = 1, pageSize = 10, { signal, tag } = {}) => {
+    getUserPosts: async (userId, page = 1, pageSize = 10, { signal, tag, token } = {}) => {
         const params = new URLSearchParams({ page, page_size: pageSize });
         if (tag) params.append('tag', tag);
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
         const response = await fetch(
             `${API_BASE_URL}/api/v1/users/${userId}/posts?${params}`,
-            { signal }
+            { signal, headers }
         );
         if (!response.ok) {
             throw new Error(`사용자 글 목록을 불러오지 못했습니다 (${response.status})`);
