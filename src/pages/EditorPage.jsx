@@ -56,7 +56,7 @@ export default function EditorPage() {
             const loadPost = async () => {
                 try {
                     setIsLoading(true);
-                    const response = await POST_API.getPost(postId, { signal: controller.signal });
+                    const response = await POST_API.getPost(postId, { signal: controller.signal, token });
                     if (response.status === 'success') {
                         const post = response.data;
                         // 본인 글이 아니면 상세 페이지로 리다이렉트
@@ -219,6 +219,11 @@ export default function EditorPage() {
                 navigate(`/post/${postIdToNavigate}`);
             }, 2000);
         } catch (err) {
+            if (err.status === 401) {
+                setError('로그인이 만료되었습니다. 다시 로그인해주세요.');
+                navigate('/login');
+                return;
+            }
             setError(err.message || '글 저장에 실패했습니다');
         } finally {
             setIsSaving(false);
@@ -369,17 +374,18 @@ export default function EditorPage() {
                 {/* 버튼 섹션 */}
                 <div className="button-section">
                     <div className="left-content">
-                        <div className="checkbox-group">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    name="is_public"
-                                    checked={formData.is_public}
-                                    onChange={handleChange}
-                                />
-                                공개 발행
-                            </label>
-                        </div>
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                name="is_public"
+                                checked={formData.is_public}
+                                onChange={handleChange}
+                            />
+                            <span className="toggle-slider"></span>
+                            <span className="toggle-label">
+                                {formData.is_public ? '공개' : '비공개'}
+                            </span>
+                        </label>
                         <div className="save-indicator">
                             {saveStatus === 'saving' && (
                                 <span className="save-status saving">저장 중...</span>

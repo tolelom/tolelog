@@ -222,11 +222,21 @@
 .btn-delete-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
 .delete-error { font-size: 13px; color: var(--error-text); align-self: center; }
 
-.back-link {
-    display: inline-block; margin-top: 24px; color: var(--accent-color); text-decoration: none;
-    font-size: 14px; transition: all 0.2s;
+/* 브레드크럼 네비게이션 */
+.post-breadcrumb {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+    font-size: 13px; color: var(--text-muted);
 }
-.back-link:hover { color: var(--accent-hover); }
+.breadcrumb-link {
+    color: var(--accent-color); text-decoration: none; transition: color 0.2s;
+    border: none;
+}
+.breadcrumb-link:hover { color: var(--accent-hover); }
+.breadcrumb-sep { color: var(--border-color); }
+.breadcrumb-current {
+    color: var(--text-muted); overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; max-width: 300px;
+}
 
 /* 목차 (TOC) */
 .toc-panel {

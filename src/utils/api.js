@@ -37,7 +37,9 @@ export function useApi() {
 
 async function authenticatedFetch(url, method, token, body = null) {
     if (!token) {
-        throw new Error('토큰이 필요합니다');
+        const err = new Error('로그인이 필요합니다');
+        err.status = 401;
+        throw err;
     }
 
     const headers = { 'Authorization': `Bearer ${token}` };
@@ -54,7 +56,9 @@ async function authenticatedFetch(url, method, token, body = null) {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const message = errorData.error || errorData.message || `요청 실패 (${response.status})`;
-        throw new Error(message);
+        const err = new Error(message);
+        err.status = response.status;
+        throw err;
     }
 
     return response.json();
@@ -162,8 +166,12 @@ export const POST_API = {
         return response.json();
     },
 
-    getPost: async (postId, { signal } = {}) => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}`, { signal });
+    getPost: async (postId, { signal, token } = {}) => {
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}`, { signal, headers });
         if (!response.ok) {
             throw new Error(`글을 불러오지 못했습니다 (${response.status})`);
         }

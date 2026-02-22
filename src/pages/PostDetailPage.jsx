@@ -88,7 +88,7 @@ export default function PostDetailPage() {
         const loadPost = async () => {
             try {
                 setIsLoading(true);
-                const response = await POST_API.getPost(postId, { signal: controller.signal });
+                const response = await POST_API.getPost(postId, { signal: controller.signal, token });
                 if (response.status === 'success') {
                     setPost(response.data);
                     document.title = `${response.data.title} | Tolelog`;
@@ -104,7 +104,7 @@ export default function PostDetailPage() {
         };
         loadPost();
         return () => controller.abort();
-    }, [postId]);
+    }, [postId, token]);
 
     // OG / SEO 메타 태그
     useEffect(() => {
@@ -244,6 +244,13 @@ export default function PostDetailPage() {
                 </nav>
             )}
             <article className="post-article">
+                {/* 브레드크럼 네비게이션 */}
+                <nav className="post-breadcrumb">
+                    <Link to="/" className="breadcrumb-link">홈</Link>
+                    <span className="breadcrumb-sep">/</span>
+                    <span className="breadcrumb-current">{post.title}</span>
+                </nav>
+
                 {/* 글 메타 */}
                 <header className="post-header">
                     <h1 className="post-title">{post.title}</h1>
@@ -312,8 +319,6 @@ export default function PostDetailPage() {
                     </div>
                 )}
 
-                {/* 목록으로 돌아가기 */}
-                <Link to="/" className="back-link">글 목록으로 돌아가기</Link>
             </article>
         </div>
     );

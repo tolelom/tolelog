@@ -13,10 +13,19 @@
     cursor: pointer;
     transition: all 0.3s;
     line-height: 1;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .theme-toggle:hover {
     background: var(--accent-color);
     color: #fff;
     border-color: var(--accent-color);
+}
+
+@media (hover: none) {
+    .theme-toggle:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
 }
