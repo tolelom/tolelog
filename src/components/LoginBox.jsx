@@ -36,8 +36,8 @@ export default function LoginBox() {
         const newErrors = {};
         if (!formData.username) {
             newErrors.username = "아이디를 입력해주세요.";
-        } else if (formData.username.length < 3) {
-            newErrors.username = "아이디는 3자 이상이어야 합니다.";
+        } else if (formData.username.length < 4) {
+            newErrors.username = "아이디는 4자 이상이어야 합니다.";
         }
 
         if (!formData.password) {
