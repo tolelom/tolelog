@@ -1,8 +1,13 @@
 .auth-page {
     max-width: 360px;
+    width: 100%;
     margin: 0 auto;
     padding: 0 16px;
     box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .signup-link {
