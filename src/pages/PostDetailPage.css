@@ -204,19 +204,38 @@
 }
 .btn-delete:hover { background-color: #b85a5a; }
 
-.delete-confirm-inline {
-    flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+/* 삭제 확인 모달 */
+.delete-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4); display: flex;
+    justify-content: center; align-items: center; z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
 }
-.delete-confirm-text { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.delete-modal {
+    background-color: var(--bg-card); border-radius: 12px; padding: 28px 32px;
+    max-width: 360px; width: 90%; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.2s ease-out;
+}
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.delete-modal-text {
+    font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px 0;
+}
+.delete-modal-sub {
+    font-size: 13px; color: var(--text-muted); margin: 0 0 24px 0;
+}
+.delete-modal-actions {
+    display: flex; gap: 10px; justify-content: flex-end;
+}
 .btn-delete-confirm {
-    padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px;
-    font-weight: 500; cursor: pointer; background-color: #c96a6a; color: white; transition: all 0.2s;
+    padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px;
+    font-weight: 600; cursor: pointer; background-color: #c96a6a; color: white; transition: all 0.2s;
 }
 .btn-delete-confirm:hover:not(:disabled) { background-color: #b85a5a; }
 .btn-delete-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-delete-cancel {
-    padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px;
-    font-weight: 500; cursor: pointer; background-color: var(--bg-secondary); color: var(--text-secondary); transition: all 0.2s;
+    padding: 10px 20px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;
+    font-weight: 600; cursor: pointer; background-color: var(--bg-secondary); color: var(--text-secondary); transition: all 0.2s;
 }
 .btn-delete-cancel:hover:not(:disabled) { background-color: var(--bg-hover); }
 .btn-delete-cancel:disabled { opacity: 0.6; cursor: not-allowed; }

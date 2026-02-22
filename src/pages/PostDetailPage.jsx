@@ -300,22 +300,28 @@ export default function PostDetailPage() {
                         <Link to={`/editor/${postId}`} className="btn-edit">
                             수정
                         </Link>
-                        {!deleteConfirm ? (
-                            <button className="btn-delete" onClick={handleDeleteClick}>
-                                삭제
-                            </button>
-                        ) : (
-                            <div className="delete-confirm-inline">
-                                <span className="delete-confirm-text">정말 삭제하시겠습니까?</span>
-                                <button className="btn-delete-confirm" onClick={handleDelete} disabled={isDeleting}>
-                                    {isDeleting ? '삭제 중...' : '삭제'}
-                                </button>
+                        <button className="btn-delete" onClick={handleDeleteClick}>
+                            삭제
+                        </button>
+                        {deleteError && <span className="delete-error">{deleteError}</span>}
+                    </div>
+                )}
+
+                {/* 삭제 확인 모달 */}
+                {deleteConfirm && (
+                    <div className="delete-modal-overlay" onClick={handleDeleteCancel}>
+                        <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+                            <p className="delete-modal-text">이 글을 삭제하시겠습니까?</p>
+                            <p className="delete-modal-sub">삭제된 글은 복구할 수 없습니다.</p>
+                            <div className="delete-modal-actions">
                                 <button className="btn-delete-cancel" onClick={handleDeleteCancel} disabled={isDeleting}>
                                     취소
                                 </button>
+                                <button className="btn-delete-confirm" onClick={handleDelete} disabled={isDeleting}>
+                                    {isDeleting ? '삭제 중...' : '삭제'}
+                                </button>
                             </div>
-                        )}
-                        {deleteError && <span className="delete-error">{deleteError}</span>}
+                        </div>
                     </div>
                 )}
 
