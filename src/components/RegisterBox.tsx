@@ -1,22 +1,30 @@
-import {useContext, useEffect, useRef, useState} from "react";
-import {useNavigate, useLocation} from "react-router-dom";
-import {AuthContext} from "../context/AuthContext.js";
-import {AUTH_API} from "../utils/api.js";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { AUTH_API } from "../utils/api";
 import './AuthForm.css';
 
+interface RegisterFormData {
+    username: string;
+    password: string;
+    confirmPassword: string;
+}
+
+interface RegisterFormErrors {
+    [key: string]: string;
+}
 
 export default function RegisterBox() {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<RegisterFormData>({
         username: '',
         password: '',
         confirmPassword: '',
     });
 
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [errors, setErrors] = useState<RegisterFormErrors>({});
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState({});
-
-    const idRef = useRef();
+    const idRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
     const location = useLocation();
     const { login } = useContext(AuthContext);
@@ -25,16 +33,16 @@ export default function RegisterBox() {
         idRef.current?.focus();
     }, []);
 
-    const handleChange = (e) => {
-        const {name, value} = e.target;
-        setFormData(prev => ({...prev, [name]: value}));
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
         if (errors[name]) {
-            setErrors(prev => ({...prev, [name]: ''}));
+            setErrors(prev => ({ ...prev, [name]: '' }));
         }
-    }
+    };
 
-    const validate = () => {
-        const newErrors = {};
+    const validate = (): boolean => {
+        const newErrors: RegisterFormErrors = {};
         if (!formData.username) {
             newErrors.username = "아이디를 입력해주세요.";
         } else if (formData.username.length < 4) {
@@ -59,9 +67,9 @@ export default function RegisterBox() {
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }
+    };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!validate()) return;
         setIsLoading(true);
@@ -69,19 +77,21 @@ export default function RegisterBox() {
         try {
             const data = await AUTH_API.register(formData.username, formData.password);
             login({
-                token: data.data.token,
+                token: data.data.access_token,
+                refreshToken: data.data.refresh_token,
                 username: data.data.username,
                 userId: data.data.user_id,
                 avatarUrl: data.data.avatar_url,
             });
-            const from = location.state?.from?.pathname || '/';
+            const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
             navigate(from, { replace: true });
-        } catch (err) {
-            setErrors({general: err.message || '네트워크 오류'});
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : '네트워크 오류';
+            setErrors({ general: message });
         } finally {
             setIsLoading(false);
         }
-    }
+    };
 
     return (
         <div className="auth-box">
@@ -127,5 +137,5 @@ export default function RegisterBox() {
                 </button>
             </form>
         </div>
-    )
+    );
 }

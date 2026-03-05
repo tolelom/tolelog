@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { AuthContext } from './AuthContext.js';
+import { useEffect, useState, type ReactNode } from 'react';
+import { AuthContext, type LoginParams } from './AuthContext';
 import { STORAGE_KEYS } from '../utils/constants';
 
-function safeParseUser(key) {
+function safeParseUser(key: string): string | number | null {
     try {
         const str = localStorage.getItem(STORAGE_KEYS.USER);
         if (!str) return null;
@@ -14,11 +14,16 @@ function safeParseUser(key) {
     }
 }
 
-export function AuthProvider({ children }) {
-    const [token, setToken] = useState(() => localStorage.getItem(STORAGE_KEYS.TOKEN));
-    const [username, setUsername] = useState(() => safeParseUser('username'));
-    const [userId, setUserId] = useState(() => safeParseUser('user_id'));
-    const [avatarUrl, setAvatarUrl] = useState(() => safeParseUser('avatar_url'));
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+    const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEYS.TOKEN));
+    const [refreshToken, setRefreshToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN));
+    const [username, setUsername] = useState<string | null>(() => safeParseUser('username') as string | null);
+    const [userId, setUserId] = useState<number | null>(() => safeParseUser('user_id') as number | null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(() => safeParseUser('avatar_url') as string | null);
 
     useEffect(() => {
         if (token) {
@@ -27,6 +32,14 @@ export function AuthProvider({ children }) {
             localStorage.removeItem(STORAGE_KEYS.TOKEN);
         }
     }, [token]);
+
+    useEffect(() => {
+        if (refreshToken) {
+            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+        } else {
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        }
+    }, [refreshToken]);
 
     useEffect(() => {
         if (username && userId) {
@@ -38,22 +51,27 @@ export function AuthProvider({ children }) {
 
     // 다른 탭에서 로그아웃/로그인 시 동기화
     useEffect(() => {
-        const handleStorage = (e) => {
+        const handleStorage = (e: StorageEvent) => {
             if (e.key === STORAGE_KEYS.TOKEN) {
                 if (!e.newValue) {
                     setToken(null);
+                    setRefreshToken(null);
                     setUsername(null);
                     setUserId(null);
                     setAvatarUrl(null);
                 } else {
                     setToken(e.newValue);
-                    const user = safeParseUser('username');
-                    const uid = safeParseUser('user_id');
-                    const avatar = safeParseUser('avatar_url');
+                    setRefreshToken(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN));
+                    const user = safeParseUser('username') as string | null;
+                    const uid = safeParseUser('user_id') as number | null;
+                    const avatar = safeParseUser('avatar_url') as string | null;
                     setUsername(user);
                     setUserId(uid);
                     setAvatarUrl(avatar);
                 }
+            }
+            if (e.key === STORAGE_KEYS.REFRESH_TOKEN) {
+                setRefreshToken(e.newValue ?? null);
             }
             if (e.key === STORAGE_KEYS.USER) {
                 if (!e.newValue) {
@@ -74,8 +92,9 @@ export function AuthProvider({ children }) {
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
-    const login = ({ token: newToken, username: newUsername, userId: newUserId, avatarUrl: newAvatarUrl }) => {
+    const login = ({ token: newToken, refreshToken: newRefreshToken, username: newUsername, userId: newUserId, avatarUrl: newAvatarUrl }: LoginParams) => {
         setToken(newToken);
+        setRefreshToken(newRefreshToken);
         setUsername(newUsername);
         setUserId(newUserId);
         setAvatarUrl(newAvatarUrl || null);
@@ -83,13 +102,14 @@ export function AuthProvider({ children }) {
 
     const logout = () => {
         setToken(null);
+        setRefreshToken(null);
         setUsername(null);
         setUserId(null);
         setAvatarUrl(null);
     };
 
     return (
-        <AuthContext.Provider value={{ token, username, userId, avatarUrl, login, logout, setAvatarUrl }}>
+        <AuthContext.Provider value={{ token, refreshToken, username, userId, avatarUrl, login, logout, setAvatarUrl }}>
             {children}
         </AuthContext.Provider>
     );

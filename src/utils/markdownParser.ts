@@ -1,22 +1,27 @@
 import hljs from 'highlight.js/lib/common';
 import DOMPurify from 'dompurify';
+import type { Block, FootnoteDefBlock } from '../types';
 
 // ─── KaTeX 동적 로드 ───
 
-let katexModule = null;
-let katexLoading = null;
+interface KatexModule {
+    renderToString(expr: string, options: { displayMode: boolean; throwOnError: boolean }): string;
+}
 
-async function loadKatex() {
+let katexModule: KatexModule | null = null;
+let katexLoading: Promise<KatexModule> | null = null;
+
+async function loadKatex(): Promise<KatexModule> {
     if (katexModule) return katexModule;
     if (katexLoading) return katexLoading;
-    katexLoading = import('katex').then(m => {
-        katexModule = m.default || m;
+    katexLoading = import('katex').then((m: { default?: KatexModule } & KatexModule) => {
+        katexModule = (m.default || m) as KatexModule;
         return katexModule;
     });
     return katexLoading;
 }
 
-function renderKatex(expr, displayMode) {
+function renderKatex(expr: string, displayMode: boolean): string {
     if (!katexModule) return escapeHtml(expr);
     try {
         return katexModule.renderToString(expr, { displayMode, throwOnError: false });
@@ -26,13 +31,13 @@ function renderKatex(expr, displayMode) {
 }
 
 // KaTeX 초기화 (앱 시작 시 호출)
-export function initKatex() {
+export function initKatex(): Promise<KatexModule> {
     return loadKatex();
 }
 
 // ─── 인라인 파싱 ───
 
-function escapeHtml(text) {
+function escapeHtml(text: string): string {
     return text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -40,7 +45,7 @@ function escapeHtml(text) {
         .replace(/"/g, '&quot;');
 }
 
-export function slugifyHeading(text) {
+export function slugifyHeading(text: string): string {
     return text
         .replace(/[*_~`[\]()]/g, '')
         .trim()
@@ -49,9 +54,9 @@ export function slugifyHeading(text) {
 }
 
 // 각주 참조를 수집하는 컨텍스트
-let footnoteRefs = new Set();
+let footnoteRefs: Set<string> = new Set();
 
-export function parseInline(text) {
+export function parseInline(text: string): string {
     if (!text) return '';
 
     let result = '';
@@ -180,11 +185,11 @@ export function parseInline(text) {
 
 // ─── 블록 파싱 ───
 
-export function parseBlocks(text) {
+export function parseBlocks(text: string): Block[] {
     if (!text) return [];
 
     const lines = text.split('\n');
-    const blocks = [];
+    const blocks: Block[] = [];
     let i = 0;
 
     while (i < lines.length) {
@@ -220,7 +225,7 @@ export function parseBlocks(text) {
                 i++;
                 continue;
             }
-            const mathLines = [];
+            const mathLines: string[] = [];
             i++;
             while (i < lines.length && !lines[i].trim().startsWith('$$')) {
                 mathLines.push(lines[i]);
@@ -237,7 +242,7 @@ export function parseBlocks(text) {
             const indent = line.length - line.trimStart().length;
             const langMatch = line.trimStart().slice(3).trim();
             const lang = langMatch || '';
-            const codeLines = [];
+            const codeLines: string[] = [];
             i++;
             while (i < lines.length) {
                 if (lines[i].trimStart().startsWith('```') && (lines[i].trim().length - lines[i].trimStart().length <= indent || lines[i].trim() === '```')) {
@@ -288,7 +293,7 @@ export function parseBlocks(text) {
 
         // 테이블: | ... |
         if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
-            const tableLines = [];
+            const tableLines: string[] = [];
             while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
                 tableLines.push(lines[i]);
                 i++;
@@ -314,7 +319,7 @@ export function parseBlocks(text) {
 
         // 인용문: >
         if (line.trimStart().startsWith('>')) {
-            const quoteLines = [];
+            const quoteLines: string[] = [];
             while (i < lines.length && (lines[i].trimStart().startsWith('>') || (lines[i].trim() !== '' && quoteLines.length > 0 && !lines[i].trimStart().startsWith('#')))) {
                 if (!lines[i].trimStart().startsWith('>') && lines[i].trim() === '') break;
                 quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
@@ -330,7 +335,7 @@ export function parseBlocks(text) {
 
         // 체크리스트: - [ ] 또는 - [x]
         if (/^\s*[-*+]\s+\[[ xX]\]\s/.test(line)) {
-            const checkItems = [];
+            const checkItems: { checked: boolean; text: string }[] = [];
             while (i < lines.length && /^\s*[-*+]\s+\[[ xX]\]\s/.test(lines[i])) {
                 const match = lines[i].match(/^\s*[-*+]\s+\[([ xX])\]\s+(.*)$/);
                 if (match) {
@@ -365,7 +370,7 @@ export function parseBlocks(text) {
         }
 
         // 문단: 그 외 텍스트 (연속된 비어있지 않은 줄 합침)
-        const paraLines = [];
+        const paraLines: string[] = [];
         while (i < lines.length && lines[i].trim() !== '' &&
             !lines[i].trimStart().startsWith('#') &&
             !lines[i].trimStart().startsWith('```') &&
@@ -392,11 +397,11 @@ export function parseBlocks(text) {
     return blocks;
 }
 
-function parseTableRow(line) {
+function parseTableRow(line: string): string[] {
     return line.trim().slice(1, -1).split('|').map(cell => cell.trim());
 }
 
-function parseTableAlignments(line) {
+function parseTableAlignments(line: string): string[] {
     return line.trim().slice(1, -1).split('|').map(cell => {
         const trimmed = cell.trim();
         if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
@@ -405,8 +410,13 @@ function parseTableAlignments(line) {
     });
 }
 
-function parseList(lines, startIndex, type) {
-    const items = [];
+interface ListParseResult {
+    block: Block;
+    nextIndex: number;
+}
+
+function parseList(lines: string[], startIndex: number, type: 'ordered' | 'unordered'): ListParseResult {
+    const items: string[] = [];
     let i = startIndex;
     const pattern = type === 'ordered' ? /^\s*\d+\.\s+/ : /^\s*[-*+]\s+/;
 
@@ -437,14 +447,14 @@ function parseList(lines, startIndex, type) {
 
     const raw = lines.slice(startIndex, i).join('\n');
     return {
-        block: { type: type === 'ordered' ? 'ordered_list' : 'unordered_list', items, raw },
+        block: { type: type === 'ordered' ? 'ordered_list' : 'unordered_list', items, raw } as Block,
         nextIndex: i,
     };
 }
 
 // ─── 렌더링 ───
 
-export function renderBlock(block) {
+export function renderBlock(block: Block): string {
     switch (block.type) {
         case 'heading': {
             const headingId = slugifyHeading(block.text);
@@ -509,11 +519,11 @@ export function renderBlock(block) {
             return ''; // renderMarkdown에서 별도 처리
 
         default:
-            return `<p>${parseInline(block.raw || '')}</p>`;
+            return `<p>${parseInline((block as Block).raw || '')}</p>`;
     }
 }
 
-export function renderMarkdown(text) {
+export function renderMarkdown(text: string): string {
     if (!text) return '';
     try {
         footnoteRefs = new Set();
@@ -521,7 +531,7 @@ export function renderMarkdown(text) {
         let html = blocks.map(renderBlock).join('\n');
 
         // 각주 정의 수집
-        const footnoteDefs = blocks.filter(b => b.type === 'footnote_def');
+        const footnoteDefs = blocks.filter((b): b is FootnoteDefBlock => b.type === 'footnote_def');
         if (footnoteDefs.length > 0) {
             html += '<section class="footnotes"><hr><ol class="footnote-list">';
             for (const fn of footnoteDefs) {

@@ -152,3 +152,29 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
+/* ─── Page Loading Spinner (React.lazy Suspense fallback) ─── */
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.page-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-light);
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  animation: page-spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+.page-loading p {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+@keyframes page-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

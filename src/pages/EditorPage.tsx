@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef, ChangeEvent, MutableRefObject } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
@@ -6,27 +6,33 @@ import { STORAGE_KEYS } from '../utils/constants';
 import { useAutoSave } from '../hooks/useAutoSave';
 import BlockEditor from '../components/BlockEditor';
 import ImageUploadButton from '../components/ImageUploadButton';
+import { PostFormData, DraftData } from '../types';
 import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
 
+interface EditorRef {
+    wrapSelection: (before: string, after: string) => void;
+    getActiveTextarea: () => HTMLTextAreaElement | HTMLDivElement | null;
+}
+
 export default function EditorPage() {
     const navigate = useNavigate();
-    const { postId } = useParams();
+    const { postId } = useParams<{ postId: string }>();
     const { token, userId } = useContext(AuthContext);
-    const imageInsertRef = useRef(null);
-    const editorRef = useRef(null);
-    const [formData, setFormData] = useState({
+    const imageInsertRef = useRef<((base64Data: string, fileName: string) => void) | null>(null);
+    const editorRef = useRef<EditorRef | null>(null);
+    const [formData, setFormData] = useState<PostFormData>({
         title: '',
         content: '',
         is_public: true,
         tags: '',
     });
-    const [isSaving, setIsSaving] = useState(false);
-    const [isLoading, setIsLoading] = useState(!!postId);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [showRestorePrompt, setShowRestorePrompt] = useState(false);
-    const [draftInfo, setDraftInfo] = useState(null);
+    const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(!!postId);
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
+    const [showRestorePrompt, setShowRestorePrompt] = useState<boolean>(false);
+    const [draftInfo, setDraftInfo] = useState<DraftData | null>(null);
     const isEditMode = !!postId;
 
     useEffect(() => {
@@ -39,7 +45,7 @@ export default function EditorPage() {
 
     // 편집 중 페이지 이탈 경고
     useEffect(() => {
-        const handleBeforeUnload = (e) => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (formData.title || formData.content) {
                 e.preventDefault();
             }
@@ -56,7 +62,7 @@ export default function EditorPage() {
             const loadPost = async () => {
                 try {
                     setIsLoading(true);
-                    const response = await POST_API.getPost(postId, { signal: controller.signal, token });
+                    const response = await POST_API.getPost(postId, { signal: controller.signal, token: token ?? undefined });
                     if (response.status === 'success') {
                         const post = response.data;
                         // 본인 글이 아니면 상세 페이지로 리다이렉트
@@ -79,7 +85,7 @@ export default function EditorPage() {
                     } else {
                         setError('글을 불러올 수 없습니다.');
                     }
-                } catch (err) {
+                } catch (err: any) {
                     if (err.name === 'AbortError') return;
                     setError(err.message || '글 불러오기에 실패했습니다.');
                 } finally {
@@ -118,7 +124,7 @@ export default function EditorPage() {
         setDraftInfo(null);
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -127,7 +133,7 @@ export default function EditorPage() {
     };
 
     // BlockEditor content 변경
-    const handleContentChange = (newContent) => {
+    const handleContentChange = (newContent: string) => {
         setFormData((prev) => ({
             ...prev,
             content: newContent,
@@ -135,14 +141,14 @@ export default function EditorPage() {
     };
 
     // 이미지 삽입 핸들러
-    const handleImageInsert = (base64Data, fileName) => {
+    const handleImageInsert = (base64Data: string, fileName: string) => {
         if (imageInsertRef.current) {
             imageInsertRef.current(base64Data, fileName);
         }
     };
 
     // 툴바 포맷 버튼 핸들러
-    const handleFormat = (type) => {
+    const handleFormat = (type: string) => {
         if (!editorRef.current) return;
         switch (type) {
             case 'bold':
@@ -186,7 +192,7 @@ export default function EditorPage() {
         setSuccess('');
 
         try {
-            let response;
+            let response: any;
             if (isEditMode) {
                 response = await POST_API.updatePost(
                     postId,
@@ -216,7 +222,7 @@ export default function EditorPage() {
 
             const postIdToNavigate = isEditMode ? postId : response.data.id;
             setTimeout(() => navigate(`/post/${postIdToNavigate}`), 1500);
-        } catch (err) {
+        } catch (err: any) {
             if (err.status === 401) {
                 setError('로그인이 만료되었습니다. 다시 로그인해주세요.');
                 navigate('/login');
@@ -295,7 +301,7 @@ export default function EditorPage() {
                     />
                     {formData.tags && (
                         <div className="tags-preview">
-                            {formData.tags.split(',').map((tag, i) => {
+                            {formData.tags.split(',').map((tag: string, i: number) => {
                                 const trimmed = tag.trim();
                                 return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
                             })}

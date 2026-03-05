@@ -1,4 +1,4 @@
-export function stripMarkdown(text) {
+export function stripMarkdown(text: string): string {
     return text
         .replace(/!\[.*?\]\(.*?\)/g, '')
         .replace(/\[([^\]]*)\]\(.*?\)/g, '$1')
@@ -8,7 +8,7 @@ export function stripMarkdown(text) {
         .trim();
 }
 
-export function formatDate(dateStr) {
+export function formatDate(dateStr: string | null | undefined): string {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return '';

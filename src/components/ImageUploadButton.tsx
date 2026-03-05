@@ -1,16 +1,20 @@
-import { useRef, useState, useContext } from 'react';
+import React, { useRef, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { validateImageFile, compressImage, uploadImageToServer } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
 import './ImageUploadButton.css';
 
-export default function ImageUploadButton({ onImageInsert }) {
-    const fileInputRef = useRef(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+interface ImageUploadButtonProps {
+    onImageInsert?: (url: string, fileName: string) => void;
+}
+
+export default function ImageUploadButton({ onImageInsert }: ImageUploadButtonProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string>('');
     const { token } = useContext(AuthContext);
 
-    const handleFileSelect = async (e) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -20,7 +24,7 @@ export default function ImageUploadButton({ onImageInsert }) {
         try {
             const validation = validateImageFile(file);
             if (!validation.valid) {
-                setError(validation.error);
+                setError(validation.error ?? '유효하지 않은 이미지입니다.');
                 setIsLoading(false);
                 return;
             }
@@ -29,6 +33,11 @@ export default function ImageUploadButton({ onImageInsert }) {
             const compressedFile = await compressImage(file);
 
             // 서버에 업로드
+            if (!token) {
+                setError('로그인이 필요합니다.');
+                setIsLoading(false);
+                return;
+            }
             const imageUrl = await uploadImageToServer(compressedFile, token);
 
             // API_BASE_URL에서 /api/v1 부분을 제거하여 서버 origin 추출
@@ -42,8 +51,9 @@ export default function ImageUploadButton({ onImageInsert }) {
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
-        } catch (err) {
-            setError(err.message || '이미지 업로드 중 오류가 발생했습니다.');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : '이미지 업로드 중 오류가 발생했습니다.';
+            setError(message);
             console.error(err);
         } finally {
             setIsLoading(false);

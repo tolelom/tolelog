@@ -1,16 +1,17 @@
-import { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import { useState, useEffect, useContext, useMemo, useRef, ChangeEvent, MouseEvent } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API } from '../utils/api';
-import { stripMarkdown, formatDate } from '../utils/format.js';
-import { validateImageFile, compressImage } from '../utils/imageUpload.js';
+import { stripMarkdown, formatDate } from '../utils/format';
+import { validateImageFile, compressImage } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
-import ThemeToggle from '../components/ThemeToggle.jsx';
+import ThemeToggle from '../components/ThemeToggle';
+import { User, PostListItem, Pagination } from '../types';
 import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
 
-function getMemberDays(createdAt) {
+function getMemberDays(createdAt: string | undefined): number {
     if (!createdAt) return 0;
     const created = new Date(createdAt);
     if (isNaN(created.getTime())) return 0;
@@ -18,29 +19,29 @@ function getMemberDays(createdAt) {
 }
 
 export default function UserProfilePage() {
-    const { userId } = useParams();
+    const { userId } = useParams<{ userId: string }>();
     const { userId: currentUserId, token, setAvatarUrl: setGlobalAvatarUrl } = useContext(AuthContext);
     const [searchParams, setSearchParams] = useSearchParams();
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const tag = searchParams.get('tag') || '';
-    const [profile, setProfile] = useState(null);
-    const [posts, setPosts] = useState([]);
-    const [totalPosts, setTotalPosts] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
-    const [hasMore, setHasMore] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [avatarUploading, setAvatarUploading] = useState(false);
-    const fileInputRef = useRef(null);
+    const page: number = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const tag: string = searchParams.get('tag') || '';
+    const [profile, setProfile] = useState<User | null>(null);
+    const [posts, setPosts] = useState<PostListItem[]>([]);
+    const [totalPosts, setTotalPosts] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
+    const [hasMore, setHasMore] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [avatarUploading, setAvatarUploading] = useState<boolean>(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
 
     // 현재 보이는 글에서 태그 집계
-    const tagCloud = useMemo(() => {
-        const counts = {};
-        posts.forEach(post => {
+    const tagCloud = useMemo<[string, number][]>(() => {
+        const counts: Record<string, number> = {};
+        posts.forEach((post: PostListItem) => {
             if (post.tags) {
-                post.tags.split(',').forEach(t => {
+                post.tags.split(',').forEach((t: string) => {
                     const trimmed = t.trim();
                     if (trimmed) counts[trimmed] = (counts[trimmed] || 0) + 1;
                 });
@@ -55,9 +56,9 @@ export default function UserProfilePage() {
         }
     };
 
-    const handleAvatarChange = async (e) => {
+    const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file || !token) return;
 
         const validation = validateImageFile(file);
         if (!validation.valid) {
@@ -69,10 +70,10 @@ export default function UserProfilePage() {
         try {
             const compressed = await compressImage(file);
             const result = await USER_API.uploadAvatar(compressed, token);
-            const newAvatarUrl = result.data.avatar_url;
-            setProfile(prev => ({ ...prev, avatar_url: newAvatarUrl }));
+            const newAvatarUrl: string = result.data.avatar_url;
+            setProfile((prev: User | null) => prev ? { ...prev, avatar_url: newAvatarUrl } : prev);
             setGlobalAvatarUrl(newAvatarUrl);
-        } catch (err) {
+        } catch (err: any) {
             alert(err.message || '프로필 이미지 업로드에 실패했습니다');
         } finally {
             setAvatarUploading(false);
@@ -86,18 +87,18 @@ export default function UserProfilePage() {
         setError(null);
 
         Promise.all([
-            USER_API.getProfile(userId, { signal: controller.signal }),
-            POST_API.getUserPosts(userId, page, PAGE_SIZE, { signal: controller.signal, tag, token }),
+            USER_API.getProfile(userId!, { signal: controller.signal }),
+            POST_API.getUserPosts(userId!, page, PAGE_SIZE, { signal: controller.signal, tag, token: token ?? undefined }),
         ])
-            .then(([profileRes, postsRes]) => {
+            .then(([profileRes, postsRes]: [any, any]) => {
                 if (profileRes.status === 'success') {
                     setProfile(profileRes.data);
                     document.title = `${profileRes.data.username} | Tolelog`;
                 }
 
                 const data = postsRes.data || postsRes;
-                const list = Array.isArray(data) ? data : data.posts || [];
-                const pagination = data.pagination;
+                const list: PostListItem[] = Array.isArray(data) ? data : data.posts || [];
+                const pagination: Pagination | undefined = data.pagination;
                 setPosts(list);
                 if (pagination) {
                     setTotalPosts(pagination.total || list.length);
@@ -108,7 +109,7 @@ export default function UserProfilePage() {
                     setHasMore(list.length === PAGE_SIZE);
                 }
             })
-            .catch((err) => {
+            .catch((err: Error) => {
                 if (err.name === 'AbortError') return;
                 setError(err.message);
             })
@@ -201,7 +202,7 @@ export default function UserProfilePage() {
                 <div className="profile-tag-cloud">
                     <h3 className="profile-tag-cloud-title">태그</h3>
                     <div className="profile-tag-cloud-list">
-                        {tagCloud.map(([tagName, count]) => (
+                        {tagCloud.map(([tagName, count]: [string, number]) => (
                             <span
                                 key={tagName}
                                 className="tag-chip tag-chip-btn"
@@ -233,7 +234,7 @@ export default function UserProfilePage() {
                     </div>
                 )}
 
-                {posts.map((post) => (
+                {posts.map((post: PostListItem) => (
                     <Link
                         key={post.id}
                         to={`/post/${post.id}`}
@@ -242,13 +243,13 @@ export default function UserProfilePage() {
                         <h3 className="profile-post-title">{post.title}</h3>
                         <div className="profile-post-meta">
                             <span className="profile-post-date">{formatDate(post.created_at)}</span>
-                            {post.tags && post.tags.split(',').map((t, i) => {
+                            {post.tags && post.tags.split(',').map((t: string, i: number) => {
                                 const trimmed = t.trim();
                                 return trimmed ? (
                                     <span
                                         key={i}
                                         className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
+                                        onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
                                     >
                                         {trimmed}
                                     </span>
@@ -258,9 +259,9 @@ export default function UserProfilePage() {
                                 <span className="profile-post-private">비공개</span>
                             )}
                         </div>
-                        {post.content && (
+                        {(post as any).content && (
                             <p className="profile-post-preview">
-                                {stripMarkdown(post.content).slice(0, 150)}
+                                {stripMarkdown((post as any).content).slice(0, 150)}
                             </p>
                         )}
                     </Link>
@@ -272,9 +273,9 @@ export default function UserProfilePage() {
                             className="profile-page-btn"
                             disabled={page <= 1}
                             onClick={() => {
-                                const params = {};
+                                const params: Record<string, string> = {};
                                 if (tag) params.tag = tag;
-                                if (page - 1 > 1) params.page = page - 1;
+                                if (page - 1 > 1) params.page = String(page - 1);
                                 setSearchParams(params);
                             }}
                         >
@@ -287,7 +288,7 @@ export default function UserProfilePage() {
                             className="profile-page-btn"
                             disabled={!hasMore}
                             onClick={() => {
-                                const params = { page: page + 1 };
+                                const params: Record<string, string> = { page: String(page + 1) };
                                 if (tag) params.tag = tag;
                                 setSearchParams(params);
                             }}

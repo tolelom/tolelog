@@ -4,10 +4,18 @@ import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { renderMarkdown } from '../utils/markdown';
 import { slugifyHeading } from '../utils/markdownParser';
+import { Post } from '../types';
+import CommentSection from '../components/CommentSection';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
 
-function getPlainText(content, maxLength = 160) {
+interface TocItem {
+    level: number;
+    text: string;
+    id: string;
+}
+
+function getPlainText(content: string, maxLength: number = 160): string {
     return content
         .replace(/!\[.*?\]\([^)]*\)/g, '')
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
@@ -18,14 +26,14 @@ function getPlainText(content, maxLength = 160) {
         .slice(0, maxLength);
 }
 
-function getFirstHttpImage(content) {
+function getFirstHttpImage(content: string): string | null {
     const match = content.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
     return match ? match[1] : null;
 }
 
-function extractToc(content) {
+function extractToc(content: string): TocItem[] {
     const lines = content.split('\n');
-    const toc = [];
+    const toc: TocItem[] = [];
     let inCode = false;
     for (const line of lines) {
         if (line.trimStart().startsWith('```')) { inCode = !inCode; continue; }
@@ -43,24 +51,25 @@ function extractToc(content) {
 }
 
 export default function PostDetailPage() {
-    const { postId } = useParams();
+    const { postId } = useParams<{ postId: string }>();
     const navigate = useNavigate();
     const { userId, token } = useContext(AuthContext);
-    const [post, setPost] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [deleteConfirm, setDeleteConfirm] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [deleteError, setDeleteError] = useState('');
-    const [activeTocId, setActiveTocId] = useState(null);
-    const contentRef = useRef(null);
+    const [post, setPost] = useState<Post | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string>('');
+    const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const [deleteError, setDeleteError] = useState<string>('');
+    const [activeTocId, setActiveTocId] = useState<string | null>(null);
+    const contentRef = useRef<HTMLDivElement | null>(null);
 
     // 코드 블록 복사 버튼 이벤트 위임
     useEffect(() => {
         const container = contentRef.current;
         if (!container) return;
-        const handleClick = (e) => {
-            const btn = e.target.closest('.code-copy-btn');
+        const handleClick = (e: Event) => {
+            const target = e.target as HTMLElement;
+            const btn = target.closest('.code-copy-btn') as HTMLElement | null;
             if (!btn) return;
             const code = btn.getAttribute('data-code')
                 ?.replace(/&amp;/g, '&')
@@ -88,14 +97,14 @@ export default function PostDetailPage() {
         const loadPost = async () => {
             try {
                 setIsLoading(true);
-                const response = await POST_API.getPost(postId, { signal: controller.signal, token });
+                const response = await POST_API.getPost(postId!, { signal: controller.signal, token: token ?? undefined });
                 if (response.status === 'success') {
                     setPost(response.data);
                     document.title = `${response.data.title} | Tolelog`;
                 } else {
                     setError('글을 찾을 수 없습니다.');
                 }
-            } catch (err) {
+            } catch (err: any) {
                 if (err.name === 'AbortError') return;
                 setError(err.message || '글 로드에 실패했습니다.');
             } finally {
@@ -111,10 +120,10 @@ export default function PostDetailPage() {
         if (!post) return;
         const description = getPlainText(post.content);
         const ogImage = getFirstHttpImage(post.content);
-        const created = [];
-        const setMeta = (attr, attrValue, content) => {
+        const created: HTMLMetaElement[] = [];
+        const setMeta = (attr: string, attrValue: string, content: string | null) => {
             if (!content) return;
-            let el = document.querySelector(`meta[${attr}="${attrValue}"]`);
+            let el = document.querySelector(`meta[${attr}="${attrValue}"]`) as HTMLMetaElement | null;
             if (!el) {
                 el = document.createElement('meta');
                 el.setAttribute(attr, attrValue);
@@ -134,15 +143,15 @@ export default function PostDetailPage() {
     }, [post]);
 
     // 목차 추출 (early return 전에 호출해야 hooks 규칙 준수)
-    const toc = useMemo(() => (post ? extractToc(post.content) : []), [post]);
+    const toc = useMemo<TocItem[]>(() => (post ? extractToc(post.content) : []), [post]);
 
     // TOC 현재 섹션 하이라이트
     useEffect(() => {
         if (toc.length === 0) return;
-        const headingEls = toc.map(item => document.getElementById(item.id)).filter(Boolean);
+        const headingEls = toc.map(item => document.getElementById(item.id)).filter(Boolean) as HTMLElement[];
         if (headingEls.length === 0) return;
         const observer = new IntersectionObserver(
-            (entries) => {
+            (entries: IntersectionObserverEntry[]) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) setActiveTocId(entry.target.id);
                 });
@@ -155,7 +164,7 @@ export default function PostDetailPage() {
 
     useEffect(() => {
         if (!deleteConfirm) return;
-        const handleKeyDown = (e) => {
+        const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 setDeleteConfirm(false);
                 setDeleteError('');
@@ -173,17 +182,18 @@ export default function PostDetailPage() {
     };
 
     const handleDelete = async () => {
+        if (!postId || !token) return;
         setIsDeleting(true);
         setDeleteError('');
         try {
-            const response = await POST_API.deletePost(postId, token);
+            const response = await POST_API.deletePost(postId, token) as { status: string };
             if (response.status === 'success') {
                 navigate('/');
             } else {
                 setDeleteError('글 삭제에 실패했습니다.');
                 setDeleteConfirm(false);
             }
-        } catch (err) {
+        } catch (err: any) {
             setDeleteError(err.message || '글 삭제에 실패했습니다.');
             setDeleteConfirm(false);
         } finally {
@@ -235,7 +245,7 @@ export default function PostDetailPage() {
                 <nav className="toc-panel" aria-label="목차">
                     <p className="toc-title">목차</p>
                     <ul className="toc-list">
-                        {toc.map((item, i) => (
+                        {toc.map((item: TocItem, i: number) => (
                             <li key={i} className={`toc-item toc-level-${item.level}`}>
                                 <a href={`#${item.id}`} className={`toc-link${activeTocId === item.id ? ' toc-link-active' : ''}`}>{item.text}</a>
                             </li>
@@ -270,7 +280,7 @@ export default function PostDetailPage() {
                 {/* 태그 */}
                 {post.tags && (
                     <div className="post-tags">
-                        {post.tags.split(',').map((tag, i) => {
+                        {post.tags.split(',').map((tag: string, i: number) => {
                             const trimmed = tag.trim();
                             return trimmed ? (
                                 <span
@@ -306,6 +316,9 @@ export default function PostDetailPage() {
                         {deleteError && <span className="delete-error">{deleteError}</span>}
                     </div>
                 )}
+
+                {/* 댓글 섹션 */}
+                {post && <CommentSection postId={post.id} />}
 
                 {/* 삭제 확인 모달 */}
                 {deleteConfirm && (

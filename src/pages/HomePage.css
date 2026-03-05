@@ -97,6 +97,47 @@
     color: var(--text-primary);
 }
 
+/* 검색 */
+.home-search {
+    position: relative;
+    margin-bottom: 24px;
+}
+.home-search-input {
+    width: 100%;
+    padding: 10px 36px 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.home-search-input:focus {
+    border-color: var(--accent-color);
+}
+.home-search-input::placeholder {
+    color: var(--text-muted);
+}
+.home-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+}
+.home-search-clear:hover {
+    color: var(--text-primary);
+}
+
 /* 글 목록 */
 .home-post-list {
     text-align: left;

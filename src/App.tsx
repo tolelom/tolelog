@@ -1,19 +1,22 @@
 import './App.css'
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import EditorPage from './pages/EditorPage.jsx';
-import PostDetailPage from './pages/PostDetailPage.jsx';
-import UserProfilePage from './pages/UserProfilePage.jsx';
-import PrivateRoute from './components/PrivateRoute.jsx';
-import ErrorBoundary from './components/ErrorBoundary.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
+import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const EditorPage = lazy(() => import('./pages/EditorPage'));
+const PostDetailPage = lazy(() => import('./pages/PostDetailPage'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function App() {
     return (
         <BrowserRouter>
             <ErrorBoundary>
+            <Suspense fallback={<div className="page-loading"><div className="spinner" /><p>로딩 중...</p></div>}>
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/post/:postId" element={<PostDetailPage />} />
@@ -26,6 +29,7 @@ function App() {
 
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
+            </Suspense>
             </ErrorBoundary>
         </BrowserRouter>
     )

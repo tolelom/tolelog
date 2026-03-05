@@ -1,6 +1,6 @@
 import { useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext.js';
+import { AuthContext } from '../context/AuthContext';
 import RegisterBox from "../components/RegisterBox";
 import './LoginPage.css';
 

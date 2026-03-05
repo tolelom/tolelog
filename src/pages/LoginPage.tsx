@@ -1,7 +1,7 @@
 import { useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext.js';
-import LoginBox from "../components/LoginBox.jsx";
+import { AuthContext } from '../context/AuthContext';
+import LoginBox from "../components/LoginBox";
 import './LoginPage.css';
 
 export default function LoginPage() {

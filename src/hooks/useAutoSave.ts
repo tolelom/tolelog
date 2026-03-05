@@ -1,14 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { STORAGE_KEYS, AUTO_SAVE_DELAY_MS } from '../utils/constants';
+import type { PostFormData, DraftData } from '../types';
 
-export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
-    const [saveStatus, setSaveStatus] = useState('saved');
-    const saveTimeoutRef = useRef(null);
-    const lastSavedRef = useRef(null);
+export type SaveStatus = 'saved' | 'saving' | 'error';
 
-    const saveDraft = useCallback((data) => {
+export interface UseAutoSaveReturn {
+    saveStatus: SaveStatus;
+    loadDraft: () => DraftData | null;
+    clearDraft: () => void;
+    hasDraft: () => boolean;
+    getFormattedSaveTime: () => string;
+}
+
+export function useAutoSave(formData: PostFormData, storageKey: string = STORAGE_KEYS.DRAFT): UseAutoSaveReturn {
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastSavedRef = useRef<DraftData | null>(null);
+
+    const saveDraft = useCallback((data: PostFormData) => {
         try {
-            const draftData = {
+            const draftData: DraftData = {
                 title: data.title,
                 content: data.content,
                 is_public: data.is_public,
@@ -42,11 +53,11 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
         };
     }, [formData, saveDraft]);
 
-    const loadDraft = useCallback(() => {
+    const loadDraft = useCallback((): DraftData | null => {
         try {
             const saved = localStorage.getItem(storageKey);
             if (saved) {
-                return JSON.parse(saved);
+                return JSON.parse(saved) as DraftData;
             }
             return null;
         } catch (error) {
@@ -65,7 +76,7 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
         }
     }, [storageKey]);
 
-    const hasDraft = useCallback(() => {
+    const hasDraft = useCallback((): boolean => {
         try {
             const saved = localStorage.getItem(storageKey);
             return saved !== null;
@@ -74,13 +85,13 @@ export function useAutoSave(formData, storageKey = STORAGE_KEYS.DRAFT) {
         }
     }, [storageKey]);
 
-    const getFormattedSaveTime = () => {
+    const getFormattedSaveTime = (): string => {
         const draft = loadDraft();
         if (!draft || !draft.savedAt) return '';
 
         const date = new Date(draft.savedAt);
         const now = new Date();
-        const diffMs = now - date;
+        const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / 60000);
 
         if (diffMins < 1) {

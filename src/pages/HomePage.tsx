@@ -1,9 +1,10 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useContext, useState, useEffect } from 'react';
-import { AuthContext } from '../context/AuthContext.js';
-import { POST_API } from '../utils/api.js';
-import { stripMarkdown, formatDate } from '../utils/format.js';
-import ThemeToggle from '../components/ThemeToggle.jsx';
+import { useContext, useState, useEffect, MouseEvent } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { POST_API } from '../utils/api';
+import { stripMarkdown, formatDate } from '../utils/format';
+import ThemeToggle from '../components/ThemeToggle';
+import { PostListItem, Pagination } from '../types';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
@@ -12,27 +13,59 @@ export default function HomePage() {
     const { username, userId, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const tag = searchParams.get('tag') || '';
-    const [posts, setPosts] = useState([]);
-    const [totalPages, setTotalPages] = useState(0);
-    const [hasMore, setHasMore] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [fetchKey, setFetchKey] = useState(0);
+    const page: number = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const tag: string = searchParams.get('tag') || '';
+    const searchQuery: string = searchParams.get('q') || '';
+    const [searchInput, setSearchInput] = useState(searchQuery);
+    const [posts, setPosts] = useState<PostListItem[]>([]);
+    const [totalPages, setTotalPages] = useState<number>(0);
+    const [hasMore, setHasMore] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [fetchKey, setFetchKey] = useState<number>(0);
 
     useEffect(() => { document.title = 'Tolelog'; }, []);
+
+    // Debounce search input into URL params
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentQ = searchParams.get('q') || '';
+            if (searchInput.trim() !== currentQ) {
+                setSearchParams(prev => {
+                    const next = new URLSearchParams(prev);
+                    if (searchInput.trim()) {
+                        next.set('q', searchInput.trim());
+                    } else {
+                        next.delete('q');
+                    }
+                    next.delete('page');
+                    return next;
+                });
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    // Sync searchInput when URL q param changes externally
+    useEffect(() => {
+        setSearchInput(searchParams.get('q') || '');
+    }, [searchParams.get('q')]);
 
     useEffect(() => {
         const controller = new AbortController();
         setLoading(true);
         setError(null);
 
-        POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal, tag })
-            .then((res) => {
+        const q = searchParams.get('q') || '';
+        const fetchPromise = q
+            ? POST_API.searchPosts(q, page, PAGE_SIZE, { signal: controller.signal })
+            : POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal, tag });
+
+        fetchPromise
+            .then((res: any) => {
                 const data = res.data || res;
-                const list = Array.isArray(data) ? data : data.posts || [];
-                const pagination = data.pagination;
+                const list: PostListItem[] = Array.isArray(data) ? data : data.posts || [];
+                const pagination: Pagination | undefined = data.pagination;
                 setPosts(list);
                 if (pagination) {
                     setTotalPages(pagination.total_pages || 0);
@@ -42,7 +75,7 @@ export default function HomePage() {
                 }
                 window.scrollTo(0, 0);
             })
-            .catch((err) => {
+            .catch((err: Error) => {
                 if (err.name === 'AbortError') return;
                 setError(err.message);
             })
@@ -51,7 +84,7 @@ export default function HomePage() {
             });
 
         return () => controller.abort();
-    }, [page, tag, fetchKey]);
+    }, [page, tag, searchQuery, fetchKey]);
 
     return (
         <div className="home-page">
@@ -78,6 +111,19 @@ export default function HomePage() {
                 )}
             </div>
 
+            <div className="home-search">
+                <input
+                    type="text"
+                    className="home-search-input"
+                    placeholder="글 검색..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                />
+                {searchInput && (
+                    <button className="home-search-clear" onClick={() => { setSearchInput(''); setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('q'); next.delete('page'); return next; }); }}>×</button>
+                )}
+            </div>
+
             <div className="home-post-list">
                 {loading && (
                     <div className="home-status">
@@ -89,7 +135,7 @@ export default function HomePage() {
                 {error && (
                     <div className="home-status home-error">
                         <p>오류가 발생했습니다: {error}</p>
-                        <button className="home-retry-btn" onClick={() => setFetchKey(k => k + 1)}>
+                        <button className="home-retry-btn" onClick={() => setFetchKey((k: number) => k + 1)}>
                             다시 시도
                         </button>
                     </div>
@@ -101,6 +147,13 @@ export default function HomePage() {
                     </div>
                 )}
 
+                {searchQuery && (
+                    <div className="home-tag-filter">
+                        <span>검색: <strong>{searchQuery}</strong></span>
+                        <button className="home-tag-clear" onClick={() => { setSearchInput(''); setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('q'); next.delete('page'); return next; }); }}>×</button>
+                    </div>
+                )}
+
                 {tag && (
                     <div className="home-tag-filter">
                         <span>태그: <strong>{tag}</strong></span>
@@ -108,7 +161,7 @@ export default function HomePage() {
                     </div>
                 )}
 
-                {!loading && !error && posts.map((post) => (
+                {!loading && !error && posts.map((post: PostListItem) => (
                     <Link
                         key={post.id}
                         to={`/post/${post.id}`}
@@ -118,7 +171,7 @@ export default function HomePage() {
                         <div className="home-post-meta">
                             <span
                                 className="home-post-author"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/user/${post.user_id}`); }}
+                                onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); navigate(`/user/${post.user_id}`); }}
                             >
                                 {post.author}
                             </span>
@@ -127,13 +180,13 @@ export default function HomePage() {
                         </div>
                         {post.tags && (
                             <div className="home-post-tags">
-                                {post.tags.split(',').map((t, i) => {
+                                {post.tags.split(',').map((t: string, i: number) => {
                                     const trimmed = t.trim();
                                     return trimmed ? (
                                         <span
                                             key={i}
                                             className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
-                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
+                                            onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
                                         >
                                             {trimmed}
                                         </span>
@@ -141,9 +194,9 @@ export default function HomePage() {
                                 })}
                             </div>
                         )}
-                        {post.content && (
+                        {(post as any).content && (
                             <p className="home-post-preview">
-                                {stripMarkdown(post.content).slice(0, 150)}
+                                {stripMarkdown((post as any).content).slice(0, 150)}
                             </p>
                         )}
                     </Link>
@@ -155,9 +208,10 @@ export default function HomePage() {
                             className="home-page-btn"
                             disabled={page <= 1}
                             onClick={() => {
-                                const params = {};
+                                const params: Record<string, string> = {};
                                 if (tag) params.tag = tag;
-                                if (page - 1 > 1) params.page = page - 1;
+                                if (searchQuery) params.q = searchQuery;
+                                if (page - 1 > 1) params.page = String(page - 1);
                                 setSearchParams(params);
                             }}
                         >
@@ -170,8 +224,9 @@ export default function HomePage() {
                             className="home-page-btn"
                             disabled={!hasMore}
                             onClick={() => {
-                                const params = { page: page + 1 };
+                                const params: Record<string, string> = { page: String(page + 1) };
                                 if (tag) params.tag = tag;
+                                if (searchQuery) params.q = searchQuery;
                                 setSearchParams(params);
                             }}
                         >
