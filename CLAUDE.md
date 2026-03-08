@@ -25,8 +25,7 @@ Vite config includes manual chunk splitting: `highlight.js/lib/common` is extrac
 
 **State management:** React Context API via `AuthContext`/`AuthProvider` and `ThemeContext`/`ThemeProvider`. Auth tokens, user info, and theme preference persisted in `localStorage` using keys from `src/utils/constants.js`.
 
-**API layer:** `src/utils/api.js` provides several patterns:
-- `useApi()` hook — returns a `request()` function that auto-attaches Bearer token and handles 401 logout. (Defined but currently unused in components.)
+**API layer:** `src/utils/api.ts` provides several patterns:
 - `POST_API` object — standalone async functions for post CRUD. Uses internal `authenticatedFetch` helper to reduce duplication.
 - `AUTH_API` object — `login()` and `register()` fetch wrappers.
 - `IMAGE_API.upload()` — FormData upload with Bearer token for server-side image storage.
@@ -40,8 +39,8 @@ Vite config includes manual chunk splitting: `highlight.js/lib/common` is extrac
 - `src/utils/format.js` — `stripMarkdown()`, `formatDate()`
 
 **Components:**
-- `AuthForm` (`src/components/AuthForm.jsx`) — generic field-driven form component. Currently unused; `LoginBox` and `RegisterBox` are standalone implementations.
-- `LoginBox` / `RegisterBox` — standalone login/register form components with their own validation and submit handlers. Both share `AuthForm.css`.
+- `AuthForm` (`src/components/AuthForm.tsx`) — generic field-driven form component for authentication.
+- `LoginBox` / `RegisterBox` — login/register components using `AuthForm` with their own validation logic. Both share `AuthForm.css`.
 - `ImageUploadButton` — image upload with compression, uploads to server via `IMAGE_API`.
 - `BlockEditor` — Typora/Notion-style block-based inline markdown editor with `forwardRef`. Exposes `wrapSelection()` via `useImperativeHandle`. Supports Ctrl+B/I/K/` shortcuts. Images are uploaded to server (Base64 as fallback).
 - `ThemeToggle` — dark/light mode toggle button.

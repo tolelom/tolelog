@@ -29,6 +29,14 @@
   --warning-bg: #fff3cd;
   --warning-text: #ff9800;
 
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
+
+  --btn-edit-bg: #5b8dd9;
+  --btn-edit-hover: #4a7ac8;
+  --btn-danger-bg: #c96a6a;
+  --btn-danger-hover: #b85a5a;
+
   --blockquote-bg: #f9f9f9;
   --blockquote-border: #ddd;
   --table-header-bg: #f5f5f5;
@@ -72,6 +80,32 @@
 :root .hljs-params { color: #383a42; }
 :root .hljs-meta { color: #4078f2; }
 
+/* ─── highlight.js 다크 모드 오버라이드 (atom-one-dark) ─── */
+[data-theme="dark"] .hljs {
+  background: var(--code-block-bg);
+  color: var(--code-block-text);
+}
+[data-theme="dark"] .hljs-comment,
+[data-theme="dark"] .hljs-quote { color: #5c6370; font-style: italic; }
+[data-theme="dark"] .hljs-keyword,
+[data-theme="dark"] .hljs-selector-tag,
+[data-theme="dark"] .hljs-deletion { color: #c678dd; }
+[data-theme="dark"] .hljs-string,
+[data-theme="dark"] .hljs-addition { color: #98c379; }
+[data-theme="dark"] .hljs-number,
+[data-theme="dark"] .hljs-literal { color: #d19a66; }
+[data-theme="dark"] .hljs-built_in,
+[data-theme="dark"] .hljs-type { color: #e6c07b; }
+[data-theme="dark"] .hljs-title,
+[data-theme="dark"] .hljs-section,
+[data-theme="dark"] .hljs-attr { color: #61afef; }
+[data-theme="dark"] .hljs-name,
+[data-theme="dark"] .hljs-tag { color: #e06c75; }
+[data-theme="dark"] .hljs-variable,
+[data-theme="dark"] .hljs-template-variable { color: #e06c75; }
+[data-theme="dark"] .hljs-params { color: #abb2bf; }
+[data-theme="dark"] .hljs-meta { color: #61afef; }
+
 /* ─── CSS 변수: 다크 모드 (블랙) ─── */
 [data-theme="dark"] {
   --bg-primary: #000000;
@@ -102,6 +136,14 @@
   --error-border: rgba(220, 53, 69, 0.3);
   --warning-bg: rgba(255, 152, 0, 0.15);
   --warning-text: #ffb74d;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  --btn-edit-bg: #4a8fd9;
+  --btn-edit-hover: #5ea0e8;
+  --btn-danger-bg: #d06060;
+  --btn-danger-hover: #e07070;
 
   --blockquote-bg: rgba(255, 255, 255, 0.04);
   --blockquote-border: rgba(255, 255, 255, 0.2);

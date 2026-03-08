@@ -87,6 +87,7 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
     const [blocks, setBlocks] = useState<EditorBlock[]>(() => initBlocks(content));
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [isDragOver, setIsDragOver] = useState<boolean>(false);
+    const [uploadError, setUploadError] = useState<string>('');
     const textareaRefs = useRef<Record<number, HTMLTextAreaElement | HTMLDivElement | null>>({});
     const containerRef = useRef<HTMLDivElement>(null);
     const isInternalChange = useRef<boolean>(false);
@@ -408,10 +409,11 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
         for (const file of files) {
             const validation = validateImageFile(file);
             if (!validation.valid) {
-                alert(validation.error);
+                setUploadError(validation.error || '유효하지 않은 이미지입니다.');
                 continue;
             }
             try {
+                setUploadError('');
                 const compressed = await compressImage(file);
                 if (token) {
                     const url = await uploadImageToServer(compressed, token);
@@ -424,7 +426,7 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
                 }
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : '이미지 업로드 실패';
-                alert('이미지 업로드 실패: ' + message);
+                setUploadError('이미지 업로드 실패: ' + message);
             }
         }
     };
@@ -437,6 +439,12 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
+            {uploadError && (
+                <div className="block-upload-error" role="alert">
+                    {uploadError}
+                    <button className="block-upload-error-close" onClick={() => setUploadError('')} aria-label="오류 닫기">×</button>
+                </div>
+            )}
             {blocks.map((block, index) => {
                 const isActive = activeIndex === index;
                 const imgMatch = isActive
@@ -466,8 +474,21 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
                                     />
                                     <div
                                         className="image-resize-handle"
+                                        role="slider"
+                                        tabIndex={0}
+                                        aria-label="이미지 크기 조절"
+                                        aria-valuetext={imgMatch[4] || '원본'}
                                         onMouseDown={(e) => handleResizeMouseDown(e, index)}
                                         onTouchStart={(e) => handleResizeTouchStart(e, index)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                                                e.preventDefault();
+                                                const currentWidth = parseInt(imgMatch![4] || '100', 10);
+                                                const delta = e.key === 'ArrowRight' ? 5 : -5;
+                                                const newWidth = Math.max(10, Math.min(100, currentWidth + delta));
+                                                handleImageResize(index, `${newWidth}%`);
+                                            }
+                                        }}
                                     />
                                 </div>
                                 <div className="image-resize-controls">

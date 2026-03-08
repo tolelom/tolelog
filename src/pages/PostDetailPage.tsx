@@ -62,6 +62,7 @@ export default function PostDetailPage() {
     const [deleteError, setDeleteError] = useState<string>('');
     const [activeTocId, setActiveTocId] = useState<string | null>(null);
     const contentRef = useRef<HTMLDivElement | null>(null);
+    const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
     // 코드 블록 복사 버튼 이벤트 위임
     useEffect(() => {
@@ -104,9 +105,9 @@ export default function PostDetailPage() {
                 } else {
                     setError('글을 찾을 수 없습니다.');
                 }
-            } catch (err: any) {
-                if (err.name === 'AbortError') return;
-                setError(err.message || '글 로드에 실패했습니다.');
+            } catch (err: unknown) {
+                if (err instanceof Error && err.name === 'AbortError') return;
+                setError(err instanceof Error ? err.message : '글 로드에 실패했습니다.');
             } finally {
                 setIsLoading(false);
             }
@@ -168,8 +169,30 @@ export default function PostDetailPage() {
             if (e.key === 'Escape') {
                 setDeleteConfirm(false);
                 setDeleteError('');
+                return;
+            }
+            // Focus trap within modal
+            if (e.key === 'Tab' && deleteModalRef.current) {
+                const focusable = deleteModalRef.current.querySelectorAll<HTMLElement>(
+                    'button:not(:disabled)'
+                );
+                if (focusable.length === 0) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
             }
         };
+        // Focus the first button in the modal
+        requestAnimationFrame(() => {
+            const cancelBtn = deleteModalRef.current?.querySelector<HTMLElement>('.btn-delete-cancel');
+            cancelBtn?.focus();
+        });
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [deleteConfirm]);
@@ -186,15 +209,15 @@ export default function PostDetailPage() {
         setIsDeleting(true);
         setDeleteError('');
         try {
-            const response = await POST_API.deletePost(postId, token) as { status: string };
+            const response = await POST_API.deletePost(postId, token) as { status: string; error?: string };
             if (response.status === 'success') {
                 navigate('/');
             } else {
                 setDeleteError('글 삭제에 실패했습니다.');
                 setDeleteConfirm(false);
             }
-        } catch (err: any) {
-            setDeleteError(err.message || '글 삭제에 실패했습니다.');
+        } catch (err: unknown) {
+            setDeleteError(err instanceof Error ? err.message : '글 삭제에 실패했습니다.');
             setDeleteConfirm(false);
         } finally {
             setIsDeleting(false);
@@ -265,7 +288,7 @@ export default function PostDetailPage() {
                 <header className="post-header">
                     <h1 className="post-title">{post.title}</h1>
                     <div className="post-meta">
-                        <span className="author" style={{ cursor: 'pointer' }} onClick={() => navigate(`/user/${post.user_id}`)}>{post.author}</span>
+                        <span className="author" role="link" tabIndex={0} style={{ cursor: 'pointer' }} onClick={() => navigate(`/user/${post.user_id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/user/${post.user_id}`); }}>{post.author}</span>
                         <span className="separator">•</span>
                         <span className="date">{createdAt}</span>
                         {updatedAt && createdAt !== updatedAt && (
@@ -280,13 +303,16 @@ export default function PostDetailPage() {
                 {/* 태그 */}
                 {post.tags && (
                     <div className="post-tags">
-                        {post.tags.split(',').map((tag: string, i: number) => {
+                        {post.tags.split(',').map((tag: string) => {
                             const trimmed = tag.trim();
                             return trimmed ? (
                                 <span
-                                    key={i}
+                                    key={trimmed}
+                                    role="button"
+                                    tabIndex={0}
                                     className="tag-chip tag-chip-btn"
                                     onClick={() => navigate(`/?tag=${encodeURIComponent(trimmed)}`)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/?tag=${encodeURIComponent(trimmed)}`); } }}
                                 >
                                     {trimmed}
                                 </span>
@@ -322,8 +348,8 @@ export default function PostDetailPage() {
 
                 {/* 삭제 확인 모달 */}
                 {deleteConfirm && (
-                    <div className="delete-modal-overlay" onClick={handleDeleteCancel}>
-                        <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="delete-modal-overlay" onClick={handleDeleteCancel} role="dialog" aria-modal="true" aria-label="글 삭제 확인">
+                        <div className="delete-modal" ref={deleteModalRef} onClick={(e) => e.stopPropagation()}>
                             <p className="delete-modal-text">이 글을 삭제하시겠습니까?</p>
                             <p className="delete-modal-sub">삭제된 글은 복구할 수 없습니다.</p>
                             <div className="delete-modal-actions">

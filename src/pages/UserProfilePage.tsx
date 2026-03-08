@@ -6,7 +6,7 @@ import { stripMarkdown, formatDate } from '../utils/format';
 import { validateImageFile, compressImage } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
 import ThemeToggle from '../components/ThemeToggle';
-import { User, PostListItem, Pagination } from '../types';
+import { User, PostListItem, Pagination, PostListWithPagination } from '../types';
 import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
@@ -32,6 +32,7 @@ export default function UserProfilePage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [avatarUploading, setAvatarUploading] = useState<boolean>(false);
+    const [avatarError, setAvatarError] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
@@ -62,19 +63,20 @@ export default function UserProfilePage() {
 
         const validation = validateImageFile(file);
         if (!validation.valid) {
-            alert(validation.error);
+            setAvatarError(validation.error || '유효하지 않은 이미지입니다.');
             return;
         }
 
         setAvatarUploading(true);
+        setAvatarError('');
         try {
             const compressed = await compressImage(file);
             const result = await USER_API.uploadAvatar(compressed, token);
             const newAvatarUrl: string = result.data.avatar_url;
             setProfile((prev: User | null) => prev ? { ...prev, avatar_url: newAvatarUrl } : prev);
             setGlobalAvatarUrl(newAvatarUrl);
-        } catch (err: any) {
-            alert(err.message || '프로필 이미지 업로드에 실패했습니다');
+        } catch (err: unknown) {
+            setAvatarError(err instanceof Error ? err.message : '프로필 이미지 업로드에 실패했습니다');
         } finally {
             setAvatarUploading(false);
             e.target.value = '';
@@ -90,15 +92,15 @@ export default function UserProfilePage() {
             USER_API.getProfile(userId!, { signal: controller.signal }),
             POST_API.getUserPosts(userId!, page, PAGE_SIZE, { signal: controller.signal, tag, token: token ?? undefined }),
         ])
-            .then(([profileRes, postsRes]: [any, any]) => {
+            .then(([profileRes, postsRes]) => {
                 if (profileRes.status === 'success') {
                     setProfile(profileRes.data);
                     document.title = `${profileRes.data.username} | Tolelog`;
                 }
 
-                const data = postsRes.data || postsRes;
+                const data = postsRes.data;
                 const list: PostListItem[] = Array.isArray(data) ? data : data.posts || [];
-                const pagination: Pagination | undefined = data.pagination;
+                const pagination: Pagination | undefined = (data as PostListWithPagination).pagination;
                 setPosts(list);
                 if (pagination) {
                     setTotalPosts(pagination.total || list.length);
@@ -154,6 +156,10 @@ export default function UserProfilePage() {
                     <div
                         className={`profile-avatar${isOwnProfile ? ' profile-avatar-editable' : ''}`}
                         onClick={handleAvatarClick}
+                        role={isOwnProfile ? 'button' : undefined}
+                        tabIndex={isOwnProfile ? 0 : undefined}
+                        aria-label={isOwnProfile ? '프로필 사진 변경' : undefined}
+                        onKeyDown={isOwnProfile ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAvatarClick(); } } : undefined}
                     >
                         {profile.avatar_url ? (
                             <img
@@ -180,6 +186,7 @@ export default function UserProfilePage() {
                         )}
                     </div>
                     <h1 className="profile-username">{profile.username}</h1>
+                    {avatarError && <p className="profile-avatar-error">{avatarError}</p>}
                     <div className="profile-stats">
                         <div className="profile-stat-item">
                             <span className="profile-stat-value">{totalPosts}</span>
@@ -205,8 +212,11 @@ export default function UserProfilePage() {
                         {tagCloud.map(([tagName, count]: [string, number]) => (
                             <span
                                 key={tagName}
+                                role="button"
+                                tabIndex={0}
                                 className="tag-chip tag-chip-btn"
                                 onClick={() => setSearchParams({ tag: tagName })}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSearchParams({ tag: tagName }); } }}
                             >
                                 {tagName} <span className="tag-count">{count}</span>
                             </span>
@@ -243,13 +253,16 @@ export default function UserProfilePage() {
                         <h3 className="profile-post-title">{post.title}</h3>
                         <div className="profile-post-meta">
                             <span className="profile-post-date">{formatDate(post.created_at)}</span>
-                            {post.tags && post.tags.split(',').map((t: string, i: number) => {
+                            {post.tags && post.tags.split(',').map((t: string) => {
                                 const trimmed = t.trim();
                                 return trimmed ? (
                                     <span
-                                        key={i}
+                                        key={trimmed}
+                                        role="button"
+                                        tabIndex={0}
                                         className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
                                         onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); } }}
                                     >
                                         {trimmed}
                                     </span>
@@ -259,16 +272,16 @@ export default function UserProfilePage() {
                                 <span className="profile-post-private">비공개</span>
                             )}
                         </div>
-                        {(post as any).content && (
+                        {'content' in post && (post as PostListItem & { content?: string }).content && (
                             <p className="profile-post-preview">
-                                {stripMarkdown((post as any).content).slice(0, 150)}
+                                {stripMarkdown((post as PostListItem & { content?: string }).content!).slice(0, 150)}
                             </p>
                         )}
                     </Link>
                 ))}
 
                 {(posts.length > 0 || page > 1) && (
-                    <div className="profile-pagination">
+                    <nav className="profile-pagination" aria-label="페이지 탐색">
                         <button
                             className="profile-page-btn"
                             disabled={page <= 1}
@@ -295,7 +308,7 @@ export default function UserProfilePage() {
                         >
                             다음 &rarr;
                         </button>
-                    </div>
+                    </nav>
                 )}
             </div>
         </div>

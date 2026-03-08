@@ -85,9 +85,9 @@ export default function EditorPage() {
                     } else {
                         setError('글을 불러올 수 없습니다.');
                     }
-                } catch (err: any) {
-                    if (err.name === 'AbortError') return;
-                    setError(err.message || '글 불러오기에 실패했습니다.');
+                } catch (err: unknown) {
+                    if (err instanceof Error && err.name === 'AbortError') return;
+                    setError(err instanceof Error ? err.message : '글 불러오기에 실패했습니다.');
                 } finally {
                     setIsLoading(false);
                 }
@@ -192,7 +192,8 @@ export default function EditorPage() {
         setSuccess('');
 
         try {
-            let response: any;
+            type SaveResponse = { status?: string; data?: { id: number }; error?: string };
+            let response: SaveResponse;
             if (isEditMode) {
                 response = await POST_API.updatePost(
                     postId,
@@ -201,7 +202,7 @@ export default function EditorPage() {
                     formData.is_public,
                     token,
                     formData.tags
-                );
+                ) as SaveResponse;
             } else {
                 response = await POST_API.createPost(
                     formData.title,
@@ -209,7 +210,7 @@ export default function EditorPage() {
                     formData.is_public,
                     token,
                     formData.tags
-                );
+                ) as SaveResponse;
             }
 
             if (!response.status || response.status !== 'success') {
@@ -220,15 +221,16 @@ export default function EditorPage() {
             setSuccess(successMsg);
             clearDraft();
 
-            const postIdToNavigate = isEditMode ? postId : response.data.id;
+            const postIdToNavigate = isEditMode ? postId : response.data?.id;
             setTimeout(() => navigate(`/post/${postIdToNavigate}`), 1500);
-        } catch (err: any) {
-            if (err.status === 401) {
+        } catch (err: unknown) {
+            const apiErr = err as { status?: number; message?: string };
+            if (apiErr.status === 401) {
                 setError('로그인이 만료되었습니다. 다시 로그인해주세요.');
                 navigate('/login');
                 return;
             }
-            setError(err.message || '글 저장에 실패했습니다');
+            setError(err instanceof Error ? err.message : '글 저장에 실패했습니다');
             setIsSaving(false);
         }
     };
@@ -256,7 +258,7 @@ export default function EditorPage() {
         <div className="editor-page">
             {/* 백업 복구 프롬프트 */}
             {showRestorePrompt && draftInfo && (
-                <div className="restore-prompt">
+                <div className="restore-prompt" role="dialog" aria-modal="true" aria-label="임시 저장 복구" onKeyDown={(e) => { if (e.key === 'Escape') handleDiscardDraft(); }}>
                     <div className="restore-content">
                         <h3>{isEditMode ? '이전에 수정하던 내용이 있습니다' : '저장된 임시 글이 있습니다'}</h3>
                         <p>마지막 저장: {getFormattedSaveTime()}</p>

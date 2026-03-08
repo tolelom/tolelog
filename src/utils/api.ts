@@ -1,47 +1,8 @@
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL, STORAGE_KEYS } from './constants';
 import type { SuccessResponse, AuthData, User, Post, PostListWithPagination, Comment as CommentType, CommentListResponse } from '../types';
 
-interface RequestOptions extends RequestInit {
-    headers?: Record<string, string>;
-}
-
 interface ApiError extends Error {
     status?: number;
-}
-
-export function useApi(): { request: (path: string, options?: RequestOptions) => Promise<unknown> } {
-    const { token, logout } = useContext(AuthContext);
-
-    async function request(path: string, options: RequestOptions = {}): Promise<unknown> {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const res = await fetch(`${API_BASE_URL}${path}`, {
-            ...options,
-            headers,
-        });
-
-        if (res.status === 401) {
-            logout();
-            throw new Error('인증이 만료되었습니다');
-        }
-
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || data.message || '요청 처리에 실패했습니다');
-        }
-
-        return data;
-    }
-
-    return { request };
 }
 
 async function tryRefreshToken(): Promise<string | null> {

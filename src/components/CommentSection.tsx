@@ -26,8 +26,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 setComments(response.data.comments);
                 setTotal(response.data.total);
             }
-        } catch (err: any) {
-            if (err.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             // Silently fail on fetch errors — the section just stays empty
         }
     }, [postId]);
@@ -48,8 +48,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
             await COMMENT_API.createComment(postId, content.trim(), token);
             setContent('');
             await fetchComments();
-        } catch (err: any) {
-            setError(err.message || '댓글 작성에 실패했습니다.');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : '댓글 작성에 실패했습니다.');
         } finally {
             setIsSubmitting(false);
         }
@@ -60,8 +60,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         try {
             await COMMENT_API.deleteComment(postId, commentId, token);
             await fetchComments();
-        } catch (err: any) {
-            setError(err.message || '댓글 삭제에 실패했습니다.');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : '댓글 삭제에 실패했습니다.');
         }
     };
 
@@ -118,6 +118,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                                         <button
                                             className="comment-delete-btn"
                                             onClick={() => handleDelete(cm.id)}
+                                            aria-label={`${cm.author}의 댓글 삭제`}
                                         >
                                             삭제
                                         </button>

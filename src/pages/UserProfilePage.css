@@ -79,6 +79,13 @@
     opacity: 1;
 }
 
+.profile-avatar-error {
+    color: var(--error-text);
+    font-size: 13px;
+    text-align: center;
+    margin: 0 0 12px 0;
+}
+
 .profile-username {
     font-size: 24px;
     font-weight: 700;

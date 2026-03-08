@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format';
 import ThemeToggle from '../components/ThemeToggle';
-import { PostListItem, Pagination } from '../types';
+import { PostListItem, Pagination, PostListWithPagination } from '../types';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
@@ -62,10 +62,10 @@ export default function HomePage() {
             : POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal, tag });
 
         fetchPromise
-            .then((res: any) => {
-                const data = res.data || res;
+            .then((res) => {
+                const data = res.data;
                 const list: PostListItem[] = Array.isArray(data) ? data : data.posts || [];
-                const pagination: Pagination | undefined = data.pagination;
+                const pagination: Pagination | undefined = (data as PostListWithPagination).pagination;
                 setPosts(list);
                 if (pagination) {
                     setTotalPages(pagination.total_pages || 0);
@@ -120,7 +120,7 @@ export default function HomePage() {
                     onChange={(e) => setSearchInput(e.target.value)}
                 />
                 {searchInput && (
-                    <button className="home-search-clear" onClick={() => { setSearchInput(''); setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('q'); next.delete('page'); return next; }); }}>×</button>
+                    <button className="home-search-clear" onClick={() => { setSearchInput(''); setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('q'); next.delete('page'); return next; }); }} aria-label="검색어 지우기">×</button>
                 )}
             </div>
 
@@ -171,7 +171,10 @@ export default function HomePage() {
                         <div className="home-post-meta">
                             <span
                                 className="home-post-author"
+                                role="link"
+                                tabIndex={0}
                                 onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); navigate(`/user/${post.user_id}`); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); navigate(`/user/${post.user_id}`); } }}
                             >
                                 {post.author}
                             </span>
@@ -180,13 +183,16 @@ export default function HomePage() {
                         </div>
                         {post.tags && (
                             <div className="home-post-tags">
-                                {post.tags.split(',').map((t: string, i: number) => {
+                                {post.tags.split(',').map((t: string) => {
                                     const trimmed = t.trim();
                                     return trimmed ? (
                                         <span
-                                            key={i}
+                                            key={trimmed}
+                                            role="button"
+                                            tabIndex={0}
                                             className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
                                             onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); } }}
                                         >
                                             {trimmed}
                                         </span>
@@ -194,16 +200,16 @@ export default function HomePage() {
                                 })}
                             </div>
                         )}
-                        {(post as any).content && (
+                        {'content' in post && (post as PostListItem & { content?: string }).content && (
                             <p className="home-post-preview">
-                                {stripMarkdown((post as any).content).slice(0, 150)}
+                                {stripMarkdown((post as PostListItem & { content?: string }).content!).slice(0, 150)}
                             </p>
                         )}
                     </Link>
                 ))}
 
                 {!loading && !error && (posts.length > 0 || page > 1) && (
-                    <div className="home-pagination">
+                    <nav className="home-pagination" aria-label="페이지 탐색">
                         <button
                             className="home-page-btn"
                             disabled={page <= 1}
@@ -232,7 +238,7 @@ export default function HomePage() {
                         >
                             다음 &rarr;
                         </button>
-                    </div>
+                    </nav>
                 )}
             </div>
         </div>

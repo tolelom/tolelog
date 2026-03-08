@@ -14,7 +14,7 @@
 .error-container h2 { color: var(--error-text); margin-bottom: 16px; }
 .error-container p { color: var(--text-muted); margin-bottom: 24px; }
 
-.post-article { background-color: var(--bg-card); border-radius: 8px; padding: 40px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+.post-article { background-color: var(--bg-card); border-radius: 8px; padding: 40px; box-shadow: var(--shadow-card); }
 
 .post-header { margin-bottom: 32px; border-bottom: 2px solid var(--border-light); padding-bottom: 24px; }
 
@@ -78,7 +78,7 @@
 
 .markdown-content img {
     max-width: 100%; height: auto; margin: 20px 0; border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
 }
 
 .markdown-content blockquote {
@@ -195,26 +195,26 @@
 }
 
 .btn-edit {
-    background-color: #5b8dd9; color: white;
+    background-color: var(--btn-edit-bg); color: white;
 }
-.btn-edit:hover { background-color: #4a7ac8; }
+.btn-edit:hover { background-color: var(--btn-edit-hover); }
 
 .btn-delete {
-    background-color: #c96a6a; color: white;
+    background-color: var(--btn-danger-bg); color: white;
 }
-.btn-delete:hover { background-color: #b85a5a; }
+.btn-delete:hover { background-color: var(--btn-danger-hover); }
 
 /* 삭제 확인 모달 */
 .delete-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0, 0, 0, 0.4); display: flex;
+    background-color: var(--bg-overlay); display: flex;
     justify-content: center; align-items: center; z-index: 1000;
     animation: fadeIn 0.2s ease-out;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .delete-modal {
     background-color: var(--bg-card); border-radius: 12px; padding: 28px 32px;
-    max-width: 360px; width: 90%; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-width: min(360px, 90vw); width: 90%; box-shadow: var(--shadow-modal);
     animation: slideUp 0.2s ease-out;
 }
 @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -229,9 +229,9 @@
 }
 .btn-delete-confirm {
     padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px;
-    font-weight: 600; cursor: pointer; background-color: #c96a6a; color: white; transition: all 0.2s;
+    font-weight: 600; cursor: pointer; background-color: var(--btn-danger-bg); color: white; transition: all 0.2s;
 }
-.btn-delete-confirm:hover:not(:disabled) { background-color: #b85a5a; }
+.btn-delete-confirm:hover:not(:disabled) { background-color: var(--btn-danger-hover); }
 .btn-delete-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-delete-cancel {
     padding: 10px 20px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;
@@ -264,7 +264,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border-light);
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-card);
     scrollbar-width: thin;
 }
 

@@ -142,7 +142,7 @@
     height: auto;
     border-radius: 8px;
     margin: 8px 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
 }
 
 .block-rendered .table-wrapper {
@@ -317,6 +317,29 @@
     margin-left: auto;
     font-size: 12px;
     color: var(--text-muted);
+}
+
+/* 이미지 업로드 에러 */
+.block-upload-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    font-size: 13px;
+    border: 1px solid var(--error-border);
+}
+.block-upload-error-close {
+    background: none;
+    border: none;
+    color: var(--error-text);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
 }
 
 /* 드래그 앤 드롭 */
