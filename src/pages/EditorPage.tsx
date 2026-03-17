@@ -1,12 +1,12 @@
 import { useState, useContext, useEffect, useRef, ChangeEvent, MutableRefObject } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API } from '../utils/api';
+import { POST_API, SERIES_API } from '../utils/api';
 import { STORAGE_KEYS } from '../utils/constants';
 import { useAutoSave } from '../hooks/useAutoSave';
 import BlockEditor from '../components/BlockEditor';
 import ImageUploadButton from '../components/ImageUploadButton';
-import { PostFormData, DraftData } from '../types';
+import { PostFormData, DraftData, Series } from '../types';
 import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
 
@@ -33,11 +33,23 @@ export default function EditorPage() {
     const [success, setSuccess] = useState<string>('');
     const [showRestorePrompt, setShowRestorePrompt] = useState<boolean>(false);
     const [draftInfo, setDraftInfo] = useState<DraftData | null>(null);
+    const [userSeries, setUserSeries] = useState<Series[]>([]);
+    const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
     const isEditMode = !!postId;
 
     useEffect(() => {
         document.title = isEditMode ? '글 수정 | Tolelog' : '새 글 작성 | Tolelog';
     }, [isEditMode]);
+
+    // 사용자의 시리즈 목록 로드
+    useEffect(() => {
+        if (!userId) return;
+        const controller = new AbortController();
+        SERIES_API.getUserSeries(userId, { signal: controller.signal })
+            .then(res => { if (res.status === 'success') setUserSeries(res.data || []); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, [userId]);
 
     // 자동 저장 훅 (수정 모드는 별도 키로 저장)
     const draftKey = isEditMode ? STORAGE_KEYS.DRAFT_EDIT : STORAGE_KEYS.DRAFT;
@@ -76,6 +88,9 @@ export default function EditorPage() {
                             is_public: post.is_public,
                             tags: post.tags || '',
                         });
+                        if (post.series) {
+                            setSelectedSeriesId(String(post.series.series_id));
+                        }
                         // 수정 모드 임시저장 확인
                         if (hasDraft()) {
                             const draft = loadDraft();
@@ -217,11 +232,20 @@ export default function EditorPage() {
                 throw new Error(response.error || '글 저장에 실패했습니다');
             }
 
+            const savedPostId = isEditMode ? Number(postId) : response.data?.id;
+
+            // 시리즈에 추가/변경
+            if (selectedSeriesId && savedPostId && token) {
+                try {
+                    await SERIES_API.addPost(selectedSeriesId, savedPostId, 0, token);
+                } catch { /* 시리즈 추가 실패는 무시 */ }
+            }
+
             const successMsg = isEditMode ? '글이 수정되었습니다!' : '글이 저장되었습니다!';
             setSuccess(successMsg);
             clearDraft();
 
-            const postIdToNavigate = isEditMode ? postId : response.data?.id;
+            const postIdToNavigate = savedPostId;
             setTimeout(() => navigate(`/post/${postIdToNavigate}`), 1500);
         } catch (err: unknown) {
             const apiErr = err as { status?: number; message?: string };
@@ -310,6 +334,22 @@ export default function EditorPage() {
                         </div>
                     )}
                 </div>
+
+                {/* 시리즈 선택 */}
+                {userSeries.length > 0 && (
+                    <div className="series-section">
+                        <select
+                            className="series-select"
+                            value={selectedSeriesId}
+                            onChange={(e) => setSelectedSeriesId(e.target.value)}
+                        >
+                            <option value="">시리즈 없음</option>
+                            {userSeries.map(s => (
+                                <option key={s.id} value={String(s.id)}>{s.title}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {/* 에디터 툴바 */}
                 <div className="editor-toolbar">

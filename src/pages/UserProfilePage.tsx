@@ -1,12 +1,12 @@
 import { useState, useEffect, useContext, useMemo, useRef, ChangeEvent, MouseEvent } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { USER_API, POST_API } from '../utils/api';
+import { USER_API, POST_API, SERIES_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format';
 import { validateImageFile, compressImage } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
 import ThemeToggle from '../components/ThemeToggle';
-import { User, PostListItem, Pagination, PostListWithPagination } from '../types';
+import { User, PostListItem, Pagination, PostListWithPagination, Series } from '../types';
 import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
@@ -33,6 +33,8 @@ export default function UserProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [avatarUploading, setAvatarUploading] = useState<boolean>(false);
     const [avatarError, setAvatarError] = useState<string>('');
+    const [seriesList, setSeriesList] = useState<Series[]>([]);
+    const [activeTab, setActiveTab] = useState<'posts' | 'series'>('posts');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
@@ -91,11 +93,16 @@ export default function UserProfilePage() {
         Promise.all([
             USER_API.getProfile(userId!, { signal: controller.signal }),
             POST_API.getUserPosts(userId!, page, PAGE_SIZE, { signal: controller.signal, tag, token: token ?? undefined }),
+            SERIES_API.getUserSeries(userId!, { signal: controller.signal }),
         ])
-            .then(([profileRes, postsRes]) => {
+            .then(([profileRes, postsRes, seriesRes]) => {
                 if (profileRes.status === 'success') {
                     setProfile(profileRes.data);
                     document.title = `${profileRes.data.username} | Tolelog`;
+                }
+
+                if (seriesRes.status === 'success') {
+                    setSeriesList(seriesRes.data || []);
                 }
 
                 const data = postsRes.data;
@@ -197,8 +204,8 @@ export default function UserProfilePage() {
                             <span className="profile-stat-label">일째</span>
                         </div>
                         <div className="profile-stat-item">
-                            <span className="profile-stat-value">{tagCloud.length}</span>
-                            <span className="profile-stat-label">태그</span>
+                            <span className="profile-stat-value">{seriesList.length}</span>
+                            <span className="profile-stat-label">시리즈</span>
                         </div>
                     </div>
                 </div>
@@ -225,7 +232,45 @@ export default function UserProfilePage() {
                 </div>
             )}
 
-            <div className="profile-posts-section">
+            {/* 탭 */}
+            <div className="profile-tabs">
+                <button
+                    className={`profile-tab${activeTab === 'posts' ? ' profile-tab-active' : ''}`}
+                    onClick={() => setActiveTab('posts')}
+                >
+                    글 {totalPosts > 0 && <span className="profile-tab-count">{totalPosts}</span>}
+                </button>
+                <button
+                    className={`profile-tab${activeTab === 'series' ? ' profile-tab-active' : ''}`}
+                    onClick={() => setActiveTab('series')}
+                >
+                    시리즈 {seriesList.length > 0 && <span className="profile-tab-count">{seriesList.length}</span>}
+                </button>
+            </div>
+
+            {/* 시리즈 탭 */}
+            {activeTab === 'series' && (
+                <div className="profile-series-section">
+                    {seriesList.length === 0 ? (
+                        <div className="profile-status">
+                            <p>아직 시리즈가 없습니다.</p>
+                        </div>
+                    ) : (
+                        seriesList.map((s: Series) => (
+                            <Link key={s.id} to={`/series/${s.id}`} className="profile-series-card">
+                                <h3 className="profile-series-title">{s.title}</h3>
+                                {s.description && (
+                                    <p className="profile-series-desc">{s.description}</p>
+                                )}
+                                <span className="profile-series-count">{s.post_count}개의 글</span>
+                            </Link>
+                        ))
+                    )}
+                </div>
+            )}
+
+            {/* 글 탭 */}
+            {activeTab === 'posts' && <div className="profile-posts-section">
                 <h2 className="profile-posts-title">
                     {isOwnProfile ? '내 글' : `${profile?.username || ''}의 글`}
                     {totalPosts > 0 && <span className="profile-posts-count">{totalPosts}</span>}
@@ -310,7 +355,7 @@ export default function UserProfilePage() {
                         </button>
                     </nav>
                 )}
-            </div>
+            </div>}
         </div>
     );
 }

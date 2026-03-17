@@ -1,10 +1,10 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useContext, useState, useEffect, MouseEvent } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API } from '../utils/api';
+import { POST_API, SERIES_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format';
 import ThemeToggle from '../components/ThemeToggle';
-import { PostListItem, Pagination, PostListWithPagination } from '../types';
+import { PostListItem, Pagination, PostListWithPagination, Series } from '../types';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
@@ -23,8 +23,19 @@ export default function HomePage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [fetchKey, setFetchKey] = useState<number>(0);
+    const [seriesList, setSeriesList] = useState<Series[]>([]);
 
     useEffect(() => { document.title = 'Tolelog'; }, []);
+
+    // 시리즈 목록 로드 (첫 페이지, 검색/태그 없을 때만)
+    useEffect(() => {
+        if (page !== 1 || tag || searchQuery) { setSeriesList([]); return; }
+        const controller = new AbortController();
+        SERIES_API.getUserSeries(1, { signal: controller.signal })
+            .then(res => { if (res.status === 'success') setSeriesList(res.data || []); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, [page, tag, searchQuery]);
 
     // Debounce search input into URL params
     useEffect(() => {
@@ -123,6 +134,21 @@ export default function HomePage() {
                     <button className="home-search-clear" onClick={() => { setSearchInput(''); setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('q'); next.delete('page'); return next; }); }} aria-label="검색어 지우기">×</button>
                 )}
             </div>
+
+            {/* 시리즈 섹션 */}
+            {seriesList.length > 0 && (
+                <div className="home-series-section">
+                    <h2 className="home-series-heading">시리즈</h2>
+                    <div className="home-series-list">
+                        {seriesList.map(s => (
+                            <Link key={s.id} to={`/series/${s.id}`} className="home-series-card">
+                                <span className="home-series-title">{s.title}</span>
+                                <span className="home-series-count">{s.post_count}편</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="home-post-list">
                 {loading && (

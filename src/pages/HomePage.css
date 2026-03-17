@@ -138,6 +138,58 @@
     color: var(--text-primary);
 }
 
+/* 시리즈 섹션 */
+.home-series-section {
+    margin-bottom: 32px;
+}
+
+.home-series-heading {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
+}
+
+.home-series-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.home-series-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.home-series-card:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-color);
+}
+
+.home-series-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.home-series-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
 /* 글 목록 */
 .home-post-list {
     text-align: left;
