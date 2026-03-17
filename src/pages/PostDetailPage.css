@@ -185,6 +185,40 @@
     background-color: var(--bg-hover); color: var(--text-primary);
 }
 
+/* 시리즈 네비게이션 */
+.series-nav {
+    margin: 32px 0; padding: 20px 24px; border-radius: 8px;
+    background-color: var(--bg-secondary); border: 1px solid var(--border-light);
+}
+.series-nav-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.series-nav-title {
+    font-size: 15px; font-weight: 600; color: var(--accent-color); text-decoration: none; border: none;
+}
+.series-nav-title:hover { text-decoration: underline; }
+.series-nav-count {
+    font-size: 13px; color: var(--text-muted); font-weight: 500;
+}
+.series-nav-buttons {
+    display: flex; justify-content: space-between; gap: 12px;
+}
+.series-nav-btn {
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 6px;
+    background-color: var(--bg-card); border: 1px solid var(--border-color);
+    text-decoration: none; color: var(--text-secondary); font-size: 13px;
+    transition: all 0.2s; max-width: 48%;
+}
+.series-nav-btn:hover {
+    border-color: var(--accent-color); color: var(--accent-color); background-color: var(--bg-primary);
+}
+.series-nav-prev { text-align: left; }
+.series-nav-next { text-align: right; margin-left: auto; }
+.series-nav-arrow { font-size: 16px; flex-shrink: 0; }
+.series-nav-label {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 .post-actions {
     display: flex; gap: 12px; margin: 32px 0; padding-top: 24px; border-top: 1px solid var(--border-light);
 }

@@ -1,10 +1,10 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API } from '../utils/api';
+import { POST_API, SERIES_API } from '../utils/api';
 import { renderMarkdown } from '../utils/markdown';
 import { slugifyHeading } from '../utils/markdownParser';
-import { Post } from '../types';
+import { Post, SeriesNav } from '../types';
 import CommentSection from '../components/CommentSection';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
@@ -61,6 +61,7 @@ export default function PostDetailPage() {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [deleteError, setDeleteError] = useState<string>('');
     const [activeTocId, setActiveTocId] = useState<string | null>(null);
+    const [seriesNav, setSeriesNav] = useState<SeriesNav | null>(null);
     const contentRef = useRef<HTMLDivElement | null>(null);
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
@@ -115,6 +116,16 @@ export default function PostDetailPage() {
         loadPost();
         return () => controller.abort();
     }, [postId, token]);
+
+    // 시리즈 네비게이션 로드
+    useEffect(() => {
+        if (!postId) return;
+        const controller = new AbortController();
+        SERIES_API.getSeriesNav(postId, { signal: controller.signal })
+            .then(res => { if (res.data) setSeriesNav(res.data); else setSeriesNav(null); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, [postId]);
 
     // OG / SEO 메타 태그
     useEffect(() => {
@@ -329,6 +340,34 @@ export default function PostDetailPage() {
                         __html: renderMarkdown(post.content)
                     }}
                 />
+
+                {/* 시리즈 네비게이션 */}
+                {seriesNav && (
+                    <nav className="series-nav" aria-label="시리즈 네비게이션">
+                        <div className="series-nav-header">
+                            <Link to={`/series/${seriesNav.series_id}`} className="series-nav-title">
+                                {seriesNav.series_title}
+                            </Link>
+                            <span className="series-nav-count">
+                                {seriesNav.current_order} / {seriesNav.total_posts}
+                            </span>
+                        </div>
+                        <div className="series-nav-buttons">
+                            {seriesNav.prev_post ? (
+                                <Link to={`/post/${seriesNav.prev_post.id}`} className="series-nav-btn series-nav-prev">
+                                    <span className="series-nav-arrow">&larr;</span>
+                                    <span className="series-nav-label">{seriesNav.prev_post.title}</span>
+                                </Link>
+                            ) : <div />}
+                            {seriesNav.next_post ? (
+                                <Link to={`/post/${seriesNav.next_post.id}`} className="series-nav-btn series-nav-next">
+                                    <span className="series-nav-label">{seriesNav.next_post.title}</span>
+                                    <span className="series-nav-arrow">&rarr;</span>
+                                </Link>
+                            ) : <div />}
+                        </div>
+                    </nav>
+                )}
 
                 {/* 수정/삭제 버튼 */}
                 {isOwner && (

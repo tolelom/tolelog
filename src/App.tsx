@@ -10,6 +10,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const EditorPage = lazy(() => import('./pages/EditorPage'));
 const PostDetailPage = lazy(() => import('./pages/PostDetailPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
+const SeriesDetailPage = lazy(() => import('./pages/SeriesDetailPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/post/:postId" element={<PostDetailPage />} />
                 <Route path="/user/:userId" element={<UserProfilePage />} />
+                <Route path="/series/:seriesId" element={<SeriesDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/editor" element={<PrivateRoute><EditorPage /></PrivateRoute>} />

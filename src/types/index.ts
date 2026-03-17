@@ -16,6 +16,7 @@ export interface Post {
     author: string;
     is_public: boolean;
     tags: string;
+    series?: SeriesInfo;
     created_at: string;
     updated_at: string;
 }
@@ -75,6 +76,45 @@ export interface Comment {
 export interface CommentListResponse {
     comments: Comment[];
     total: number;
+}
+
+// Series types
+
+export interface Series {
+    id: number;
+    title: string;
+    description: string;
+    user_id: number;
+    author: string;
+    post_count: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SeriesPostItem {
+    id: number;
+    title: string;
+    order: number;
+    created_at: string;
+}
+
+export interface SeriesDetail extends Omit<Series, 'post_count'> {
+    posts: SeriesPostItem[];
+}
+
+export interface SeriesNav {
+    series_id: number;
+    series_title: string;
+    current_order: number;
+    total_posts: number;
+    prev_post: { id: number; title: string } | null;
+    next_post: { id: number; title: string } | null;
+}
+
+export interface SeriesInfo {
+    series_id: number;
+    series_title: string;
+    series_order: number;
 }
 
 // Block types for markdown parser (discriminated union)

@@ -1,0 +1,89 @@
+.series-detail-page {
+    max-width: 720px; margin: 0 auto; padding: 40px 20px;
+}
+
+.series-loading, .series-error {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    min-height: 400px; text-align: center;
+}
+.series-error h2 { color: var(--error-text); margin-bottom: 16px; }
+.series-error p { color: var(--text-muted); margin-bottom: 24px; }
+
+.series-header {
+    background-color: var(--bg-card); border-radius: 12px; padding: 32px;
+    box-shadow: var(--shadow-card); margin-bottom: 24px;
+}
+
+.series-breadcrumb {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    font-size: 13px; color: var(--text-muted);
+}
+.series-breadcrumb .breadcrumb-link {
+    color: var(--accent-color); text-decoration: none;
+}
+.series-breadcrumb .breadcrumb-link:hover { text-decoration: underline; }
+.series-breadcrumb .breadcrumb-sep { color: var(--border-color); }
+.series-breadcrumb .breadcrumb-current { color: var(--text-muted); }
+
+.series-title {
+    font-size: 28px; font-weight: 700; color: var(--text-primary);
+    margin: 0 0 12px 0; line-height: 1.3;
+}
+
+.series-description {
+    font-size: 15px; color: var(--text-muted); line-height: 1.6;
+    margin: 0 0 16px 0;
+}
+
+.series-meta {
+    display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-muted);
+}
+.series-author {
+    font-weight: 600; color: var(--text-secondary); text-decoration: none;
+}
+.series-author:hover { color: var(--accent-color); }
+.series-sep { color: var(--border-color); }
+.series-count { color: var(--text-muted); }
+
+.series-post-list {
+    display: flex; flex-direction: column; gap: 2px;
+    background-color: var(--bg-card); border-radius: 12px;
+    box-shadow: var(--shadow-card); overflow: hidden;
+}
+
+.series-post-item {
+    display: flex; align-items: center; gap: 16px; padding: 16px 24px;
+    text-decoration: none; color: var(--text-secondary);
+    transition: background-color 0.15s;
+    border-bottom: 1px solid var(--border-light);
+}
+.series-post-item:last-child { border-bottom: none; }
+.series-post-item:hover { background-color: var(--bg-hover); }
+
+.series-post-number {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+}
+.series-post-item:hover .series-post-number {
+    background-color: var(--accent-color); color: white; border-color: var(--accent-color);
+}
+
+.series-post-info {
+    display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.series-post-title {
+    font-size: 15px; font-weight: 500; color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.series-post-date {
+    font-size: 12px; color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .series-detail-page { padding: 16px 12px; }
+    .series-header { padding: 20px 16px; }
+    .series-title { font-size: 22px; }
+    .series-post-item { padding: 12px 16px; gap: 12px; }
+}
