@@ -296,8 +296,16 @@ export default function UserProfilePage() {
                         className="profile-post-card"
                     >
                         <h3 className="profile-post-title">{post.title}</h3>
+                        {post.series && (
+                            <div className="profile-post-series-badge">
+                                {post.series.series_title}
+                            </div>
+                        )}
                         <div className="profile-post-meta">
                             <span className="profile-post-date">{formatDate(post.created_at)}</span>
+                            {post.view_count > 0 && (
+                                <span className="profile-post-views">조회 {post.view_count}</span>
+                            )}
                             {post.tags && post.tags.split(',').map((t: string) => {
                                 const trimmed = t.trim();
                                 return trimmed ? (

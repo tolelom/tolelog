@@ -17,6 +17,7 @@ export interface Post {
     is_public: boolean;
     tags: string;
     series?: SeriesInfo;
+    view_count: number;
     created_at: string;
     updated_at: string;
 }
@@ -28,6 +29,8 @@ export interface PostListItem {
     author: string;
     is_public: boolean;
     tags: string;
+    series?: SeriesInfo;
+    view_count: number;
     created_at: string;
     updated_at: string;
 }

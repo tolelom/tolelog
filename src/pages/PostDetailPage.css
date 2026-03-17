@@ -32,6 +32,7 @@
 .post-meta .separator { color: var(--border-color); }
 .post-meta .date { color: var(--text-muted); }
 .post-meta .updated { color: var(--accent-color); font-size: 12px; }
+.post-meta .views { color: var(--text-muted); }
 
 /* 마크다운 콘텐츠 */
 .markdown-content { line-height: 1.8; color: var(--text-secondary); }
@@ -197,8 +198,42 @@
     font-size: 15px; font-weight: 600; color: var(--accent-color); text-decoration: none; border: none;
 }
 .series-nav-title:hover { text-decoration: underline; }
+.series-nav-header-right {
+    display: flex; align-items: center; gap: 8px;
+}
 .series-nav-count {
     font-size: 13px; color: var(--text-muted); font-weight: 500;
+}
+.series-toc-toggle {
+    background: none; border: 1px solid var(--border-color); border-radius: 4px;
+    padding: 2px 8px; font-size: 12px; color: var(--text-muted); cursor: pointer;
+    transition: all 0.2s;
+}
+.series-toc-toggle:hover {
+    background: var(--bg-hover); color: var(--text-primary);
+}
+.series-toc-list {
+    list-style: none; padding: 0; margin: 12px 0;
+    border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);
+    max-height: 300px; overflow-y: auto;
+}
+.series-toc-list li {
+    margin: 0;
+}
+.series-toc-list li a {
+    display: block; padding: 8px 12px; font-size: 13px;
+    color: var(--text-secondary); text-decoration: none; border: none;
+    transition: background 0.15s;
+}
+.series-toc-list li a:hover {
+    background: var(--bg-hover);
+}
+.series-toc-current a {
+    color: var(--accent-color) !important; font-weight: 600;
+    background: var(--bg-hover);
+}
+.series-toc-num {
+    color: var(--text-muted); margin-right: 4px;
 }
 .series-nav-buttons {
     display: flex; justify-content: space-between; gap: 12px;

@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { POST_API, SERIES_API } from '../utils/api';
 import { renderMarkdown } from '../utils/markdown';
 import { slugifyHeading } from '../utils/markdownParser';
-import { Post, SeriesNav } from '../types';
+import { Post, SeriesNav, SeriesDetail } from '../types';
 import CommentSection from '../components/CommentSection';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
@@ -62,6 +62,8 @@ export default function PostDetailPage() {
     const [deleteError, setDeleteError] = useState<string>('');
     const [activeTocId, setActiveTocId] = useState<string | null>(null);
     const [seriesNav, setSeriesNav] = useState<SeriesNav | null>(null);
+    const [seriesTocOpen, setSeriesTocOpen] = useState(false);
+    const [seriesDetail, setSeriesDetail] = useState<SeriesDetail | null>(null);
     const contentRef = useRef<HTMLDivElement | null>(null);
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
@@ -308,6 +310,12 @@ export default function PostDetailPage() {
                                 <span className="updated">수정: {updatedAt}</span>
                             </>
                         )}
+                        {post.view_count > 0 && (
+                            <>
+                                <span className="separator">•</span>
+                                <span className="views">조회 {post.view_count}</span>
+                            </>
+                        )}
                     </div>
                 </header>
 
@@ -348,10 +356,38 @@ export default function PostDetailPage() {
                             <Link to={`/series/${seriesNav.series_id}`} className="series-nav-title">
                                 {seriesNav.series_title}
                             </Link>
-                            <span className="series-nav-count">
-                                {seriesNav.current_order} / {seriesNav.total_posts}
-                            </span>
+                            <div className="series-nav-header-right">
+                                <span className="series-nav-count">
+                                    {seriesNav.current_order} / {seriesNav.total_posts}
+                                </span>
+                                <button
+                                    className="series-toc-toggle"
+                                    onClick={() => {
+                                        const next = !seriesTocOpen;
+                                        setSeriesTocOpen(next);
+                                        if (next && !seriesDetail) {
+                                            SERIES_API.getSeries(seriesNav.series_id)
+                                                .then(res => { if (res.data) setSeriesDetail(res.data); })
+                                                .catch(() => {});
+                                        }
+                                    }}
+                                    aria-label={seriesTocOpen ? '목록 접기' : '목록 펼치기'}
+                                >
+                                    {seriesTocOpen ? '▲' : '▼'}
+                                </button>
+                            </div>
                         </div>
+                        {seriesTocOpen && seriesDetail && (
+                            <ul className="series-toc-list">
+                                {seriesDetail.posts.map((p, i) => (
+                                    <li key={p.id} className={p.id === post.id ? 'series-toc-current' : ''}>
+                                        <Link to={`/post/${p.id}`}>
+                                            <span className="series-toc-num">{i + 1}.</span> {p.title}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                         <div className="series-nav-buttons">
                             {seriesNav.prev_post ? (
                                 <Link to={`/post/${seriesNav.prev_post.id}`} className="series-nav-btn series-nav-prev">

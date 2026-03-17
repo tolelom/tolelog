@@ -244,6 +244,20 @@
     color: var(--text-muted);
 }
 
+.home-post-views {
+    color: var(--text-muted);
+}
+
+.home-post-series-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    background-color: var(--accent-color);
+    color: white;
+    margin-bottom: 4px;
+}
+
 .home-post-tags {
     display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
 }

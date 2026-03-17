@@ -206,7 +206,18 @@ export default function HomePage() {
                             </span>
                             <span className="home-post-sep">&middot;</span>
                             <span className="home-post-date">{formatDate(post.created_at)}</span>
+                            {post.view_count > 0 && (
+                                <>
+                                    <span className="home-post-sep">&middot;</span>
+                                    <span className="home-post-views">조회 {post.view_count}</span>
+                                </>
+                            )}
                         </div>
+                        {post.series && (
+                            <div className="home-post-series-badge">
+                                {post.series.series_title}
+                            </div>
+                        )}
                         {post.tags && (
                             <div className="home-post-tags">
                                 {post.tags.split(',').map((t: string) => {
