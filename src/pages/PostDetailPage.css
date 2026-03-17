@@ -1,4 +1,4 @@
-.post-detail-page { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+.post-detail-page { max-width: 800px; margin: 0 auto; padding: 40px 20px; position: relative; }
 
 .loading-container, .error-container {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -362,23 +362,15 @@
 
 @media (min-width: 1200px) {
     .post-detail-page {
-        max-width: 1080px;
-        display: grid;
-        grid-template-columns: 1fr 190px;
-        gap: 32px;
-        align-items: start;
-    }
-    .post-article {
-        grid-column: 1;
-        grid-row: 1;
+        max-width: 800px;
     }
     .toc-panel {
         display: block;
-        grid-column: 2;
-        grid-row: 1;
-        position: sticky;
-        top: 32px;
-        max-height: calc(100vh - 60px);
+        position: fixed;
+        right: calc((100vw - 800px) / 2 - 220px);
+        top: 80px;
+        width: 190px;
+        max-height: calc(100vh - 120px);
         overflow-y: auto;
     }
 }
