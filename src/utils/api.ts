@@ -258,6 +258,19 @@ export const SERIES_API = {
     },
 };
 
+export const LIKE_API = {
+    toggle: async (postId: number | string, token: string): Promise<SuccessResponse<{ liked: boolean; like_count: number }>> => {
+        return authenticatedFetch(`${API_BASE_URL}/api/v1/posts/${postId}/like`, 'POST', token) as Promise<SuccessResponse<{ liked: boolean; like_count: number }>>;
+    },
+    getStatus: async (postId: number | string, { signal, token }: { signal?: AbortSignal; token?: string } = {}): Promise<SuccessResponse<{ liked: boolean }>> => {
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/like`, { signal, headers });
+        if (!response.ok) throw new Error(`좋아요 상태 조회 실패 (${response.status})`);
+        return response.json();
+    },
+};
+
 export const POST_API = {
     getPublicPosts: async (
         page: number = 1,

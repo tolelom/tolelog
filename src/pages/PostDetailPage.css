@@ -186,6 +186,29 @@
     background-color: var(--bg-hover); color: var(--text-primary);
 }
 
+/* 좋아요 버튼 */
+.post-like-section {
+    display: flex; justify-content: center; margin: 32px 0;
+}
+.post-like-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 24px; border-radius: 24px;
+    border: 1px solid var(--border-color); background: var(--bg-secondary);
+    color: var(--text-secondary); font-size: 16px; cursor: pointer;
+    transition: all 0.2s;
+}
+.post-like-btn:hover:not(:disabled) {
+    border-color: #e74c3c; color: #e74c3c; background: var(--bg-primary);
+}
+.post-like-btn:disabled {
+    opacity: 0.5; cursor: default;
+}
+.post-like-btn-active {
+    border-color: #e74c3c; color: #e74c3c; background: rgba(231, 76, 60, 0.08);
+}
+.post-like-icon { font-size: 20px; line-height: 1; }
+.post-like-count { font-size: 15px; font-weight: 600; }
+
 /* 시리즈 네비게이션 */
 .series-nav {
     margin: 32px 0; padding: 20px 24px; border-radius: 8px;
@@ -401,6 +424,44 @@
 .toc-link-active {
     color: var(--accent-color);
     font-weight: 600;
+}
+
+/* 모바일 목차 */
+.toc-mobile {
+    margin-bottom: 20px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.toc-mobile-toggle {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--bg-secondary);
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.toc-mobile-toggle:hover {
+    background: var(--bg-hover);
+}
+
+.toc-mobile-list {
+    list-style: none;
+    padding: 8px 16px;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-light);
+}
+
+@media (min-width: 1200px) {
+    .toc-mobile { display: none; }
 }
 
 @media (max-width: 768px) {

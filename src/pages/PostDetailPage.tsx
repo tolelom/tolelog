@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API, SERIES_API } from '../utils/api';
+import { POST_API, SERIES_API, LIKE_API } from '../utils/api';
 import { renderMarkdown } from '../utils/markdown';
 import { slugifyHeading } from '../utils/markdownParser';
 import { Post, SeriesNav, SeriesDetail } from '../types';
@@ -64,6 +64,9 @@ export default function PostDetailPage() {
     const [seriesNav, setSeriesNav] = useState<SeriesNav | null>(null);
     const [seriesTocOpen, setSeriesTocOpen] = useState(false);
     const [seriesDetail, setSeriesDetail] = useState<SeriesDetail | null>(null);
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [mobileTocOpen, setMobileTocOpen] = useState(false);
     const contentRef = useRef<HTMLDivElement | null>(null);
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
@@ -118,6 +121,32 @@ export default function PostDetailPage() {
         loadPost();
         return () => controller.abort();
     }, [postId, token]);
+
+    // 좋아요 상태 + 카운트 초기화
+    useEffect(() => {
+        if (!post) return;
+        setLikeCount(post.like_count || 0);
+    }, [post]);
+
+    useEffect(() => {
+        if (!postId || !token) return;
+        const controller = new AbortController();
+        LIKE_API.getStatus(postId, { signal: controller.signal, token })
+            .then(res => { if (res.data) setLiked(res.data.liked); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, [postId, token]);
+
+    const handleLike = async () => {
+        if (!token || !postId) return;
+        try {
+            const res = await LIKE_API.toggle(postId, token);
+            if (res.data) {
+                setLiked(res.data.liked);
+                setLikeCount(res.data.like_count);
+            }
+        } catch { /* ignore */ }
+    };
 
     // 시리즈 네비게이션 로드
     useEffect(() => {
@@ -340,6 +369,30 @@ export default function PostDetailPage() {
                     </div>
                 )}
 
+                {/* 모바일 목차 */}
+                {toc.length > 1 && (
+                    <div className="toc-mobile">
+                        <button className="toc-mobile-toggle" onClick={() => setMobileTocOpen(v => !v)}>
+                            목차 {mobileTocOpen ? '▲' : '▼'}
+                        </button>
+                        {mobileTocOpen && (
+                            <ul className="toc-mobile-list">
+                                {toc.map((item: TocItem, i: number) => (
+                                    <li key={i} className={`toc-item toc-level-${item.level}`}>
+                                        <a
+                                            href={`#${item.id}`}
+                                            className={`toc-link${activeTocId === item.id ? ' toc-link-active' : ''}`}
+                                            onClick={() => setMobileTocOpen(false)}
+                                        >
+                                            {item.text}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                )}
+
                 {/* 글 내용 */}
                 <div
                     ref={contentRef}
@@ -348,6 +401,19 @@ export default function PostDetailPage() {
                         __html: renderMarkdown(post.content)
                     }}
                 />
+
+                {/* 좋아요 버튼 */}
+                <div className="post-like-section">
+                    <button
+                        className={`post-like-btn${liked ? ' post-like-btn-active' : ''}`}
+                        onClick={handleLike}
+                        disabled={!token}
+                        title={token ? (liked ? '좋아요 취소' : '좋아요') : '로그인 후 이용 가능'}
+                    >
+                        <span className="post-like-icon">{liked ? '♥' : '♡'}</span>
+                        <span className="post-like-count">{likeCount}</span>
+                    </button>
+                </div>
 
                 {/* 시리즈 네비게이션 */}
                 {seriesNav && (

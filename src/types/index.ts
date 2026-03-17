@@ -18,6 +18,7 @@ export interface Post {
     tags: string;
     series?: SeriesInfo;
     view_count: number;
+    like_count: number;
     created_at: string;
     updated_at: string;
 }
@@ -31,6 +32,7 @@ export interface PostListItem {
     tags: string;
     series?: SeriesInfo;
     view_count: number;
+    like_count: number;
     created_at: string;
     updated_at: string;
 }
