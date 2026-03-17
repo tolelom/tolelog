@@ -66,6 +66,7 @@ export default function PostDetailPage() {
     const [seriesDetail, setSeriesDetail] = useState<SeriesDetail | null>(null);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(0);
+    const [likeLoading, setLikeLoading] = useState(false);
     const [mobileTocOpen, setMobileTocOpen] = useState(false);
     const contentRef = useRef<HTMLDivElement | null>(null);
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
@@ -138,7 +139,8 @@ export default function PostDetailPage() {
     }, [postId, token]);
 
     const handleLike = async () => {
-        if (!token || !postId) return;
+        if (!token || !postId || likeLoading) return;
+        setLikeLoading(true);
         try {
             const res = await LIKE_API.toggle(postId, token);
             if (res.data) {
@@ -146,6 +148,7 @@ export default function PostDetailPage() {
                 setLikeCount(res.data.like_count);
             }
         } catch { /* ignore */ }
+        finally { setLikeLoading(false); }
     };
 
     // 시리즈 네비게이션 로드
@@ -407,7 +410,7 @@ export default function PostDetailPage() {
                     <button
                         className={`post-like-btn${liked ? ' post-like-btn-active' : ''}`}
                         onClick={handleLike}
-                        disabled={!token}
+                        disabled={!token || likeLoading}
                         title={token ? (liked ? '좋아요 취소' : '좋아요') : '로그인 후 이용 가능'}
                     >
                         <span className="post-like-icon">{liked ? '♥' : '♡'}</span>
