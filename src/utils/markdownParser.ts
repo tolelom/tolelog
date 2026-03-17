@@ -188,7 +188,7 @@ export function parseInline(text: string): string {
 export function parseBlocks(text: string): Block[] {
     if (!text) return [];
 
-    const lines = text.split('\n');
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
     const blocks: Block[] = [];
     let i = 0;
 
