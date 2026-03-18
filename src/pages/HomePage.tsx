@@ -153,9 +153,18 @@ export default function HomePage() {
 
             <div className="home-post-list">
                 {loading && (
-                    <div className="home-status">
-                        <div className="spinner-sm" />
-                        <p>글을 불러오는 중...</p>
+                    <div className="home-skeleton-list">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="skeleton-card">
+                                <div className="skeleton skeleton-text-lg" style={{ width: '70%' }} />
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                                    <div className="skeleton skeleton-text-sm" style={{ width: 60 }} />
+                                    <div className="skeleton skeleton-text-sm" style={{ width: 80 }} />
+                                </div>
+                                <div className="skeleton skeleton-text" style={{ width: '100%' }} />
+                                <div className="skeleton skeleton-text" style={{ width: '60%' }} />
+                            </div>
+                        ))}
                     </div>
                 )}
 

@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '../utils/constants';
 import { useAutoSave } from '../hooks/useAutoSave';
 import BlockEditor from '../components/BlockEditor';
 import ImageUploadButton from '../components/ImageUploadButton';
+import { renderMarkdown } from '../utils/markdown';
 import { PostFormData, DraftData, Series } from '../types';
 import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
@@ -35,6 +36,8 @@ export default function EditorPage() {
     const [draftInfo, setDraftInfo] = useState<DraftData | null>(null);
     const [userSeries, setUserSeries] = useState<Series[]>([]);
     const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
+    const [showPreview, setShowPreview] = useState<boolean>(false);
+    const previewContentRef = useRef<HTMLDivElement | null>(null);
     const isEditMode = !!postId;
 
     useEffect(() => {
@@ -65,6 +68,42 @@ export default function EditorPage() {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [formData.title, formData.content]);
+
+    // 미리보기 Escape 닫기 + 코드 복사 버튼 이벤트 위임
+    useEffect(() => {
+        if (!showPreview) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setShowPreview(false);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+
+        const container = previewContentRef.current;
+        if (!container) return () => window.removeEventListener('keydown', handleKeyDown);
+        const handleClick = (e: Event) => {
+            const btn = (e.target as HTMLElement).closest('.code-copy-btn') as HTMLElement | null;
+            if (!btn) return;
+            const code = btn.getAttribute('data-code')
+                ?.replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+            if (code) {
+                navigator.clipboard.writeText(code).then(() => {
+                    btn.textContent = '복사됨!';
+                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
+                }).catch(() => {
+                    btn.textContent = '복사 실패';
+                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
+                });
+            }
+        };
+        container.addEventListener('click', handleClick);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            container.removeEventListener('click', handleClick);
+        };
+    }, [showPreview]);
 
     // 글 수정 모드: 기존 글 불러오기
     useEffect(() => {
@@ -405,6 +444,15 @@ export default function EditorPage() {
                         <span className="toolbar-sep" />
                     </div>
                     <ImageUploadButton onImageInsert={handleImageInsert} />
+                    <button
+                        type="button"
+                        className="toolbar-btn toolbar-btn-preview"
+                        onClick={() => setShowPreview(true)}
+                        title="미리보기"
+                        disabled={!formData.content.trim()}
+                    >
+                        미리보기
+                    </button>
                 </div>
 
                 {/* 블록 에디터 */}
@@ -463,6 +511,35 @@ export default function EditorPage() {
                     </div>
                 </div>
             </form>
+
+            {/* 미리보기 모달 */}
+            {showPreview && (
+                <div className="preview-overlay" onClick={() => setShowPreview(false)} role="dialog" aria-modal="true" aria-label="미리보기">
+                    <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="preview-header">
+                            <h2 className="preview-title">{formData.title || '제목 없음'}</h2>
+                            <button className="preview-close" onClick={() => setShowPreview(false)} aria-label="미리보기 닫기">
+                                &times;
+                            </button>
+                        </div>
+                        {formData.tags && (
+                            <div className="preview-tags">
+                                {formData.tags.split(',').map((tag: string, i: number) => {
+                                    const trimmed = tag.trim();
+                                    return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
+                                })}
+                            </div>
+                        )}
+                        <div
+                            ref={previewContentRef}
+                            className="preview-body markdown-content"
+                            dangerouslySetInnerHTML={{
+                                __html: renderMarkdown(formData.content)
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

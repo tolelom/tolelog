@@ -39,9 +39,25 @@ export default function SeriesDetailPage() {
     if (isLoading) {
         return (
             <div className="series-detail-page">
-                <div className="series-loading">
-                    <div className="spinner"></div>
-                    <p>시리즈를 불러오는 중...</p>
+                <div className="series-header">
+                    <div className="skeleton skeleton-text-sm" style={{ width: 100, marginBottom: 16 }} />
+                    <div className="skeleton skeleton-text-lg" style={{ width: '60%', height: 28 }} />
+                    <div className="skeleton skeleton-text" style={{ width: '80%', marginTop: 12 }} />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                        <div className="skeleton skeleton-text-sm" style={{ width: 60 }} />
+                        <div className="skeleton skeleton-text-sm" style={{ width: 50 }} />
+                    </div>
+                </div>
+                <div className="series-post-list">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="series-post-item" style={{ pointerEvents: 'none' }}>
+                            <div className="skeleton skeleton-circle" style={{ width: 28, height: 28, flexShrink: 0 }} />
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: 4 }}>
+                                <div className="skeleton skeleton-text" style={{ width: '70%' }} />
+                                <div className="skeleton skeleton-text-sm" style={{ width: 80 }} />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         );

@@ -132,9 +132,25 @@ export default function UserProfilePage() {
     if (loading) {
         return (
             <div className="profile-page">
-                <div className="profile-status">
-                    <div className="spinner-sm" />
-                    <p>프로필을 불러오는 중...</p>
+                <div className="profile-info" style={{ paddingTop: 36 }}>
+                    <div className="skeleton skeleton-circle" style={{ width: 80, height: 80, margin: '0 auto 16px' }} />
+                    <div className="skeleton skeleton-text-lg" style={{ width: 120, margin: '0 auto 16px' }} />
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 32 }}>
+                        <div className="skeleton" style={{ width: 40, height: 28 }} />
+                        <div className="skeleton" style={{ width: 40, height: 28 }} />
+                    </div>
+                </div>
+                <div style={{ marginTop: 32 }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="skeleton-card">
+                            <div className="skeleton skeleton-text-lg" style={{ width: '65%' }} />
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                                <div className="skeleton skeleton-text-sm" style={{ width: 70 }} />
+                                <div className="skeleton skeleton-text-sm" style={{ width: 50 }} />
+                            </div>
+                            <div className="skeleton skeleton-text" style={{ width: '90%' }} />
+                        </div>
+                    ))}
                 </div>
             </div>
         );
