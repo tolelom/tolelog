@@ -47,7 +47,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/tolelom/tolelog:latest
+          tags: |
+            ghcr.io/tolelom/tolelog:latest
+            ghcr.io/tolelom/tolelog:${{ github.sha }}
           platforms: linux/arm64
 
       - name: 서버에 배포

@@ -62,19 +62,6 @@
     color: var(--text-muted);
 }
 
-.home-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--border-light);
-    border-top-color: var(--text-secondary);
-    border-radius: 50%;
-    animation: home-spin 0.8s linear infinite;
-    margin: 0 auto 12px;
-}
-
-@keyframes home-spin {
-    to { transform: rotate(360deg); }
-}
 
 .home-error {
     color: var(--error-text);
@@ -262,14 +249,9 @@
     display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
 }
 .home-post-tags .tag-chip {
-    display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px;
-    background-color: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color);
+    padding: 2px 10px; border-radius: 12px; font-size: 12px;
+    color: var(--text-muted);
 }
-.home-post-tags .tag-chip-btn {
-    cursor: pointer; transition: background-color 0.15s, color 0.15s;
-}
-.home-post-tags .tag-chip-btn:hover { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
-.home-post-tags .tag-chip-active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
 
 .home-tag-filter {
     display: flex; align-items: center; gap: 8px; margin-bottom: 16px;

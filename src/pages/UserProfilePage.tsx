@@ -133,7 +133,7 @@ export default function UserProfilePage() {
         return (
             <div className="profile-page">
                 <div className="profile-status">
-                    <div className="profile-spinner" />
+                    <div className="spinner-sm" />
                     <p>프로필을 불러오는 중...</p>
                 </div>
             </div>

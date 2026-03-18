@@ -32,8 +32,7 @@ interface SizeOption {
     value: string | null;
 }
 
-let nextBlockId = 1;
-function genBlockId(): string { return `blk-${nextBlockId++}`; }
+function genBlockId(): string { return crypto.randomUUID(); }
 
 function startImageDrag(
     startX: number,

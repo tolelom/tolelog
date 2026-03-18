@@ -11,6 +11,9 @@ export const STORAGE_KEYS = {
 
 export const AUTO_SAVE_DELAY_MS: number = 1000;
 
+// 블로그 소유자 ID (홈페이지 시리즈 표시에 사용)
+export const BLOG_OWNER_ID: number = 1;
+
 export const IMAGE_CONSTRAINTS = {
     MAX_SIZE: 5 * 1024 * 1024, // 5MB
     ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const,

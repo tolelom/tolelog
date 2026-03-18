@@ -8,7 +8,6 @@
     color: var(--text-primary);
     border-radius: 10px;
     box-shadow: var(--shadow-modal);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .auth-box h1 {

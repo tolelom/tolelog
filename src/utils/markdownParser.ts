@@ -53,10 +53,7 @@ export function slugifyHeading(text: string): string {
         .replace(/["<>&]/g, '');
 }
 
-// 각주 참조를 수집하는 컨텍스트
-let footnoteRefs: Set<string> = new Set();
-
-export function parseInline(text: string): string {
+function parseInlineWithRefs(text: string, refs: Set<string>): string {
     if (!text) return '';
 
     let result = '';
@@ -91,7 +88,7 @@ export function parseInline(text: string): string {
             if (end !== -1 && text[end + 1] !== ':') {
                 const id = text.slice(i + 2, end);
                 if (id && /^[\w-]+$/.test(id)) {
-                    footnoteRefs.add(id);
+                    refs.add(id);
                     result += `<sup class="footnote-ref"><a href="#fn-${escapeHtml(id)}" id="fnref-${escapeHtml(id)}">${escapeHtml(id)}</a></sup>`;
                     i = end + 1;
                     continue;
@@ -107,7 +104,7 @@ export function parseInline(text: string): string {
                 if (urlEnd !== -1) {
                     const label = text.slice(i + 1, labelEnd);
                     const url = text.slice(labelEnd + 2, urlEnd);
-                    result += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${parseInline(label)}</a>`;
+                    result += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${parseInlineWithRefs(label, refs)}</a>`;
                     i = urlEnd + 1;
                     continue;
                 }
@@ -140,7 +137,7 @@ export function parseInline(text: string): string {
         if (text[i] === '*' && text[i + 1] === '*') {
             const end = text.indexOf('**', i + 2);
             if (end !== -1) {
-                const inner = parseInline(text.slice(i + 2, end));
+                const inner = parseInlineWithRefs(text.slice(i + 2, end), refs);
                 result += `<strong>${inner}</strong>`;
                 i = end + 2;
                 continue;
@@ -151,7 +148,7 @@ export function parseInline(text: string): string {
         if (text[i] === '*' && text[i + 1] !== '*') {
             const end = text.indexOf('*', i + 1);
             if (end !== -1 && end > i + 1) {
-                const inner = parseInline(text.slice(i + 1, end));
+                const inner = parseInlineWithRefs(text.slice(i + 1, end), refs);
                 result += `<em>${inner}</em>`;
                 i = end + 1;
                 continue;
@@ -162,7 +159,7 @@ export function parseInline(text: string): string {
         if (text[i] === '~' && text[i + 1] === '~') {
             const end = text.indexOf('~~', i + 2);
             if (end !== -1) {
-                const inner = parseInline(text.slice(i + 2, end));
+                const inner = parseInlineWithRefs(text.slice(i + 2, end), refs);
                 result += `<del>${inner}</del>`;
                 i = end + 2;
                 continue;
@@ -181,6 +178,10 @@ export function parseInline(text: string): string {
     }
 
     return result;
+}
+
+export function parseInline(text: string): string {
+    return parseInlineWithRefs(text, new Set());
 }
 
 // ─── 블록 파싱 ───
@@ -454,15 +455,17 @@ function parseList(lines: string[], startIndex: number, type: 'ordered' | 'unord
 
 // ─── 렌더링 ───
 
-export function renderBlock(block: Block): string {
+function renderBlockWithRefs(block: Block, refs: Set<string>): string {
+    const inline = (text: string) => parseInlineWithRefs(text, refs);
+
     switch (block.type) {
         case 'heading': {
             const headingId = slugifyHeading(block.text);
-            return `<h${block.level} id="${headingId}" class="markdown-heading">${parseInline(block.text)}</h${block.level}>`;
+            return `<h${block.level} id="${headingId}" class="markdown-heading">${inline(block.text)}</h${block.level}>`;
         }
 
         case 'paragraph':
-            return `<p class="markdown-paragraph">${parseInline(block.text)}</p>`;
+            return `<p class="markdown-paragraph">${inline(block.text)}</p>`;
 
         case 'code': {
             const lang = block.lang && hljs.getLanguage(block.lang) ? block.lang : 'plaintext';
@@ -478,28 +481,28 @@ export function renderBlock(block: Block): string {
             return `<div class="math-block">${renderKatex(block.expr, true)}</div>`;
 
         case 'blockquote':
-            return `<blockquote class="markdown-blockquote">${renderMarkdown(block.text)}</blockquote>`;
+            return `<blockquote class="markdown-blockquote">${renderMarkdownWithRefs(block.text, refs)}</blockquote>`;
 
         case 'checklist':
             return `<ul class="markdown-checklist">${block.items.map(item =>
-                `<li class="checklist-item"><input type="checkbox" ${item.checked ? 'checked' : ''} disabled /><span>${parseInline(item.text)}</span></li>`
+                `<li class="checklist-item"><input type="checkbox" ${item.checked ? 'checked' : ''} disabled /><span>${inline(item.text)}</span></li>`
             ).join('')}</ul>`;
 
         case 'unordered_list':
-            return `<ul class="markdown-list">${block.items.map(item => `<li>${parseInline(item)}</li>`).join('')}</ul>`;
+            return `<ul class="markdown-list">${block.items.map(item => `<li>${inline(item)}</li>`).join('')}</ul>`;
 
         case 'ordered_list':
-            return `<ol class="markdown-list">${block.items.map(item => `<li>${parseInline(item)}</li>`).join('')}</ol>`;
+            return `<ol class="markdown-list">${block.items.map(item => `<li>${inline(item)}</li>`).join('')}</ol>`;
 
         case 'table': {
             const headerHtml = block.headers.map((h, idx) => {
                 const align = block.alignments[idx] || 'left';
-                return `<th style="text-align:${align}">${parseInline(h)}</th>`;
+                return `<th style="text-align:${align}">${inline(h)}</th>`;
             }).join('');
             const bodyHtml = block.rows.map(row =>
                 '<tr>' + row.map((cell, idx) => {
                     const align = block.alignments[idx] || 'left';
-                    return `<td style="text-align:${align}">${parseInline(cell)}</td>`;
+                    return `<td style="text-align:${align}">${inline(cell)}</td>`;
                 }).join('') + '</tr>'
             ).join('');
             return `<div class="table-wrapper"><table class="markdown-table"><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
@@ -519,16 +522,26 @@ export function renderBlock(block: Block): string {
             return ''; // renderMarkdown에서 별도 처리
 
         default:
-            return `<p>${parseInline((block as Block).raw || '')}</p>`;
+            return `<p>${inline((block as Block).raw || '')}</p>`;
     }
+}
+
+export function renderBlock(block: Block): string {
+    return renderBlockWithRefs(block, new Set());
+}
+
+function renderMarkdownWithRefs(text: string, refs: Set<string>): string {
+    if (!text) return '';
+    const blocks = parseBlocks(text);
+    return blocks.map(b => renderBlockWithRefs(b, refs)).join('\n');
 }
 
 export function renderMarkdown(text: string): string {
     if (!text) return '';
     try {
-        footnoteRefs = new Set();
+        const refs = new Set<string>();
         const blocks = parseBlocks(text);
-        let html = blocks.map(renderBlock).join('\n');
+        let html = blocks.map(b => renderBlockWithRefs(b, refs)).join('\n');
 
         // 각주 정의 수집
         const footnoteDefs = blocks.filter((b): b is FootnoteDefBlock => b.type === 'footnote_def');
@@ -536,7 +549,7 @@ export function renderMarkdown(text: string): string {
             html += '<section class="footnotes"><hr><ol class="footnote-list">';
             for (const fn of footnoteDefs) {
                 html += `<li id="fn-${escapeHtml(fn.id)}" class="footnote-item">`;
-                html += `${parseInline(fn.text)} <a href="#fnref-${escapeHtml(fn.id)}" class="footnote-backref">↩</a>`;
+                html += `${parseInlineWithRefs(fn.text, refs)} <a href="#fnref-${escapeHtml(fn.id)}" class="footnote-backref">↩</a>`;
                 html += '</li>';
             }
             html += '</ol></section>';

@@ -123,11 +123,11 @@ export const AUTH_API = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
-        const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error || data.message || '로그인에 실패했습니다');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || '로그인에 실패했습니다');
         }
-        return data;
+        return response.json();
     },
 
     register: async (username: string, password: string): Promise<SuccessResponse<AuthData>> => {
@@ -136,11 +136,11 @@ export const AUTH_API = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
-        const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error || data.message || '회원가입에 실패했습니다');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || '회원가입에 실패했습니다');
         }
-        return data;
+        return response.json();
     },
 
     refresh: async (refreshToken: string): Promise<SuccessResponse<AuthData>> => {
@@ -149,11 +149,11 @@ export const AUTH_API = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: refreshToken }),
         });
-        const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error || data.message || '토큰 갱신에 실패했습니다');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || '토큰 갱신에 실패했습니다');
         }
-        return data;
+        return response.json();
     },
 };
 

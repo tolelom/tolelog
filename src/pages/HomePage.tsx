@@ -3,6 +3,7 @@ import { useContext, useState, useEffect, MouseEvent } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API, SERIES_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format';
+import { BLOG_OWNER_ID } from '../utils/constants';
 import ThemeToggle from '../components/ThemeToggle';
 import { PostListItem, Pagination, PostListWithPagination, Series } from '../types';
 import './HomePage.css';
@@ -31,7 +32,7 @@ export default function HomePage() {
     useEffect(() => {
         if (page !== 1 || tag || searchQuery) { setSeriesList([]); return; }
         const controller = new AbortController();
-        SERIES_API.getUserSeries(1, { signal: controller.signal })
+        SERIES_API.getUserSeries(BLOG_OWNER_ID, { signal: controller.signal })
             .then(res => { if (res.status === 'success') setSeriesList(res.data || []); })
             .catch(() => {});
         return () => controller.abort();
@@ -153,7 +154,7 @@ export default function HomePage() {
             <div className="home-post-list">
                 {loading && (
                     <div className="home-status">
-                        <div className="home-spinner" />
+                        <div className="spinner-sm" />
                         <p>글을 불러오는 중...</p>
                     </div>
                 )}
