@@ -191,6 +191,9 @@ export default function PostDetailPage() {
     // 목차 추출 (early return 전에 호출해야 hooks 규칙 준수)
     const toc = useMemo<TocItem[]>(() => (post ? extractToc(post.content) : []), [post]);
 
+    // 마크다운 렌더링 결과 캐싱 (highlight.js + DOMPurify가 비용이 큼)
+    const renderedHtml = useMemo(() => ({ __html: post ? renderMarkdown(post.content) : '' }), [post]);
+
     // TOC 현재 섹션 하이라이트
     useEffect(() => {
         if (toc.length === 0) return;
@@ -400,9 +403,7 @@ export default function PostDetailPage() {
                 <div
                     ref={contentRef}
                     className="post-content markdown-content"
-                    dangerouslySetInnerHTML={{
-                        __html: renderMarkdown(post.content)
-                    }}
+                    dangerouslySetInnerHTML={renderedHtml}
                 />
 
                 {/* 좋아요 버튼 */}

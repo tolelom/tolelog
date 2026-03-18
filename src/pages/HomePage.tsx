@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { POST_API, SERIES_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format';
 import { BLOG_OWNER_ID } from '../utils/constants';
+import { cachedFetch } from '../utils/apiCache';
 import ThemeToggle from '../components/ThemeToggle';
 import { PostListItem, Pagination, PostListWithPagination, Series } from '../types';
 import './HomePage.css';
@@ -69,9 +70,12 @@ export default function HomePage() {
         setError(null);
 
         const q = searchParams.get('q') || '';
-        const fetchPromise = q
-            ? POST_API.searchPosts(q, page, PAGE_SIZE, { signal: controller.signal })
-            : POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal, tag });
+        const cacheKey = q ? `search:${q}:${page}` : `posts:${page}:${tag}`;
+        const fetchPromise = cachedFetch(cacheKey, () =>
+            q
+                ? POST_API.searchPosts(q, page, PAGE_SIZE, { signal: controller.signal })
+                : POST_API.getPublicPosts(page, PAGE_SIZE, { signal: controller.signal, tag })
+        );
 
         fetchPromise
             .then((res) => {

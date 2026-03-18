@@ -1,8 +1,8 @@
-import { useContext } from 'react';
+import { memo, useContext } from 'react';
 import { ThemeContext } from '../context/ThemeContext';
 import './ThemeToggle.css';
 
-export default function ThemeToggle() {
+export default memo(function ThemeToggle() {
     const { theme, toggleTheme } = useContext(ThemeContext);
 
     return (
@@ -15,4 +15,4 @@ export default function ThemeToggle() {
             {theme === 'light' ? '\u263E' : '\u2600'}
         </button>
     );
-}
+});

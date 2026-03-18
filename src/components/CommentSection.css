@@ -108,6 +108,9 @@
     color: var(--text-muted);
 }
 .comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     margin-left: auto;
 }
 .comment-delete-btn {
@@ -150,4 +153,303 @@
 }
 .comment-login-prompt a:hover {
     text-decoration: underline;
+}
+
+/* ─── 댓글 하단 액션 바 (답글, 수정) ─── */
+.comment-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.comment-reply-btn,
+.comment-edit-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 2px 0;
+    transition: color 0.2s;
+}
+
+.comment-reply-btn:hover,
+.comment-edit-btn:hover {
+    color: var(--accent-color);
+}
+
+/* ─── 대댓글 (nested replies) ─── */
+.comment-replies {
+    position: relative;
+    margin-top: 4px;
+    padding-left: 24px;
+    margin-left: 14px;
+}
+
+/* 세로 연결선 (thread line) */
+.comment-replies::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--border-light);
+    border-radius: 1px;
+}
+
+/* 대댓글 아이템 */
+.comment-reply-item {
+    position: relative;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.comment-reply-item:last-child {
+    border-bottom: none;
+}
+
+/* 대댓글 가로 연결선 */
+.comment-reply-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 24px;
+    width: 16px;
+    height: 2px;
+    background-color: var(--border-light);
+}
+
+/* 대댓글 아바타/작성자는 약간 작게 */
+.comment-reply-item .comment-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+}
+
+.comment-reply-item .comment-author {
+    font-size: 13px;
+}
+
+.comment-reply-item .comment-content {
+    font-size: 13px;
+}
+
+/* 대댓글 멘션 태그 */
+.comment-mention {
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* ─── 대댓글 접기/펼치기 토글 ─── */
+.comment-replies-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 0;
+    margin-top: 4px;
+    transition: color 0.2s;
+}
+
+.comment-replies-toggle:hover {
+    color: var(--accent-hover);
+}
+
+.comment-replies-toggle-icon {
+    display: inline-flex;
+    transition: transform 0.2s;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.comment-replies-toggle-icon--expanded {
+    transform: rotate(90deg);
+}
+
+/* ─── 인라인 답글 작성 폼 ─── */
+.comment-reply-form {
+    margin-top: 12px;
+    padding-left: 24px;
+    margin-left: 14px;
+    position: relative;
+}
+
+/* 답글 폼 연결선 */
+.comment-reply-form::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--accent-color);
+    border-radius: 1px;
+    opacity: 0.4;
+}
+
+.comment-reply-form .comment-textarea {
+    min-height: 60px;
+    font-size: 13px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.comment-reply-form .comment-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.comment-reply-form .comment-submit-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+}
+
+.comment-reply-cancel-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.comment-reply-cancel-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ─── 인라인 수정 폼 ─── */
+.comment-edit-form {
+    margin-top: 8px;
+}
+
+.comment-edit-form .comment-textarea {
+    min-height: 60px;
+    font-size: 13px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.comment-edit-form .comment-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.comment-edit-form .comment-submit-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+}
+
+.comment-edit-cancel-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.comment-edit-cancel-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* 수정 중인 댓글의 내용을 숨김 */
+.comment-content--hidden {
+    display: none;
+}
+
+/* 수정됨 표시 */
+.comment-edited {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-left: 4px;
+}
+
+/* ─── 모바일 반응형 ─── */
+@media (max-width: 768px) {
+    /* 대댓글 들여쓰기를 줄임 */
+    .comment-replies {
+        padding-left: 16px;
+        margin-left: 10px;
+    }
+
+    .comment-reply-item::before {
+        left: -16px;
+        width: 10px;
+    }
+
+    .comment-reply-form {
+        padding-left: 16px;
+        margin-left: 10px;
+    }
+
+    .comment-reply-item .comment-avatar {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* 가장 좁은 화면에서는 들여쓰기를 더 줄임 */
+    .comment-replies {
+        padding-left: 12px;
+        margin-left: 8px;
+    }
+
+    .comment-reply-item::before {
+        left: -12px;
+        width: 8px;
+    }
+
+    .comment-reply-form {
+        padding-left: 12px;
+        margin-left: 8px;
+    }
+
+    /* 액션 버튼 간격 조정 */
+    .comment-footer {
+        gap: 8px;
+    }
+
+    .comment-reply-btn,
+    .comment-edit-btn {
+        font-size: 11px;
+    }
+
+    /* 대댓글 아바타 더 작게 */
+    .comment-reply-item .comment-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 9px;
+    }
+
+    .comment-reply-item .comment-author {
+        font-size: 12px;
+    }
+
+    .comment-reply-item .comment-content {
+        font-size: 12px;
+    }
 }

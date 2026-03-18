@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { COMMENT_API } from '../utils/api';
@@ -11,7 +11,7 @@ interface CommentSectionProps {
     postId: number;
 }
 
-export default function CommentSection({ postId }: CommentSectionProps) {
+export default memo(function CommentSection({ postId }: CommentSectionProps) {
     const { token, userId } = useContext(AuthContext);
     const [comments, setComments] = useState<Comment[]>([]);
     const [total, setTotal] = useState(0);
@@ -132,4 +132,4 @@ export default function CommentSection({ postId }: CommentSectionProps) {
             )}
         </section>
     );
-}
+});
