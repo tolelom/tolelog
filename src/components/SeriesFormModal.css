@@ -1,0 +1,156 @@
+/* ═══ 시리즈 생성/수정 폼 모달 (SeriesFormModal) ═══ */
+
+.series-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-overlay);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.series-modal {
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: min(440px, 90vw);
+    width: 90%;
+    box-shadow: var(--shadow-modal);
+    animation: slideUp 0.2s ease-out;
+}
+
+.series-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+}
+
+.series-modal-field {
+    margin-bottom: 16px;
+}
+
+.series-modal-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.series-modal-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+
+.series-modal-input::placeholder {
+    color: var(--text-muted);
+}
+
+.series-modal-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+
+.series-modal-textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.series-modal-error {
+    color: var(--error-text);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.series-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.series-modal-btn-submit {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: var(--accent-color);
+    color: white;
+    transition: background 0.2s;
+}
+
+.series-modal-btn-submit:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+}
+
+.series-modal-btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.series-modal-btn-cancel {
+    padding: 10px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    transition: background 0.2s;
+}
+
+.series-modal-btn-cancel:hover {
+    background-color: var(--bg-hover);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .series-modal {
+        padding: 24px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .series-modal {
+        padding: 20px 16px;
+    }
+
+    .series-modal-actions {
+        flex-direction: column;
+    }
+
+    .series-modal-btn-submit,
+    .series-modal-btn-cancel {
+        width: 100%;
+        text-align: center;
+    }
+}

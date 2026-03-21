@@ -1,0 +1,137 @@
+/* ─── SettingsPage ─── */
+.settings-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.settings-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 32px 0;
+}
+
+/* ─── Section ─── */
+.settings-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.settings-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* ─── Form fields (auth pattern) ─── */
+.settings-field {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-label {
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.settings-input {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.settings-input-error {
+  border-color: var(--error-text);
+  box-shadow: 0 0 6px var(--error-glow);
+}
+
+/* ─── Messages ─── */
+.settings-error {
+  color: var(--error-text);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.settings-message {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.settings-message-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+
+.settings-message-error {
+  background-color: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
+}
+
+/* ─── Submit button ─── */
+.settings-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ─── Delete Account ─── */
+.settings-delete-section {
+    border: 1px solid var(--danger-color, #e53e3e);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.settings-delete-warning {
+    color: var(--danger-color, #e53e3e);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.settings-delete-btn {
+    margin-top: 0.75rem;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 24px 16px;
+  }
+  .settings-section {
+    padding: 20px 16px;
+  }
+  .settings-title {
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-page {
+    padding: 20px 12px;
+  }
+  .settings-section {
+    padding: 16px 12px;
+  }
+  .settings-section-title {
+    font-size: 16px;
+  }
+}

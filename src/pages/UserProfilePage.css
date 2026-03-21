@@ -214,13 +214,19 @@
     border-radius: 8px;
     padding: 20px 24px;
     margin-bottom: 12px;
-    text-decoration: none;
     color: inherit;
     transition: background 0.2s;
+    position: relative;
 }
 
 .profile-series-card:hover {
     background: var(--bg-secondary);
+}
+
+.profile-series-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
 }
 
 .profile-series-title {
@@ -373,43 +379,8 @@
 
 /* 페이지네이션 */
 .profile-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    margin-top: 32px;
     padding-top: 24px;
     border-top: 1px solid var(--border-light);
-}
-
-.profile-page-btn {
-    padding: 6px 16px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: none;
-    color: var(--text-secondary);
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.profile-page-btn:hover:not(:disabled) {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-    border-color: var(--text-muted);
-}
-
-.profile-page-btn:disabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-.profile-page-num {
-    font-size: 14px;
-    color: var(--text-muted);
-    min-width: 48px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
 }
 
 /* 반응형 */
@@ -466,5 +437,141 @@
 
     .profile-tag-cloud {
         padding: 12px 14px;
+    }
+}
+
+/* ═══ 시리즈 관리 모드 ═══ */
+
+/* 시리즈 에러 메시지 */
+.profile-series-error {
+    color: var(--error-text);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+/* 시리즈 탭 상단 헤더 (제목 + 새 시리즈 버튼) */
+.profile-series-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+/* 새 시리즈 버튼 */
+.profile-series-create-btn {
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* 카드 내 편집/삭제 버튼 그룹 */
+.profile-series-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.profile-series-card:hover .profile-series-card-actions,
+.profile-series-card:focus-within .profile-series-card-actions {
+    opacity: 1;
+}
+
+/* 편집 버튼 */
+.profile-series-edit-btn {
+    background: none;
+    border: none;
+    padding: 2px 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--btn-edit-bg);
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+    width: auto;
+    height: auto;
+}
+
+.profile-series-edit-btn:hover {
+    color: var(--btn-edit-hover);
+    background: var(--bg-secondary);
+}
+
+/* 삭제 버튼 */
+.profile-series-delete-btn {
+    background: none;
+    border: none;
+    padding: 2px 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--btn-danger-bg);
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+    width: auto;
+    height: auto;
+}
+
+.profile-series-delete-btn:hover {
+    color: var(--btn-danger-hover);
+    background: var(--bg-secondary);
+}
+
+/* 삭제 확인 인라인 메시지 */
+.profile-series-delete-confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    font-size: 13px;
+    color: var(--error-text);
+    margin-top: 8px;
+}
+
+.profile-series-delete-confirm button {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+}
+
+.profile-series-confirm-yes {
+    background: var(--btn-danger-bg) !important;
+    color: white !important;
+}
+
+.profile-series-confirm-no {
+    background: var(--btn-secondary-bg, var(--bg-secondary)) !important;
+    color: var(--text-primary) !important;
+}
+
+/* 반응형 — 시리즈 관리 */
+@media (max-width: 768px) {
+    .profile-series-card-actions {
+        opacity: 1;
+    }
+
+    .profile-series-edit-btn,
+    .profile-series-delete-btn {
+        width: auto;
+        height: auto;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-series-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .profile-series-create-btn {
+        justify-content: center;
     }
 }

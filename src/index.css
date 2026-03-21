@@ -42,6 +42,15 @@
   --table-header-bg: #f5f5f5;
   --table-row-hover: #f9f9f9;
 
+  --accent-glow: rgba(0, 102, 204, 0.3);
+  --focus-glow: rgba(77, 166, 255, 0.4);
+  --error-glow: rgba(255, 107, 107, 0.4);
+  --like-color: #e74c3c;
+  --like-bg: rgba(231, 76, 60, 0.08);
+
+  --nav-height: 56px;
+  --nav-bg: rgba(255, 255, 255, 0.85);
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -152,6 +161,14 @@
 
   --editor-active-bg: #0d0d0d;
 
+  --accent-glow: rgba(77, 166, 255, 0.3);
+  --focus-glow: rgba(77, 166, 255, 0.5);
+  --error-glow: rgba(255, 107, 107, 0.5);
+  --like-color: #ff6b6b;
+  --like-bg: rgba(255, 107, 107, 0.1);
+
+  --nav-bg: rgba(0, 0, 0, 0.85);
+
   color: var(--text-primary);
   background-color: var(--bg-primary);
 }
@@ -190,15 +207,108 @@ button {
 button:hover {
   border-color: var(--accent-color);
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* ─── 전역 포커스 링 (키보드 접근성) ─── */
+*:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
-/* ─── 공통 스피너 ─── */
+/* 입력 필드 포커스 — 전역 통일 */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 6px var(--focus-glow);
+}
+
+/* ─── 공용 버튼 ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+  text-decoration: none;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent-color);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--text-primary);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.btn-danger {
+  background: var(--btn-danger-bg);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { background: var(--btn-danger-hover); }
+
+/* ─── 공용 페이지네이션 ─── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+.page-btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.page-btn.active {
+  background: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+.page-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ─── 공통 애니메이션 ─── */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .spinner {
@@ -230,6 +340,11 @@ button:focus-visible {
   background-color: var(--bg-secondary);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
+}
+
+button.tag-chip-btn {
+  font-family: inherit;
+  line-height: inherit;
 }
 
 .tag-chip-btn {
@@ -286,6 +401,118 @@ button:focus-visible {
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 12px;
+}
+
+.skeleton-list { margin-top: 32px; }
+.skeleton-meta-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.skeleton-stats-row { display: flex; justify-content: center; gap: 32px; }
+
+/* ─── 공통 마크다운 렌더링 (.md-body) ─── */
+.md-body { line-height: 1.8; color: var(--text-secondary); }
+
+.md-body h1, .md-body h2 { font-weight: 700; color: var(--text-primary); }
+.md-body h1 {
+  font-size: 32px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px;
+}
+.md-body h2 { font-size: 24px; }
+.md-body h3 { font-size: 20px; font-weight: 600; color: var(--text-secondary); }
+.md-body h4, .md-body h5, .md-body h6 { font-weight: 600; color: var(--text-secondary); }
+
+.md-body strong { font-weight: 700; color: var(--text-primary); }
+.md-body em { font-style: italic; }
+.md-body del { text-decoration: line-through; color: var(--text-muted); }
+
+.md-body code {
+  background-color: var(--code-bg); padding: 2px 6px; border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 13px; color: var(--code-text);
+}
+.md-body pre {
+  background-color: var(--code-block-bg); padding: 16px; border-radius: 8px;
+  overflow-x: auto; border: 1px solid var(--border-light);
+}
+.md-body pre code {
+  background-color: transparent; color: var(--code-block-text); padding: 0; border-radius: 0; font-size: 13px;
+}
+.md-body .hljs {
+  display: block; overflow-x: auto; padding: 16px;
+  background: var(--code-block-bg); color: var(--code-block-text); border-radius: 8px;
+}
+
+.md-body a {
+  color: var(--accent-color); text-decoration: none;
+  border-bottom: 1px solid var(--accent-glow);
+  transition: all 0.2s;
+}
+.md-body a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+.md-body img {
+  max-width: 100%; height: auto; border-radius: 8px; box-shadow: var(--shadow-card);
+}
+
+.md-body blockquote {
+  border-left: 4px solid var(--blockquote-border); padding: 12px 16px;
+  background-color: var(--blockquote-bg); color: var(--text-muted);
+  font-style: italic; border-radius: 4px;
+}
+
+.md-body ul, .md-body ol { padding-left: 32px; }
+.md-body li { color: var(--text-secondary); }
+
+.md-body .table-wrapper {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.md-body table {
+  border-collapse: collapse; width: 100%; min-width: 320px;
+}
+.md-body table thead { background-color: var(--table-header-bg); }
+.md-body table th, .md-body table td {
+  border: 1px solid var(--border-color); padding: 12px; text-align: left;
+}
+.md-body table th { font-weight: 600; color: var(--text-primary); }
+.md-body table tr:hover { background-color: var(--table-row-hover); }
+
+.md-body hr { border: none; height: 1px; background-color: var(--border-color); }
+
+/* 체크리스트 */
+.md-body .markdown-checklist { list-style: none; padding-left: 8px; }
+.md-body .checklist-item {
+  display: flex; align-items: flex-start; gap: 8px; color: var(--text-secondary);
+}
+.md-body .checklist-item input[type="checkbox"] {
+  margin-top: 4px; accent-color: var(--accent-color); pointer-events: none;
+}
+
+/* 각주 */
+.md-body .footnotes { font-size: 13px; color: var(--text-muted); }
+.md-body .footnote-list { padding-left: 24px; }
+.md-body .footnote-item { margin: 4px 0; }
+.md-body .footnote-ref a { color: var(--accent-color); text-decoration: none; font-size: 12px; }
+.md-body .footnote-backref { color: var(--accent-color); text-decoration: none; margin-left: 4px; }
+
+/* 수식 */
+.md-body .math-block { text-align: center; overflow-x: auto; }
+
+/* 코드 블록 언어 레이블 */
+.md-body .code-lang-label {
+  position: absolute; top: 10px; left: 14px;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px; line-height: 1;
+  pointer-events: none; user-select: none; opacity: 0.7;
+}
+.md-body .has-lang pre { padding-top: 36px; }
+
+/* 코드 블록 복사 버튼 */
+.md-body .code-block-wrapper { position: relative; }
+.md-body .code-copy-btn {
+  position: absolute; top: 8px; right: 8px; padding: 4px 10px;
+  border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px;
+  cursor: pointer; z-index: 1;
+  background-color: var(--bg-secondary); color: var(--text-muted);
+  opacity: 0; transition: opacity 0.2s;
+}
+.md-body .code-block-wrapper:hover .code-copy-btn { opacity: 1; }
+.md-body .code-copy-btn:hover {
+  background-color: var(--bg-hover); color: var(--text-primary);
 }
 
 /* ─── Page Loading Spinner (React.lazy Suspense fallback) ─── */

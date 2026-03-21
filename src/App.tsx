@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import Navbar from './components/Navbar';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -11,12 +12,15 @@ const EditorPage = lazy(() => import('./pages/EditorPage'));
 const PostDetailPage = lazy(() => import('./pages/PostDetailPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const SeriesDetailPage = lazy(() => import('./pages/SeriesDetailPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const DraftsPage = lazy(() => import('./pages/DraftsPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function App() {
     return (
         <BrowserRouter>
             <ErrorBoundary>
+            <Navbar />
             <Suspense fallback={<div className="page-loading"><div className="spinner" /><p>로딩 중...</p></div>}>
             <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -25,6 +29,8 @@ function App() {
                 <Route path="/series/:seriesId" element={<SeriesDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+                <Route path="/drafts" element={<PrivateRoute><DraftsPage /></PrivateRoute>} />
                 <Route path="/editor" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
                 <Route path="/editor/:postId" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
                 <Route path="/editor_private" element={<PrivateRoute><EditorPage /></PrivateRoute>} />

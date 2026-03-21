@@ -79,171 +79,25 @@
     padding: 4px 8px;
 }
 
-/* ─── 렌더링된 마크다운 스타일 ─── */
-
-.block-rendered h1, .block-rendered h2 {
-    margin: 8px 0;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-.block-rendered h1 {
-    font-size: 32px;
-    border-bottom: 1px solid var(--border-light);
-    padding-bottom: 8px;
-}
-.block-rendered h2 { font-size: 24px; }
-.block-rendered h3 { font-size: 20px; font-weight: 600; margin: 6px 0; color: var(--text-secondary); }
-.block-rendered h4, .block-rendered h5, .block-rendered h6 {
-    font-weight: 600; margin: 4px 0; color: var(--text-secondary);
-}
-
-.block-rendered p { margin: 4px 0; color: var(--text-secondary); line-height: 1.8; }
-.block-rendered strong { font-weight: 700; color: var(--text-primary); }
-.block-rendered em { font-style: italic; color: var(--text-muted); }
-.block-rendered del { text-decoration: line-through; color: var(--text-muted); }
-
-.block-rendered code {
-    background-color: var(--code-bg);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 13px;
-    color: var(--code-text);
-}
-
-.block-rendered pre {
-    background-color: var(--code-block-bg);
-    padding: 16px;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 8px 0;
-    border: 1px solid var(--border-light);
-}
-.block-rendered pre code {
-    background-color: transparent;
-    color: var(--code-block-text);
-    padding: 0;
-    border-radius: 0;
-}
-
-.block-rendered a {
-    color: var(--accent-color);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(0, 102, 204, 0.3);
-    transition: all 0.2s;
-}
-.block-rendered a:hover {
-    color: var(--accent-hover);
-    border-bottom-color: var(--accent-hover);
-}
-
-.block-rendered img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin: 8px 0;
-    box-shadow: var(--shadow-card);
-}
-
-.block-rendered .table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 8px 0;
-}
-
-.block-rendered table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 0;
-    min-width: 320px;
-}
-.block-rendered table thead { background-color: var(--table-header-bg); }
-.block-rendered table th, .block-rendered table td {
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    text-align: left;
-}
-.block-rendered table th { font-weight: 600; color: var(--text-primary); }
-.block-rendered table tr:hover { background-color: var(--table-row-hover); }
-
-.block-rendered ul, .block-rendered ol {
-    margin: 4px 0;
-    padding-left: 32px;
-}
-.block-rendered li { margin: 4px 0; color: var(--text-secondary); }
-
-.block-rendered blockquote {
-    border-left: 4px solid var(--blockquote-border);
-    padding: 8px 12px;
-    margin: 8px 0;
-    color: var(--text-muted);
-    font-style: italic;
-    background-color: var(--blockquote-bg);
-    border-radius: 4px;
-}
-
-.block-rendered hr {
-    border: none;
-    height: 1px;
-    background-color: var(--border-color);
-    margin: 16px 0;
-}
-
-/* 체크리스트 */
-.block-rendered .markdown-checklist { list-style: none; padding-left: 8px; margin: 4px 0; }
-.block-rendered .checklist-item {
-    display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; color: var(--text-secondary);
-}
-.block-rendered .checklist-item input[type="checkbox"] {
-    margin-top: 4px; accent-color: var(--accent-color); pointer-events: none;
-}
-
-/* 각주 */
-.block-rendered .footnotes { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
-.block-rendered .footnote-list { padding-left: 24px; }
-.block-rendered .footnote-item { margin: 4px 0; }
-.block-rendered .footnote-ref a { color: var(--accent-color); text-decoration: none; font-size: 12px; }
-.block-rendered .footnote-backref { color: var(--accent-color); text-decoration: none; margin-left: 4px; }
-
-/* 수식 */
-.block-rendered .math-block { margin: 8px 0; text-align: center; overflow-x: auto; }
-
-/* 코드 블록 언어 레이블 */
-.block-rendered .code-lang-label {
-    position: absolute;
-    top: 10px;
-    left: 14px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1;
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.7;
-}
-.block-rendered .has-lang pre {
-    padding-top: 36px;
-}
-
-/* 코드 블록 복사 버튼 */
-.block-rendered .code-block-wrapper {
-    position: relative;
-}
-.block-rendered .code-copy-btn {
-    position: absolute; top: 8px; right: 8px; padding: 4px 10px;
-    border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px;
-    cursor: pointer; z-index: 1;
-    background-color: var(--bg-secondary); color: var(--text-muted);
-    opacity: 0; transition: opacity 0.2s;
-}
-.block-rendered .code-block-wrapper:hover .code-copy-btn {
-    opacity: 1;
-}
-.block-rendered .code-copy-btn:hover {
-    background-color: var(--bg-hover); color: var(--text-primary);
-}
+/* ─── 에디터용 마크다운 간격 오버라이드 (.md-body 기반, 더 촘촘한 간격) ─── */
+.block-rendered h1, .block-rendered h2 { margin: 8px 0; }
+.block-rendered h1 { padding-bottom: 8px; }
+.block-rendered h3 { margin: 6px 0; }
+.block-rendered h4, .block-rendered h5, .block-rendered h6 { margin: 4px 0; }
+.block-rendered p { margin: 4px 0; }
+.block-rendered em { color: var(--text-muted); }
+.block-rendered pre { margin: 8px 0; }
+.block-rendered img { margin: 8px 0; }
+.block-rendered blockquote { padding: 8px 12px; margin: 8px 0; }
+.block-rendered ul, .block-rendered ol { margin: 4px 0; }
+.block-rendered li { margin: 4px 0; }
+.block-rendered .table-wrapper { margin: 8px 0; }
+.block-rendered table th, .block-rendered table td { padding: 8px 12px; }
+.block-rendered hr { margin: 16px 0; }
+.block-rendered .markdown-checklist { margin: 4px 0; }
+.block-rendered .checklist-item { margin: 4px 0; }
+.block-rendered .footnotes { margin-top: 16px; }
+.block-rendered .math-block { margin: 8px 0; }
 
 /* 이미지 블록 에디터 */
 .block-image-editor {
@@ -346,16 +200,6 @@
 .block-editor.drag-over {
     border: 2px dashed var(--accent-color);
     background-color: var(--bg-hover);
-}
-
-/* hljs 스타일 오버라이드 */
-.block-rendered .hljs {
-    display: block;
-    overflow-x: auto;
-    padding: 16px;
-    background: var(--code-block-bg);
-    color: var(--code-block-text);
-    border-radius: 8px;
 }
 
 @media (max-width: 768px) {

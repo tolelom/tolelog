@@ -1,19 +1,16 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API, SERIES_API, LIKE_API } from '../utils/api';
+import { POST_API } from '../utils/api';
+import { invalidateCache } from '../utils/apiCache';
 import { renderMarkdown } from '../utils/markdown';
-import { slugifyHeading } from '../utils/markdownParser';
-import { Post, SeriesNav, SeriesDetail } from '../types';
+import { Post } from '../types';
+import { useTOC, TocItem } from '../hooks/useTOC';
+import { useSeriesNav } from '../hooks/useSeriesNav';
+import { useLike } from '../hooks/useLike';
 import CommentSection from '../components/CommentSection';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
-
-interface TocItem {
-    level: number;
-    text: string;
-    id: string;
-}
 
 function getPlainText(content: string, maxLength: number = 160): string {
     return content
@@ -31,25 +28,6 @@ function getFirstHttpImage(content: string): string | null {
     return match ? match[1] : null;
 }
 
-function extractToc(content: string): TocItem[] {
-    const lines = content.split('\n');
-    const toc: TocItem[] = [];
-    let inCode = false;
-    for (const line of lines) {
-        if (line.trimStart().startsWith('```')) { inCode = !inCode; continue; }
-        if (inCode) continue;
-        const match = line.match(/^(#{1,3})\s+(.+)$/);
-        if (match) {
-            toc.push({
-                level: match[1].length,
-                text: match[2].replace(/[*_~`[\]()]/g, '').trim(),
-                id: slugifyHeading(match[2]),
-            });
-        }
-    }
-    return toc;
-}
-
 export default function PostDetailPage() {
     const { postId } = useParams<{ postId: string }>();
     const navigate = useNavigate();
@@ -60,24 +38,21 @@ export default function PostDetailPage() {
     const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [deleteError, setDeleteError] = useState<string>('');
-    const [activeTocId, setActiveTocId] = useState<string | null>(null);
-    const [seriesNav, setSeriesNav] = useState<SeriesNav | null>(null);
-    const [seriesTocOpen, setSeriesTocOpen] = useState(false);
-    const [seriesDetail, setSeriesDetail] = useState<SeriesDetail | null>(null);
-    const [liked, setLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(0);
-    const [likeLoading, setLikeLoading] = useState(false);
-    const [mobileTocOpen, setMobileTocOpen] = useState(false);
     const contentRef = useRef<HTMLDivElement | null>(null);
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
+
+    const { toc, activeTocId, mobileTocOpen, setMobileTocOpen } = useTOC(post?.content ?? null);
+    const { seriesNav, seriesTocOpen, seriesDetail, toggleSeriesToc } = useSeriesNav(postId);
+    const { liked, likeCount, likeLoading, handleLike } = useLike(postId, token, post?.like_count || 0);
+
+    const renderedHtml = useMemo(() => ({ __html: post ? renderMarkdown(post.content) : '' }), [post]);
 
     // 코드 블록 복사 버튼 이벤트 위임
     useEffect(() => {
         const container = contentRef.current;
         if (!container) return;
         const handleClick = (e: Event) => {
-            const target = e.target as HTMLElement;
-            const btn = target.closest('.code-copy-btn') as HTMLElement | null;
+            const btn = (e.target as HTMLElement).closest('.code-copy-btn') as HTMLElement | null;
             if (!btn) return;
             const code = btn.getAttribute('data-code')
                 ?.replace(/&amp;/g, '&')
@@ -123,44 +98,6 @@ export default function PostDetailPage() {
         return () => controller.abort();
     }, [postId, token]);
 
-    // 좋아요 상태 + 카운트 초기화
-    useEffect(() => {
-        if (!post) return;
-        setLikeCount(post.like_count || 0);
-    }, [post]);
-
-    useEffect(() => {
-        if (!postId || !token) return;
-        const controller = new AbortController();
-        LIKE_API.getStatus(postId, { signal: controller.signal, token })
-            .then(res => { if (res.data) setLiked(res.data.liked); })
-            .catch(() => {});
-        return () => controller.abort();
-    }, [postId, token]);
-
-    const handleLike = async () => {
-        if (!token || !postId || likeLoading) return;
-        setLikeLoading(true);
-        try {
-            const res = await LIKE_API.toggle(postId, token);
-            if (res.data) {
-                setLiked(res.data.liked);
-                setLikeCount(res.data.like_count);
-            }
-        } catch { /* ignore */ }
-        finally { setLikeLoading(false); }
-    };
-
-    // 시리즈 네비게이션 로드
-    useEffect(() => {
-        if (!postId) return;
-        const controller = new AbortController();
-        SERIES_API.getSeriesNav(postId, { signal: controller.signal })
-            .then(res => { if (res.data) setSeriesNav(res.data); else setSeriesNav(null); })
-            .catch(() => {});
-        return () => controller.abort();
-    }, [postId]);
-
     // OG / SEO 메타 태그
     useEffect(() => {
         if (!post) return;
@@ -188,77 +125,42 @@ export default function PostDetailPage() {
         return () => { created.forEach(el => el.parentNode?.removeChild(el)); };
     }, [post]);
 
-    // 목차 추출 (early return 전에 호출해야 hooks 규칙 준수)
-    const toc = useMemo<TocItem[]>(() => (post ? extractToc(post.content) : []), [post]);
-
-    // 마크다운 렌더링 결과 캐싱 (highlight.js + DOMPurify가 비용이 큼)
-    const renderedHtml = useMemo(() => ({ __html: post ? renderMarkdown(post.content) : '' }), [post]);
-
-    // TOC 현재 섹션 하이라이트
+    // 모달 배경 스크롤 잠금
     useEffect(() => {
-        if (toc.length === 0) return;
-        const headingEls = toc.map(item => document.getElementById(item.id)).filter(Boolean) as HTMLElement[];
-        if (headingEls.length === 0) return;
-        const observer = new IntersectionObserver(
-            (entries: IntersectionObserverEntry[]) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) setActiveTocId(entry.target.id);
-                });
-            },
-            { rootMargin: '0px 0px -80% 0px', threshold: 0 }
-        );
-        headingEls.forEach(el => observer.observe(el));
-        return () => observer.disconnect();
-    }, [toc]);
+        document.body.style.overflow = deleteConfirm ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [deleteConfirm]);
 
+    // 삭제 모달 키보드 처리
     useEffect(() => {
         if (!deleteConfirm) return;
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setDeleteConfirm(false);
-                setDeleteError('');
-                return;
-            }
-            // Focus trap within modal
+            if (e.key === 'Escape') { setDeleteConfirm(false); setDeleteError(''); return; }
             if (e.key === 'Tab' && deleteModalRef.current) {
-                const focusable = deleteModalRef.current.querySelectorAll<HTMLElement>(
-                    'button:not(:disabled)'
-                );
+                const focusable = deleteModalRef.current.querySelectorAll<HTMLElement>('button:not(:disabled)');
                 if (focusable.length === 0) return;
                 const first = focusable[0];
                 const last = focusable[focusable.length - 1];
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
-                }
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
             }
         };
-        // Focus the first button in the modal
         requestAnimationFrame(() => {
-            const cancelBtn = deleteModalRef.current?.querySelector<HTMLElement>('.btn-delete-cancel');
-            cancelBtn?.focus();
+            deleteModalRef.current?.querySelector<HTMLElement>('.btn-delete-cancel')?.focus();
         });
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [deleteConfirm]);
-
-    const handleDeleteClick = () => setDeleteConfirm(true);
-
-    const handleDeleteCancel = () => {
-        setDeleteConfirm(false);
-        setDeleteError('');
-    };
 
     const handleDelete = async () => {
         if (!postId || !token) return;
         setIsDeleting(true);
         setDeleteError('');
         try {
-            const response = await POST_API.deletePost(postId, token) as { status: string; error?: string };
+            const response = await POST_API.deletePost(postId, token);
             if (response.status === 'success') {
+                invalidateCache('posts:');
+                invalidateCache('search:');
                 navigate('/');
             } else {
                 setDeleteError('글 삭제에 실패했습니다.');
@@ -272,19 +174,14 @@ export default function PostDetailPage() {
         }
     };
 
-    // 로드 중
     if (isLoading) {
         return (
             <div className="post-detail-page">
-                <div className="loading-container">
-                    <div className="spinner"></div>
-                    <p>글을 불러오는 중...</p>
-                </div>
+                <div className="loading-container"><div className="spinner"></div><p>글을 불러오는 중...</p></div>
             </div>
         );
     }
 
-    // 에러
     if (error || !post) {
         return (
             <div className="post-detail-page">
@@ -297,18 +194,9 @@ export default function PostDetailPage() {
         );
     }
 
-    // 본인 글인지 확인
     const isOwner = userId && userId === post.user_id;
-    const createdAt = new Date(post.created_at).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-    const updatedAt = post.updated_at ? new Date(post.updated_at).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }) : null;
+    const createdAt = new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    const updatedAt = post.updated_at ? new Date(post.updated_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
 
     return (
         <div className="post-detail-page">
@@ -325,73 +213,44 @@ export default function PostDetailPage() {
                 </nav>
             )}
             <article className="post-article">
-                {/* 브레드크럼 네비게이션 */}
                 <nav className="post-breadcrumb">
                     <Link to="/" className="breadcrumb-link">홈</Link>
                     <span className="breadcrumb-sep">/</span>
                     <span className="breadcrumb-current">{post.title}</span>
                 </nav>
 
-                {/* 글 메타 */}
                 <header className="post-header">
                     <h1 className="post-title">{post.title}</h1>
                     <div className="post-meta">
-                        <span className="author" role="link" tabIndex={0} style={{ cursor: 'pointer' }} onClick={() => navigate(`/user/${post.user_id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/user/${post.user_id}`); }}>{post.author}</span>
+                        <button type="button" className="author" onClick={() => navigate(`/user/${post.user_id}`)}>{post.author}</button>
                         <span className="separator">•</span>
                         <span className="date">{createdAt}</span>
-                        {updatedAt && createdAt !== updatedAt && (
-                            <>
-                                <span className="separator">•</span>
-                                <span className="updated">수정: {updatedAt}</span>
-                            </>
-                        )}
-                        {post.view_count > 0 && (
-                            <>
-                                <span className="separator">•</span>
-                                <span className="views">조회 {post.view_count}</span>
-                            </>
-                        )}
+                        {updatedAt && createdAt !== updatedAt && (<><span className="separator">•</span><span className="updated">수정: {updatedAt}</span></>)}
+                        {post.view_count > 0 && (<><span className="separator">•</span><span className="views">조회 {post.view_count}</span></>)}
                     </div>
                 </header>
 
-                {/* 태그 */}
                 {post.tags && (
                     <div className="post-tags">
                         {post.tags.split(',').map((tag: string) => {
                             const trimmed = tag.trim();
                             return trimmed ? (
-                                <span
-                                    key={trimmed}
-                                    role="button"
-                                    tabIndex={0}
-                                    className="tag-chip tag-chip-btn"
+                                <button key={trimmed} type="button" className="tag-chip tag-chip-btn"
                                     onClick={() => navigate(`/?tag=${encodeURIComponent(trimmed)}`)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/?tag=${encodeURIComponent(trimmed)}`); } }}
-                                >
-                                    {trimmed}
-                                </span>
+                                >{trimmed}</button>
                             ) : null;
                         })}
                     </div>
                 )}
 
-                {/* 모바일 목차 */}
                 {toc.length > 1 && (
                     <div className="toc-mobile">
-                        <button className="toc-mobile-toggle" onClick={() => setMobileTocOpen(v => !v)}>
-                            목차 {mobileTocOpen ? '▲' : '▼'}
-                        </button>
+                        <button className="toc-mobile-toggle" onClick={() => setMobileTocOpen(v => !v)}>목차 {mobileTocOpen ? '▲' : '▼'}</button>
                         {mobileTocOpen && (
                             <ul className="toc-mobile-list">
                                 {toc.map((item: TocItem, i: number) => (
                                     <li key={i} className={`toc-item toc-level-${item.level}`}>
-                                        <a
-                                            href={`#${item.id}`}
-                                            className={`toc-link${activeTocId === item.id ? ' toc-link-active' : ''}`}
-                                            onClick={() => setMobileTocOpen(false)}
-                                        >
-                                            {item.text}
-                                        </a>
+                                        <a href={`#${item.id}`} className={`toc-link${activeTocId === item.id ? ' toc-link-active' : ''}`} onClick={() => setMobileTocOpen(false)}>{item.text}</a>
                                     </li>
                                 ))}
                             </ul>
@@ -399,61 +258,29 @@ export default function PostDetailPage() {
                     </div>
                 )}
 
-                {/* 글 내용 */}
-                <div
-                    ref={contentRef}
-                    className="post-content markdown-content"
-                    dangerouslySetInnerHTML={renderedHtml}
-                />
+                <div ref={contentRef} className="post-content markdown-content md-body" dangerouslySetInnerHTML={renderedHtml} />
 
-                {/* 좋아요 버튼 */}
                 <div className="post-like-section">
-                    <button
-                        className={`post-like-btn${liked ? ' post-like-btn-active' : ''}`}
-                        onClick={handleLike}
-                        disabled={!token || likeLoading}
-                        title={token ? (liked ? '좋아요 취소' : '좋아요') : '로그인 후 이용 가능'}
-                    >
+                    <button className={`post-like-btn${liked ? ' post-like-btn-active' : ''}`} onClick={handleLike} disabled={!token || likeLoading} title={token ? (liked ? '좋아요 취소' : '좋아요') : '로그인 후 이용 가능'}>
                         <span className="post-like-icon">{liked ? '♥' : '♡'}</span>
                         <span className="post-like-count">{likeCount}</span>
                     </button>
                 </div>
 
-                {/* 시리즈 네비게이션 */}
                 {seriesNav && (
                     <nav className="series-nav" aria-label="시리즈 네비게이션">
                         <div className="series-nav-header">
-                            <Link to={`/series/${seriesNav.series_id}`} className="series-nav-title">
-                                {seriesNav.series_title}
-                            </Link>
+                            <Link to={`/series/${seriesNav.series_id}`} className="series-nav-title">{seriesNav.series_title}</Link>
                             <div className="series-nav-header-right">
-                                <span className="series-nav-count">
-                                    {seriesNav.current_order} / {seriesNav.total_posts}
-                                </span>
-                                <button
-                                    className="series-toc-toggle"
-                                    onClick={() => {
-                                        const next = !seriesTocOpen;
-                                        setSeriesTocOpen(next);
-                                        if (next && !seriesDetail) {
-                                            SERIES_API.getSeries(seriesNav.series_id)
-                                                .then(res => { if (res.data) setSeriesDetail(res.data); })
-                                                .catch(() => {});
-                                        }
-                                    }}
-                                    aria-label={seriesTocOpen ? '목록 접기' : '목록 펼치기'}
-                                >
-                                    {seriesTocOpen ? '▲' : '▼'}
-                                </button>
+                                <span className="series-nav-count">{seriesNav.current_order} / {seriesNav.total_posts}</span>
+                                <button className="series-toc-toggle" onClick={toggleSeriesToc} aria-label={seriesTocOpen ? '목록 접기' : '목록 펼치기'}>{seriesTocOpen ? '▲' : '▼'}</button>
                             </div>
                         </div>
                         {seriesTocOpen && seriesDetail && (
                             <ul className="series-toc-list">
                                 {seriesDetail.posts.map((p, i) => (
                                     <li key={p.id} className={p.id === post.id ? 'series-toc-current' : ''}>
-                                        <Link to={`/post/${p.id}`}>
-                                            <span className="series-toc-num">{i + 1}.</span> {p.title}
-                                        </Link>
+                                        <Link to={`/post/${p.id}`}><span className="series-toc-num">{i + 1}.</span> {p.title}</Link>
                                     </li>
                                 ))}
                             </ul>
@@ -461,54 +288,40 @@ export default function PostDetailPage() {
                         <div className="series-nav-buttons">
                             {seriesNav.prev_post ? (
                                 <Link to={`/post/${seriesNav.prev_post.id}`} className="series-nav-btn series-nav-prev">
-                                    <span className="series-nav-arrow">&larr;</span>
-                                    <span className="series-nav-label">{seriesNav.prev_post.title}</span>
+                                    <span className="series-nav-arrow">&larr;</span><span className="series-nav-label">{seriesNav.prev_post.title}</span>
                                 </Link>
                             ) : <div />}
                             {seriesNav.next_post ? (
                                 <Link to={`/post/${seriesNav.next_post.id}`} className="series-nav-btn series-nav-next">
-                                    <span className="series-nav-label">{seriesNav.next_post.title}</span>
-                                    <span className="series-nav-arrow">&rarr;</span>
+                                    <span className="series-nav-label">{seriesNav.next_post.title}</span><span className="series-nav-arrow">&rarr;</span>
                                 </Link>
                             ) : <div />}
                         </div>
                     </nav>
                 )}
 
-                {/* 수정/삭제 버튼 */}
                 {isOwner && (
                     <div className="post-actions">
-                        <Link to={`/editor/${postId}`} className="btn-edit">
-                            수정
-                        </Link>
-                        <button className="btn-delete" onClick={handleDeleteClick}>
-                            삭제
-                        </button>
+                        <Link to={`/editor/${postId}`} className="btn-edit">수정</Link>
+                        <button className="btn-delete" onClick={() => setDeleteConfirm(true)}>삭제</button>
                         {deleteError && <span className="delete-error">{deleteError}</span>}
                     </div>
                 )}
 
-                {/* 댓글 섹션 */}
                 {post && <CommentSection postId={post.id} />}
 
-                {/* 삭제 확인 모달 */}
                 {deleteConfirm && (
-                    <div className="delete-modal-overlay" onClick={handleDeleteCancel} role="dialog" aria-modal="true" aria-label="글 삭제 확인">
+                    <div className="delete-modal-overlay" onClick={() => { setDeleteConfirm(false); setDeleteError(''); }} role="dialog" aria-modal="true" aria-label="글 삭제 확인">
                         <div className="delete-modal" ref={deleteModalRef} onClick={(e) => e.stopPropagation()}>
                             <p className="delete-modal-text">이 글을 삭제하시겠습니까?</p>
                             <p className="delete-modal-sub">삭제된 글은 복구할 수 없습니다.</p>
                             <div className="delete-modal-actions">
-                                <button className="btn-delete-cancel" onClick={handleDeleteCancel} disabled={isDeleting}>
-                                    취소
-                                </button>
-                                <button className="btn-delete-confirm" onClick={handleDelete} disabled={isDeleting}>
-                                    {isDeleting ? '삭제 중...' : '삭제'}
-                                </button>
+                                <button className="btn-delete-cancel" onClick={() => { setDeleteConfirm(false); setDeleteError(''); }} disabled={isDeleting}>취소</button>
+                                <button className="btn-delete-confirm" onClick={handleDelete} disabled={isDeleting}>{isDeleting ? '삭제 중...' : '삭제'}</button>
                             </div>
                         </div>
                     </div>
                 )}
-
             </article>
         </div>
     );

@@ -51,15 +51,10 @@
     transition: border-color 0.25s ease;
 }
 
-.auth-box .input-group input:focus {
-    border-color: var(--accent-color);
-    outline: none;
-    box-shadow: 0 0 6px rgba(77, 166, 255, 0.4);
-}
 
 .auth-box .input-group input.invalid {
     border-color: var(--error-text);
-    box-shadow: 0 0 6px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 0 6px var(--error-glow);
 }
 
 .auth-box button[type="submit"] {

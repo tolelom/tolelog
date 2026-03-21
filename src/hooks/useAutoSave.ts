@@ -4,6 +4,12 @@ import type { PostFormData, DraftData } from '../types';
 
 export type SaveStatus = 'saved' | 'saving' | 'error';
 
+export interface ServerSaveOptions {
+    enabled: boolean;
+    delay?: number;
+    onSave: (data: PostFormData) => Promise<void>;
+}
+
 export interface UseAutoSaveReturn {
     saveStatus: SaveStatus;
     loadDraft: () => DraftData | null;
@@ -12,9 +18,14 @@ export interface UseAutoSaveReturn {
     getFormattedSaveTime: () => string;
 }
 
-export function useAutoSave(formData: PostFormData, storageKey: string = STORAGE_KEYS.DRAFT): UseAutoSaveReturn {
+export function useAutoSave(
+    formData: PostFormData,
+    storageKey: string = STORAGE_KEYS.DRAFT,
+    serverSave?: ServerSaveOptions
+): UseAutoSaveReturn {
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedRef = useRef<DraftData | null>(null);
 
     const saveDraft = useCallback((data: PostFormData) => {
@@ -35,6 +46,7 @@ export function useAutoSave(formData: PostFormData, storageKey: string = STORAGE
         }
     }, [storageKey]);
 
+    // localStorage auto-save
     useEffect(() => {
         setSaveStatus('saving');
 
@@ -52,6 +64,29 @@ export function useAutoSave(formData: PostFormData, storageKey: string = STORAGE
             }
         };
     }, [formData, saveDraft]);
+
+    // server save side effect
+    useEffect(() => {
+        if (!serverSave?.enabled) return;
+
+        if (serverSaveTimeoutRef.current) {
+            clearTimeout(serverSaveTimeoutRef.current);
+        }
+
+        serverSaveTimeoutRef.current = setTimeout(async () => {
+            try {
+                await serverSave.onSave(formData);
+            } catch {
+                // server save failure is silent — localStorage backup is still valid
+            }
+        }, serverSave.delay ?? 5000);
+
+        return () => {
+            if (serverSaveTimeoutRef.current) {
+                clearTimeout(serverSaveTimeoutRef.current);
+            }
+        };
+    }, [formData, serverSave?.enabled, serverSave?.delay, serverSave?.onSave]);
 
     const loadDraft = useCallback((): DraftData | null => {
         try {

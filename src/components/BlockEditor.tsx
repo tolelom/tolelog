@@ -526,7 +526,7 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
                             />
                         ) : (
                             <div
-                                className="block-rendered"
+                                className="block-rendered md-body"
                                 onClick={() => handleBlockClick(index)}
                                 dangerouslySetInnerHTML={{
                                     __html: renderBlockSafe(block)

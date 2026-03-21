@@ -19,13 +19,10 @@
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-overlay);
     display: flex; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s ease-out;
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
 .restore-content {
     background-color: var(--bg-card); border-radius: 12px; padding: 32px; max-width: min(400px, 90vw);
     box-shadow: var(--shadow-modal); animation: slideUp 0.3s ease-out;
 }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .restore-content h3 { margin: 0 0 16px 0; font-size: 18px; color: var(--text-primary); }
 .restore-content p { margin: 0 0 24px 0; color: var(--text-muted); font-size: 14px; }
@@ -36,7 +33,7 @@
     font-weight: 600; cursor: pointer; transition: all 0.3s;
 }
 .btn-restore { background-color: var(--accent-color); color: white; }
-.btn-restore:hover { background-color: var(--accent-hover); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); }
+.btn-restore:hover { background-color: var(--accent-hover); box-shadow: 0 4px 12px var(--accent-glow); }
 .btn-discard { background-color: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color); }
 .btn-discard:hover { background-color: var(--bg-hover); }
 
@@ -51,14 +48,57 @@
 
 /* 태그 입력 */
 .tags-section { margin-bottom: 16px; }
+.tags-input-wrapper { position: relative; }
 .tags-input {
     width: 100%; font-size: 14px; padding: 10px 12px; border: 1px solid var(--border-color);
     border-radius: 6px; outline: none; transition: border-color 0.3s;
     background-color: transparent; color: var(--text-primary); box-sizing: border-box;
 }
-.tags-input:focus { border-color: var(--accent-color); }
 .tags-input::placeholder { color: var(--text-muted); }
 .tags-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* 태그 자동완성 드롭다운 */
+.tags-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: var(--shadow-card);
+    z-index: 50;
+}
+.tags-autocomplete-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.1s;
+}
+.tags-autocomplete-item:hover,
+.tags-autocomplete-item-active {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+.tags-autocomplete-name {
+    font-weight: 500;
+}
+.tags-autocomplete-count {
+    font-size: 12px;
+    color: var(--text-muted);
+}
 
 /* 시리즈 선택 */
 .series-section { margin-bottom: 16px; }
@@ -68,7 +108,6 @@
     background-color: transparent; color: var(--text-primary); box-sizing: border-box;
     cursor: pointer;
 }
-.series-select:focus { border-color: var(--accent-color); }
 
 /* 에디터 툴바 — 에디터와 연결된 느낌 */
 .editor-toolbar {
@@ -150,7 +189,7 @@
     cursor: pointer; transition: all 0.3s; white-space: nowrap;
 }
 .save-button { background-color: var(--accent-color); color: white; }
-.save-button:hover:not(:disabled) { background-color: var(--accent-hover); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); }
+.save-button:hover:not(:disabled) { background-color: var(--accent-hover); box-shadow: 0 4px 12px var(--accent-glow); }
 .save-button:disabled { background-color: var(--border-color); cursor: not-allowed; opacity: 0.7; }
 .cancel-button { background-color: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color); }
 .cancel-button:hover:not(:disabled) { background-color: var(--bg-hover); border-color: var(--text-muted); }

@@ -102,9 +102,6 @@
     transition: border-color 0.2s;
     box-sizing: border-box;
 }
-.home-search-input:focus {
-    border-color: var(--accent-color);
-}
 .home-search-input::placeholder {
     color: var(--text-muted);
 }
@@ -175,6 +172,141 @@
     background: var(--bg-secondary);
     padding: 2px 8px;
     border-radius: 10px;
+}
+
+/* ─── 미니 프로필 섹션 ─── */
+.home-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+}
+
+.home-profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.home-profile-avatar-fallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.home-profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.home-profile-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.home-profile-name:hover {
+    color: var(--accent-color);
+}
+
+.home-profile-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.home-profile-stat-value {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ─── 인기 태그 가로 스크롤 ─── */
+.home-popular-tags {
+    margin-bottom: 24px;
+}
+
+.home-popular-tags-heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px 0;
+}
+
+.home-popular-tags-list {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+.home-popular-tags-list::-webkit-scrollbar {
+    height: 4px;
+}
+.home-popular-tags-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.home-popular-tags-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.home-popular-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-family: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    flex-shrink: 0;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.home-popular-tag:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.home-popular-tag-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.home-popular-tag:hover .home-popular-tag-count {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* 글 목록 */
@@ -279,43 +411,8 @@
 
 /* 페이지네이션 */
 .home-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 40px;
     padding-top: 28px;
     border-top: 1px solid var(--border-light);
-}
-
-.home-page-btn {
-    padding: 8px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-}
-
-.home-page-btn:hover:not(:disabled) {
-    background: var(--bg-hover);
-    border-color: var(--text-muted);
-}
-
-.home-page-btn:disabled {
-    opacity: 0.25;
-    cursor: default;
-}
-
-.home-page-num {
-    font-size: 14px;
-    color: var(--text-secondary);
-    min-width: 48px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
 }
 
 /* 반응형 */
@@ -334,6 +431,17 @@
 
     .home-post-preview {
         font-size: 13px;
+    }
+
+    .home-profile {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+    .home-profile-avatar,
+    .home-profile-avatar-fallback {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
     }
 }
 

@@ -16,6 +16,7 @@ export interface Post {
     author: string;
     is_public: boolean;
     tags: string;
+    status?: string;
     series?: SeriesInfo;
     view_count: number;
     like_count: number;
@@ -120,6 +121,12 @@ export interface SeriesInfo {
     series_id: number;
     series_title: string;
     series_order: number;
+}
+
+// Tag info from /api/v1/tags
+export interface TagInfo {
+    name: string;
+    count: number;
 }
 
 // Block types for markdown parser (discriminated union)

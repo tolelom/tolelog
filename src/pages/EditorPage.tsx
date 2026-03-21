@@ -1,8 +1,10 @@
-import { useState, useContext, useEffect, useRef, ChangeEvent, MutableRefObject } from 'react';
+import { useState, useContext, useEffect, useRef, useCallback, useMemo, ChangeEvent, MutableRefObject } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API, SERIES_API } from '../utils/api';
+import { POST_API, SERIES_API, TAG_API } from '../utils/api';
+import { TagInfo } from '../types';
 import { STORAGE_KEYS } from '../utils/constants';
+import { invalidateCache } from '../utils/apiCache';
 import { useAutoSave } from '../hooks/useAutoSave';
 import BlockEditor from '../components/BlockEditor';
 import ImageUploadButton from '../components/ImageUploadButton';
@@ -38,6 +40,12 @@ export default function EditorPage() {
     const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
     const [showPreview, setShowPreview] = useState<boolean>(false);
     const previewContentRef = useRef<HTMLDivElement | null>(null);
+    const [allTags, setAllTags] = useState<TagInfo[]>([]);
+    const [tagSuggestions, setTagSuggestions] = useState<TagInfo[]>([]);
+    const [showTagDropdown, setShowTagDropdown] = useState(false);
+    const [activeTagIndex, setActiveTagIndex] = useState(-1);
+    const tagInputRef = useRef<HTMLInputElement | null>(null);
+    const tagDropdownRef = useRef<HTMLDivElement | null>(null);
     const isEditMode = !!postId;
 
     useEffect(() => {
@@ -54,9 +62,104 @@ export default function EditorPage() {
         return () => controller.abort();
     }, [userId]);
 
+    // 태그 목록 로드
+    useEffect(() => {
+        const controller = new AbortController();
+        TAG_API.getTags({ signal: controller.signal })
+            .then(res => { if (res.status === 'success') setAllTags(res.data || []); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, []);
+
+    // 태그 자동완성 필터링
+    const getCurrentTagInput = useCallback((): string => {
+        const parts = formData.tags.split(',');
+        return (parts[parts.length - 1] || '').trim();
+    }, [formData.tags]);
+
+    const filterTagSuggestions = useCallback((input: string) => {
+        if (!input) {
+            setTagSuggestions([]);
+            setShowTagDropdown(false);
+            return;
+        }
+        const existingTags = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+        const filtered = allTags
+            .filter(t => t.name.toLowerCase().includes(input.toLowerCase()) && !existingTags.includes(t.name.toLowerCase()))
+            .slice(0, 8);
+        setTagSuggestions(filtered);
+        setShowTagDropdown(filtered.length > 0);
+        setActiveTagIndex(-1);
+    }, [allTags, formData.tags]);
+
+    const handleTagSelect = useCallback((tagName: string) => {
+        const parts = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+        parts.pop(); // remove incomplete current input
+        parts.push(tagName);
+        setFormData(prev => ({ ...prev, tags: parts.join(', ') + ', ' }));
+        setShowTagDropdown(false);
+        setActiveTagIndex(-1);
+        tagInputRef.current?.focus();
+    }, [formData.tags]);
+
+    const handleTagInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        const parts = value.split(',');
+        const currentInput = (parts[parts.length - 1] || '').trim();
+        filterTagSuggestions(currentInput);
+    }, [filterTagSuggestions]);
+
+    const handleTagKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!showTagDropdown || tagSuggestions.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveTagIndex(prev => (prev + 1) % tagSuggestions.length);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveTagIndex(prev => (prev <= 0 ? tagSuggestions.length - 1 : prev - 1));
+        } else if (e.key === 'Enter' && activeTagIndex >= 0) {
+            e.preventDefault();
+            handleTagSelect(tagSuggestions[activeTagIndex].name);
+        } else if (e.key === 'Escape') {
+            setShowTagDropdown(false);
+        }
+    }, [showTagDropdown, tagSuggestions, activeTagIndex, handleTagSelect]);
+
+    // Close tag dropdown on outside click
+    useEffect(() => {
+        if (!showTagDropdown) return;
+        const handleClick = (e: MouseEvent) => {
+            if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node) &&
+                tagInputRef.current && !tagInputRef.current.contains(e.target as Node)) {
+                setShowTagDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [showTagDropdown]);
+
+    // 서버 draft 자동 저장 (새 글 작성 시에만)
+    const serverDraftIdRef = useRef<number | null>(null);
+
+    const handleServerSave = useCallback(async (data: PostFormData) => {
+        if (!token) return;
+        if (serverDraftIdRef.current) {
+            await POST_API.saveDraft(serverDraftIdRef.current, data.title, data.content, data.tags || '', token);
+        } else {
+            const result = await POST_API.createDraft(data.title || '제목 없음', data.content, data.tags || '', token);
+            serverDraftIdRef.current = result.data.id;
+        }
+    }, [token]);
+
+    const serverSaveOptions = useMemo(() => ({
+        enabled: !isEditMode && !!token,
+        onSave: handleServerSave,
+    }), [isEditMode, token, handleServerSave]);
+
     // 자동 저장 훅 (수정 모드는 별도 키로 저장)
     const draftKey = isEditMode ? STORAGE_KEYS.DRAFT_EDIT : STORAGE_KEYS.DRAFT;
-    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData, draftKey);
+    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData, draftKey, serverSaveOptions);
 
     // 편집 중 페이지 이탈 경고
     useEffect(() => {
@@ -68,6 +171,12 @@ export default function EditorPage() {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [formData.title, formData.content]);
+
+    // 모달 배경 스크롤 잠금
+    useEffect(() => {
+        document.body.style.overflow = showPreview ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [showPreview]);
 
     // 미리보기 Escape 닫기 + 코드 복사 버튼 이벤트 위임
     useEffect(() => {
@@ -246,8 +355,7 @@ export default function EditorPage() {
         setSuccess('');
 
         try {
-            type SaveResponse = { status?: string; data?: { id: number }; error?: string };
-            let response: SaveResponse;
+            let response;
             if (isEditMode) {
                 response = await POST_API.updatePost(
                     postId,
@@ -256,7 +364,7 @@ export default function EditorPage() {
                     formData.is_public,
                     token,
                     formData.tags
-                ) as SaveResponse;
+                );
             } else {
                 response = await POST_API.createPost(
                     formData.title,
@@ -264,11 +372,11 @@ export default function EditorPage() {
                     formData.is_public,
                     token,
                     formData.tags
-                ) as SaveResponse;
+                );
             }
 
-            if (!response.status || response.status !== 'success') {
-                throw new Error(response.error || '글 저장에 실패했습니다');
+            if (response.status !== 'success') {
+                throw new Error('글 저장에 실패했습니다');
             }
 
             const savedPostId = isEditMode ? Number(postId) : response.data?.id;
@@ -279,6 +387,10 @@ export default function EditorPage() {
                     await SERIES_API.addPost(selectedSeriesId, savedPostId, 0, token);
                 } catch { /* 시리즈 추가 실패는 무시 */ }
             }
+
+            // 홈 캐시 무효화
+            invalidateCache('posts:');
+            invalidateCache('search:');
 
             const successMsg = isEditMode ? '글이 수정되었습니다!' : '글이 저장되었습니다!';
             setSuccess(successMsg);
@@ -354,16 +466,37 @@ export default function EditorPage() {
                     />
                 </div>
 
-                {/* 태그 입력 */}
+                {/* 태그 입력 + 자동완성 */}
                 <div className="tags-section">
-                    <input
-                        type="text"
-                        name="tags"
-                        value={formData.tags}
-                        onChange={handleChange}
-                        placeholder="태그를 쉼표로 구분하여 입력 (예: React, JavaScript, 블로그)"
-                        className="tags-input"
-                    />
+                    <div className="tags-input-wrapper">
+                        <input
+                            ref={tagInputRef}
+                            type="text"
+                            name="tags"
+                            value={formData.tags}
+                            onChange={handleTagInputChange}
+                            onKeyDown={handleTagKeyDown}
+                            onFocus={() => { const cur = getCurrentTagInput(); if (cur) filterTagSuggestions(cur); }}
+                            placeholder="태그를 쉼표로 구분하여 입력 (예: React, JavaScript, 블로그)"
+                            className="tags-input"
+                            autoComplete="off"
+                        />
+                        {showTagDropdown && tagSuggestions.length > 0 && (
+                            <div className="tags-autocomplete" ref={tagDropdownRef}>
+                                {tagSuggestions.map((t, i) => (
+                                    <button
+                                        key={t.name}
+                                        type="button"
+                                        className={`tags-autocomplete-item${i === activeTagIndex ? ' tags-autocomplete-item-active' : ''}`}
+                                        onMouseDown={(e) => { e.preventDefault(); handleTagSelect(t.name); }}
+                                    >
+                                        <span className="tags-autocomplete-name">{t.name}</span>
+                                        <span className="tags-autocomplete-count">{t.count}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     {formData.tags && (
                         <div className="tags-preview">
                             {formData.tags.split(',').map((tag: string, i: number) => {
@@ -532,7 +665,7 @@ export default function EditorPage() {
                         )}
                         <div
                             ref={previewContentRef}
-                            className="preview-body markdown-content"
+                            className="preview-body markdown-content md-body"
                             dangerouslySetInnerHTML={{
                                 __html: renderMarkdown(formData.content)
                             }}

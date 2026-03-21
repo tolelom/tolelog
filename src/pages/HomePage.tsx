@@ -1,18 +1,15 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useContext, useState, useEffect, MouseEvent } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import { POST_API, SERIES_API } from '../utils/api';
+import { useState, useEffect, MouseEvent } from 'react';
+import { POST_API, SERIES_API, TAG_API, USER_API } from '../utils/api';
 import { stripMarkdown, formatDate } from '../utils/format';
-import { BLOG_OWNER_ID } from '../utils/constants';
+import { BLOG_OWNER_ID, API_BASE_URL } from '../utils/constants';
 import { cachedFetch } from '../utils/apiCache';
-import ThemeToggle from '../components/ThemeToggle';
-import { PostListItem, Pagination, PostListWithPagination, Series } from '../types';
+import { PostListItem, Pagination, PostListWithPagination, Series, User, TagInfo } from '../types';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
 
 export default function HomePage() {
-    const { username, userId, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const page: number = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
@@ -26,6 +23,8 @@ export default function HomePage() {
     const [error, setError] = useState<string | null>(null);
     const [fetchKey, setFetchKey] = useState<number>(0);
     const [seriesList, setSeriesList] = useState<Series[]>([]);
+    const [ownerProfile, setOwnerProfile] = useState<User | null>(null);
+    const [popularTags, setPopularTags] = useState<TagInfo[]>([]);
 
     useEffect(() => { document.title = 'Tolelog'; }, []);
 
@@ -38,6 +37,24 @@ export default function HomePage() {
             .catch(() => {});
         return () => controller.abort();
     }, [page, tag, searchQuery]);
+
+    // 블로그 소유자 프로필 로드
+    useEffect(() => {
+        const controller = new AbortController();
+        USER_API.getProfile(BLOG_OWNER_ID, { signal: controller.signal })
+            .then(res => { if (res.status === 'success') setOwnerProfile(res.data); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, []);
+
+    // 인기 태그 로드
+    useEffect(() => {
+        const controller = new AbortController();
+        TAG_API.getTags({ signal: controller.signal })
+            .then(res => { if (res.status === 'success') setPopularTags((res.data || []).slice(0, 15)); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, []);
 
     // Debounce search input into URL params
     useEffect(() => {
@@ -104,28 +121,51 @@ export default function HomePage() {
 
     return (
         <div className="home-page">
-            <div className="home-header">
-                <h1 className="home-title">tolelog</h1>
-                <ThemeToggle />
-            </div>
+            {/* 미니 프로필 */}
+            {ownerProfile && (
+                <div className="home-profile">
+                    {ownerProfile.avatar_url ? (
+                        <img
+                            src={ownerProfile.avatar_url.startsWith('http') ? ownerProfile.avatar_url : `${API_BASE_URL}${ownerProfile.avatar_url}`}
+                            alt={ownerProfile.username}
+                            className="home-profile-avatar"
+                        />
+                    ) : (
+                        <div className="home-profile-avatar-fallback">
+                            {ownerProfile.username.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                    <div className="home-profile-info">
+                        <Link to={`/user/${ownerProfile.id}`} className="home-profile-name">
+                            {ownerProfile.username}
+                        </Link>
+                        <div className="home-profile-stats">
+                            {seriesList.length > 0 && (
+                                <span>시리즈 <span className="home-profile-stat-value">{seriesList.length}</span></span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            <div className="home-actions">
-                {username ? (
-                    <>
-                        <Link to={`/user/${userId}`} className="home-nav-link">{username}님</Link>
-                        <span className="home-sep">&middot;</span>
-                        <Link to="/editor_private" className="home-nav-link">글쓰기</Link>
-                        <span className="home-sep">&middot;</span>
-                        <button className="home-nav-link home-logout-btn" onClick={logout}>로그아웃</button>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login" className="home-nav-link">로그인</Link>
-                        <span className="home-sep">&middot;</span>
-                        <Link to="/register" className="home-nav-link">회원가입</Link>
-                    </>
-                )}
-            </div>
+            {/* 인기 태그 */}
+            {popularTags.length > 0 && !tag && !searchQuery && (
+                <div className="home-popular-tags">
+                    <h2 className="home-popular-tags-heading">인기 태그</h2>
+                    <div className="home-popular-tags-list">
+                        {popularTags.map(t => (
+                            <button
+                                key={t.name}
+                                type="button"
+                                className="home-popular-tag"
+                                onClick={() => setSearchParams({ tag: t.name })}
+                            >
+                                {t.name} <span className="home-popular-tag-count">{t.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="home-search">
                 <input
@@ -161,7 +201,7 @@ export default function HomePage() {
                         {Array.from({ length: 4 }).map((_, i) => (
                             <div key={i} className="skeleton-card">
                                 <div className="skeleton skeleton-text-lg" style={{ width: '70%' }} />
-                                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                                <div className="skeleton-meta-row">
                                     <div className="skeleton skeleton-text-sm" style={{ width: 60 }} />
                                     <div className="skeleton skeleton-text-sm" style={{ width: 80 }} />
                                 </div>
@@ -183,7 +223,7 @@ export default function HomePage() {
 
                 {!loading && !error && posts.length === 0 && (
                     <div className="home-status">
-                        <p>아직 작성된 글이 없습니다.</p>
+                        <p>{searchQuery ? `'${searchQuery}' 검색 결과가 없습니다.` : tag ? `'${tag}' 태그가 포함된 글이 없습니다.` : '아직 작성된 글이 없습니다.'}</p>
                     </div>
                 )}
 
@@ -237,16 +277,14 @@ export default function HomePage() {
                                 {post.tags.split(',').map((t: string) => {
                                     const trimmed = t.trim();
                                     return trimmed ? (
-                                        <span
+                                        <button
                                             key={trimmed}
-                                            role="button"
-                                            tabIndex={0}
+                                            type="button"
                                             className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
-                                            onClick={(e: MouseEvent<HTMLSpanElement>) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); } }}
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
                                         >
                                             {trimmed}
-                                        </span>
+                                        </button>
                                     ) : null;
                                 })}
                             </div>
@@ -260,9 +298,9 @@ export default function HomePage() {
                 ))}
 
                 {!loading && !error && (posts.length > 0 || page > 1) && (
-                    <nav className="home-pagination" aria-label="페이지 탐색">
+                    <nav className="pagination home-pagination" aria-label="페이지 탐색">
                         <button
-                            className="home-page-btn"
+                            className="page-btn"
                             disabled={page <= 1}
                             onClick={() => {
                                 const params: Record<string, string> = {};
@@ -274,11 +312,11 @@ export default function HomePage() {
                         >
                             &larr; 이전
                         </button>
-                        <span className="home-page-num">
+                        <span className="page-info">
                             {totalPages > 0 ? `${page} / ${totalPages}` : page}
                         </span>
                         <button
-                            className="home-page-btn"
+                            className="page-btn"
                             disabled={!hasMore}
                             onClick={() => {
                                 const params: Record<string, string> = { page: String(page + 1) };

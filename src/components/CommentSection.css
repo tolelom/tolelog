@@ -33,9 +33,6 @@
     outline: none;
     transition: border-color 0.2s;
 }
-.comment-textarea:focus {
-    border-color: var(--accent-color);
-}
 .comment-textarea::placeholder {
     color: var(--text-muted);
 }

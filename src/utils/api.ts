@@ -1,5 +1,5 @@
 import { API_BASE_URL, STORAGE_KEYS } from './constants';
-import type { SuccessResponse, AuthData, User, Post, PostListWithPagination, Comment as CommentType, CommentListResponse, Series, SeriesDetail, SeriesNav } from '../types';
+import type { SuccessResponse, AuthData, User, Post, PostListWithPagination, Comment as CommentType, CommentListResponse, Series, SeriesDetail, SeriesNav, TagInfo } from '../types';
 
 interface ApiError extends Error {
     status?: number;
@@ -35,7 +35,7 @@ async function tryRefreshToken(): Promise<string | null> {
     }
 }
 
-async function authenticatedFetch(url: string, method: string, token: string, body: Record<string, unknown> | null = null): Promise<unknown> {
+async function authenticatedFetch<T = unknown>(url: string, method: string, token: string, body: Record<string, unknown> | null = null): Promise<T> {
     if (!token) {
         const err: ApiError = new Error('로그인이 필요합니다');
         err.status = 401;
@@ -155,6 +155,32 @@ export const AUTH_API = {
         }
         return response.json();
     },
+
+    changePassword: async (currentPassword: string, newPassword: string, token: string): Promise<SuccessResponse<null>> => {
+        return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/users/password`, 'PUT', token, {
+            current_password: currentPassword,
+            new_password: newPassword,
+        });
+    },
+
+    logout: async (token: string): Promise<void> => {
+        try {
+            await authenticatedFetch<unknown>(`${API_BASE_URL}/api/v1/auth/logout`, 'POST', token);
+        } catch {
+            // 서버 에러여도 클라이언트 로그아웃 진행
+        }
+    },
+
+    deleteAccount: async (token: string): Promise<void> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (response.status !== 204 && !response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || '계정 삭제에 실패했습니다');
+        }
+    },
 };
 
 export const USER_API = {
@@ -209,7 +235,7 @@ export const COMMENT_API = {
         }
         return response.json();
     },
-    deleteComment: async (postId: number | string, commentId: number, token: string): Promise<unknown> => {
+    deleteComment: async (postId: number | string, commentId: number, token: string): Promise<SuccessResponse<null>> => {
         const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/comments/${commentId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` },
@@ -234,22 +260,22 @@ export const SERIES_API = {
         return response.json();
     },
     createSeries: async (title: string, description: string, token: string): Promise<SuccessResponse<Series>> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/series`, 'POST', token, { title, description }) as Promise<SuccessResponse<Series>>;
+        return authenticatedFetch<SuccessResponse<Series>>(`${API_BASE_URL}/api/v1/series`, 'POST', token, { title, description });
     },
     updateSeries: async (seriesId: number | string, title: string, description: string, token: string): Promise<SuccessResponse<Series>> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/series/${seriesId}`, 'PUT', token, { title, description }) as Promise<SuccessResponse<Series>>;
+        return authenticatedFetch<SuccessResponse<Series>>(`${API_BASE_URL}/api/v1/series/${seriesId}`, 'PUT', token, { title, description });
     },
-    deleteSeries: async (seriesId: number | string, token: string): Promise<unknown> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/series/${seriesId}`, 'DELETE', token);
+    deleteSeries: async (seriesId: number | string, token: string): Promise<SuccessResponse<null>> => {
+        return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/series/${seriesId}`, 'DELETE', token);
     },
-    addPost: async (seriesId: number | string, postId: number, order: number, token: string): Promise<unknown> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/series/${seriesId}/posts`, 'POST', token, { post_id: postId, order });
+    addPost: async (seriesId: number | string, postId: number, order: number, token: string): Promise<SuccessResponse<null>> => {
+        return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/series/${seriesId}/posts`, 'POST', token, { post_id: postId, order });
     },
-    removePost: async (seriesId: number | string, postId: number, token: string): Promise<unknown> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/series/${seriesId}/posts/${postId}`, 'DELETE', token);
+    removePost: async (seriesId: number | string, postId: number, token: string): Promise<SuccessResponse<null>> => {
+        return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/series/${seriesId}/posts/${postId}`, 'DELETE', token);
     },
-    reorderPosts: async (seriesId: number | string, postIds: number[], token: string): Promise<unknown> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/series/${seriesId}/reorder`, 'PUT', token, { post_ids: postIds });
+    reorderPosts: async (seriesId: number | string, postIds: number[], token: string): Promise<SuccessResponse<null>> => {
+        return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/series/${seriesId}/reorder`, 'PUT', token, { post_ids: postIds });
     },
     getSeriesNav: async (postId: number | string, { signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<SeriesNav | null>> => {
         const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/series-nav`, { signal });
@@ -260,13 +286,21 @@ export const SERIES_API = {
 
 export const LIKE_API = {
     toggle: async (postId: number | string, token: string): Promise<SuccessResponse<{ liked: boolean; like_count: number }>> => {
-        return authenticatedFetch(`${API_BASE_URL}/api/v1/posts/${postId}/like`, 'POST', token) as Promise<SuccessResponse<{ liked: boolean; like_count: number }>>;
+        return authenticatedFetch<SuccessResponse<{ liked: boolean; like_count: number }>>(`${API_BASE_URL}/api/v1/posts/${postId}/like`, 'POST', token);
     },
     getStatus: async (postId: number | string, { signal, token }: { signal?: AbortSignal; token?: string } = {}): Promise<SuccessResponse<{ liked: boolean }>> => {
         const headers: Record<string, string> = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
         const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/like`, { signal, headers });
         if (!response.ok) throw new Error(`좋아요 상태 조회 실패 (${response.status})`);
+        return response.json();
+    },
+};
+
+export const TAG_API = {
+    getTags: async ({ signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<TagInfo[]>> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/tags`, { signal });
+        if (!response.ok) throw new Error(`태그 목록을 불러오지 못했습니다 (${response.status})`);
         return response.json();
     },
 };
@@ -338,8 +372,8 @@ export const POST_API = {
         return response.json();
     },
 
-    createPost: async (title: string, content: string, isPublic: boolean = true, token: string, tags: string = ''): Promise<unknown> => {
-        return authenticatedFetch(
+    createPost: async (title: string, content: string, isPublic: boolean = true, token: string, tags: string = ''): Promise<SuccessResponse<{ id: number }>> => {
+        return authenticatedFetch<SuccessResponse<{ id: number }>>(
             `${API_BASE_URL}/api/v1/posts`,
             'POST',
             token,
@@ -347,8 +381,8 @@ export const POST_API = {
         );
     },
 
-    updatePost: async (postId: number | string, title: string, content: string, isPublic: boolean = true, token: string, tags: string = ''): Promise<unknown> => {
-        return authenticatedFetch(
+    updatePost: async (postId: number | string, title: string, content: string, isPublic: boolean = true, token: string, tags: string = ''): Promise<SuccessResponse<{ id: number }>> => {
+        return authenticatedFetch<SuccessResponse<{ id: number }>>(
             `${API_BASE_URL}/api/v1/posts/${postId}`,
             'PUT',
             token,
@@ -356,11 +390,37 @@ export const POST_API = {
         );
     },
 
-    deletePost: async (postId: number | string, token: string): Promise<unknown> => {
-        return authenticatedFetch(
+    deletePost: async (postId: number | string, token: string): Promise<SuccessResponse<null>> => {
+        return authenticatedFetch<SuccessResponse<null>>(
             `${API_BASE_URL}/api/v1/posts/${postId}`,
             'DELETE',
             token
+        );
+    },
+
+    getDrafts: async (token: string): Promise<SuccessResponse<Post[]>> => {
+        return authenticatedFetch<SuccessResponse<Post[]>>(
+            `${API_BASE_URL}/api/v1/drafts`,
+            'GET',
+            token
+        );
+    },
+
+    createDraft: async (title: string, content: string, tags: string, token: string): Promise<SuccessResponse<{ id: number }>> => {
+        return authenticatedFetch<SuccessResponse<{ id: number }>>(
+            `${API_BASE_URL}/api/v1/posts`,
+            'POST',
+            token,
+            { title, content, is_public: false, tags, status: 'draft' }
+        );
+    },
+
+    saveDraft: async (postId: number | string, title: string, content: string, tags: string, token: string): Promise<SuccessResponse<{ id: number }>> => {
+        return authenticatedFetch<SuccessResponse<{ id: number }>>(
+            `${API_BASE_URL}/api/v1/posts/${postId}`,
+            'PUT',
+            token,
+            { title, content, tags, status: 'draft' }
         );
     },
 };

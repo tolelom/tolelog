@@ -53,12 +53,18 @@
 
 .series-post-item {
     display: flex; align-items: center; gap: 16px; padding: 16px 24px;
-    text-decoration: none; color: var(--text-secondary);
+    color: var(--text-secondary);
     transition: background-color 0.15s;
     border-bottom: 1px solid var(--border-light);
 }
 .series-post-item:last-child { border-bottom: none; }
 .series-post-item:hover { background-color: var(--bg-hover); }
+
+.series-post-item-link {
+    display: flex; align-items: center; gap: 16px;
+    text-decoration: none; color: inherit;
+    flex: 1; min-width: 0;
+}
 
 .series-post-number {
     flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
@@ -81,9 +87,106 @@
     font-size: 12px; color: var(--text-muted);
 }
 
+/* 시리즈 액션 에러 */
+.series-action-error {
+    color: var(--error-text);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+/* ═══ 시리즈 관리 (헤더 내 관리 버튼 바) ═══ */
+
+.series-manage-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* ═══ 글 항목 내 관리 버튼 그룹 ═══ */
+
+.series-post-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* 글 제거 버튼 */
+.series-post-remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: var(--btn-danger-bg);
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+}
+
+.series-post-remove-btn:hover {
+    background: var(--btn-danger-hover);
+}
+
+/* 순서 이동 버튼 (위/아래) */
+.series-post-move-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    padding: 0;
+}
+
+.series-post-move-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.series-post-move-btn:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
 @media (max-width: 768px) {
     .series-detail-page { padding: 16px 12px; }
     .series-header { padding: 20px 16px; }
     .series-title { font-size: 22px; }
     .series-post-item { padding: 12px 16px; gap: 12px; }
+
+    .series-post-move-btn {
+        width: 24px;
+        height: 20px;
+        font-size: 11px;
+    }
+
+    .series-post-remove-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .series-post-actions {
+        gap: 4px;
+    }
+
+    .series-manage-bar {
+        flex-wrap: wrap;
+    }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AuthContext, type LoginParams } from './AuthContext';
+import { AUTH_API } from '../utils/api';
 import { STORAGE_KEYS } from '../utils/constants';
 
 function safeParseUser(key: string): string | number | null {
@@ -101,6 +102,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     const logout = () => {
+        const currentToken = token;
+        if (currentToken) {
+            AUTH_API.logout(currentToken).catch(() => {});
+        }
         setToken(null);
         setRefreshToken(null);
         setUsername(null);
