@@ -8,7 +8,7 @@ export interface TocItem {
 }
 
 function extractToc(content: string): TocItem[] {
-    const lines = content.split('\n');
+    const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
     const toc: TocItem[] = [];
     let inCode = false;
     for (const line of lines) {
