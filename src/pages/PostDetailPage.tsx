@@ -200,7 +200,7 @@ export default function PostDetailPage() {
 
     return (
         <div className="post-detail-page">
-            {toc.length > 1 && (
+            {toc.length > 0 && (
                 <nav className="toc-panel" aria-label="목차">
                     <p className="toc-title">목차</p>
                     <ul className="toc-list">
@@ -243,7 +243,7 @@ export default function PostDetailPage() {
                     </div>
                 )}
 
-                {toc.length > 1 && (
+                {toc.length > 0 && (
                     <div className="toc-mobile">
                         <button className="toc-mobile-toggle" onClick={() => setMobileTocOpen(v => !v)}>목차 {mobileTocOpen ? '▲' : '▼'}</button>
                         {mobileTocOpen && (
