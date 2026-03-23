@@ -1,14 +1,14 @@
-import { useState, useContext, useEffect, useRef, useCallback, useMemo, ChangeEvent, MutableRefObject } from 'react';
+import { useState, useContext, useEffect, useRef, useCallback, useMemo, ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { POST_API, SERIES_API, TAG_API } from '../utils/api';
-import { TagInfo } from '../types';
+import { POST_API, SERIES_API } from '../utils/api';
 import { STORAGE_KEYS } from '../utils/constants';
 import { invalidateCache } from '../utils/apiCache';
 import { useAutoSave } from '../hooks/useAutoSave';
 import BlockEditor from '../components/BlockEditor';
-import ImageUploadButton from '../components/ImageUploadButton';
-import { renderMarkdown } from '../utils/markdown';
+import TagAutocompleteInput from '../components/TagAutocompleteInput';
+import EditorToolbar from '../components/EditorToolbar';
+import PreviewModal from '../components/PreviewModal';
 import { PostFormData, DraftData, Series } from '../types';
 import 'highlight.js/styles/atom-one-dark.css';
 import './EditorPage.css';
@@ -39,13 +39,6 @@ export default function EditorPage() {
     const [userSeries, setUserSeries] = useState<Series[]>([]);
     const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
     const [showPreview, setShowPreview] = useState<boolean>(false);
-    const previewContentRef = useRef<HTMLDivElement | null>(null);
-    const [allTags, setAllTags] = useState<TagInfo[]>([]);
-    const [tagSuggestions, setTagSuggestions] = useState<TagInfo[]>([]);
-    const [showTagDropdown, setShowTagDropdown] = useState(false);
-    const [activeTagIndex, setActiveTagIndex] = useState(-1);
-    const tagInputRef = useRef<HTMLInputElement | null>(null);
-    const tagDropdownRef = useRef<HTMLDivElement | null>(null);
     const isEditMode = !!postId;
 
     useEffect(() => {
@@ -61,83 +54,6 @@ export default function EditorPage() {
             .catch(() => {});
         return () => controller.abort();
     }, [userId]);
-
-    // 태그 목록 로드
-    useEffect(() => {
-        const controller = new AbortController();
-        TAG_API.getTags({ signal: controller.signal })
-            .then(res => { if (res.status === 'success') setAllTags(res.data || []); })
-            .catch(() => {});
-        return () => controller.abort();
-    }, []);
-
-    // 태그 자동완성 필터링
-    const getCurrentTagInput = useCallback((): string => {
-        const parts = formData.tags.split(',');
-        return (parts[parts.length - 1] || '').trim();
-    }, [formData.tags]);
-
-    const filterTagSuggestions = useCallback((input: string) => {
-        if (!input) {
-            setTagSuggestions([]);
-            setShowTagDropdown(false);
-            return;
-        }
-        const existingTags = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-        const filtered = allTags
-            .filter(t => t.name.toLowerCase().includes(input.toLowerCase()) && !existingTags.includes(t.name.toLowerCase()))
-            .slice(0, 8);
-        setTagSuggestions(filtered);
-        setShowTagDropdown(filtered.length > 0);
-        setActiveTagIndex(-1);
-    }, [allTags, formData.tags]);
-
-    const handleTagSelect = useCallback((tagName: string) => {
-        const parts = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
-        parts.pop(); // remove incomplete current input
-        parts.push(tagName);
-        setFormData(prev => ({ ...prev, tags: parts.join(', ') + ', ' }));
-        setShowTagDropdown(false);
-        setActiveTagIndex(-1);
-        tagInputRef.current?.focus();
-    }, [formData.tags]);
-
-    const handleTagInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        const parts = value.split(',');
-        const currentInput = (parts[parts.length - 1] || '').trim();
-        filterTagSuggestions(currentInput);
-    }, [filterTagSuggestions]);
-
-    const handleTagKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!showTagDropdown || tagSuggestions.length === 0) return;
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            setActiveTagIndex(prev => (prev + 1) % tagSuggestions.length);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setActiveTagIndex(prev => (prev <= 0 ? tagSuggestions.length - 1 : prev - 1));
-        } else if (e.key === 'Enter' && activeTagIndex >= 0) {
-            e.preventDefault();
-            handleTagSelect(tagSuggestions[activeTagIndex].name);
-        } else if (e.key === 'Escape') {
-            setShowTagDropdown(false);
-        }
-    }, [showTagDropdown, tagSuggestions, activeTagIndex, handleTagSelect]);
-
-    // Close tag dropdown on outside click
-    useEffect(() => {
-        if (!showTagDropdown) return;
-        const handleClick = (e: MouseEvent) => {
-            if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node) &&
-                tagInputRef.current && !tagInputRef.current.contains(e.target as Node)) {
-                setShowTagDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClick);
-        return () => document.removeEventListener('mousedown', handleClick);
-    }, [showTagDropdown]);
 
     // 서버 draft 자동 저장 (새 글 작성 시에만)
     const serverDraftIdRef = useRef<number | null>(null);
@@ -171,48 +87,6 @@ export default function EditorPage() {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [formData.title, formData.content]);
-
-    // 모달 배경 스크롤 잠금
-    useEffect(() => {
-        document.body.style.overflow = showPreview ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
-    }, [showPreview]);
-
-    // 미리보기 Escape 닫기 + 코드 복사 버튼 이벤트 위임
-    useEffect(() => {
-        if (!showPreview) return;
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setShowPreview(false);
-        };
-        window.addEventListener('keydown', handleKeyDown);
-
-        const container = previewContentRef.current;
-        if (!container) return () => window.removeEventListener('keydown', handleKeyDown);
-        const handleClick = (e: Event) => {
-            const btn = (e.target as HTMLElement).closest('.code-copy-btn') as HTMLElement | null;
-            if (!btn) return;
-            const code = btn.getAttribute('data-code')
-                ?.replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'");
-            if (code) {
-                navigator.clipboard.writeText(code).then(() => {
-                    btn.textContent = '복사됨!';
-                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
-                }).catch(() => {
-                    btn.textContent = '복사 실패';
-                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
-                });
-            }
-        };
-        container.addEventListener('click', handleClick);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            container.removeEventListener('click', handleClick);
-        };
-    }, [showPreview]);
 
     // 글 수정 모드: 기존 글 불러오기
     useEffect(() => {
@@ -467,45 +341,10 @@ export default function EditorPage() {
                 </div>
 
                 {/* 태그 입력 + 자동완성 */}
-                <div className="tags-section">
-                    <div className="tags-input-wrapper">
-                        <input
-                            ref={tagInputRef}
-                            type="text"
-                            name="tags"
-                            value={formData.tags}
-                            onChange={handleTagInputChange}
-                            onKeyDown={handleTagKeyDown}
-                            onFocus={() => { const cur = getCurrentTagInput(); if (cur) filterTagSuggestions(cur); }}
-                            placeholder="태그를 쉼표로 구분하여 입력 (예: React, JavaScript, 블로그)"
-                            className="tags-input"
-                            autoComplete="off"
-                        />
-                        {showTagDropdown && tagSuggestions.length > 0 && (
-                            <div className="tags-autocomplete" ref={tagDropdownRef}>
-                                {tagSuggestions.map((t, i) => (
-                                    <button
-                                        key={t.name}
-                                        type="button"
-                                        className={`tags-autocomplete-item${i === activeTagIndex ? ' tags-autocomplete-item-active' : ''}`}
-                                        onMouseDown={(e) => { e.preventDefault(); handleTagSelect(t.name); }}
-                                    >
-                                        <span className="tags-autocomplete-name">{t.name}</span>
-                                        <span className="tags-autocomplete-count">{t.count}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    {formData.tags && (
-                        <div className="tags-preview">
-                            {formData.tags.split(',').map((tag: string, i: number) => {
-                                const trimmed = tag.trim();
-                                return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
-                            })}
-                        </div>
-                    )}
-                </div>
+                <TagAutocompleteInput
+                    value={formData.tags}
+                    onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
+                />
 
                 {/* 시리즈 선택 */}
                 {userSeries.length > 0 && (
@@ -524,69 +363,12 @@ export default function EditorPage() {
                 )}
 
                 {/* 에디터 툴바 */}
-                <div className="editor-toolbar">
-                    <div className="toolbar-format-buttons">
-                        <button
-                            type="button"
-                            className="toolbar-btn"
-                            onClick={() => handleFormat('heading')}
-                            title="제목 (Heading)"
-                        >
-                            H
-                        </button>
-                        <button
-                            type="button"
-                            className="toolbar-btn toolbar-btn-bold"
-                            onClick={() => handleFormat('bold')}
-                            title="굵게 (Ctrl+B)"
-                        >
-                            B
-                        </button>
-                        <button
-                            type="button"
-                            className="toolbar-btn toolbar-btn-italic"
-                            onClick={() => handleFormat('italic')}
-                            title="기울임 (Ctrl+I)"
-                        >
-                            I
-                        </button>
-                        <button
-                            type="button"
-                            className="toolbar-btn toolbar-btn-strike"
-                            onClick={() => handleFormat('strikethrough')}
-                            title="취소선"
-                        >
-                            S
-                        </button>
-                        <button
-                            type="button"
-                            className="toolbar-btn toolbar-btn-code"
-                            onClick={() => handleFormat('code')}
-                            title="인라인 코드 (Ctrl+`)"
-                        >
-                            {'</>'}
-                        </button>
-                        <button
-                            type="button"
-                            className="toolbar-btn toolbar-btn-link"
-                            onClick={() => handleFormat('link')}
-                            title="링크 (Ctrl+K)"
-                        >
-                            🔗
-                        </button>
-                        <span className="toolbar-sep" />
-                    </div>
-                    <ImageUploadButton onImageInsert={handleImageInsert} />
-                    <button
-                        type="button"
-                        className="toolbar-btn toolbar-btn-preview"
-                        onClick={() => setShowPreview(true)}
-                        title="미리보기"
-                        disabled={!formData.content.trim()}
-                    >
-                        미리보기
-                    </button>
-                </div>
+                <EditorToolbar
+                    onFormat={handleFormat}
+                    onImageInsert={handleImageInsert}
+                    onPreview={() => setShowPreview(true)}
+                    previewDisabled={!formData.content.trim()}
+                />
 
                 {/* 블록 에디터 */}
                 <BlockEditor
@@ -647,31 +429,12 @@ export default function EditorPage() {
 
             {/* 미리보기 모달 */}
             {showPreview && (
-                <div className="preview-overlay" onClick={() => setShowPreview(false)} role="dialog" aria-modal="true" aria-label="미리보기">
-                    <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="preview-header">
-                            <h2 className="preview-title">{formData.title || '제목 없음'}</h2>
-                            <button className="preview-close" onClick={() => setShowPreview(false)} aria-label="미리보기 닫기">
-                                &times;
-                            </button>
-                        </div>
-                        {formData.tags && (
-                            <div className="preview-tags">
-                                {formData.tags.split(',').map((tag: string, i: number) => {
-                                    const trimmed = tag.trim();
-                                    return trimmed ? <span key={i} className="tag-chip">{trimmed}</span> : null;
-                                })}
-                            </div>
-                        )}
-                        <div
-                            ref={previewContentRef}
-                            className="preview-body markdown-content md-body"
-                            dangerouslySetInnerHTML={{
-                                __html: renderMarkdown(formData.content)
-                            }}
-                        />
-                    </div>
-                </div>
+                <PreviewModal
+                    title={formData.title}
+                    content={formData.content}
+                    tags={formData.tags}
+                    onClose={() => setShowPreview(false)}
+                />
             )}
         </div>
     );

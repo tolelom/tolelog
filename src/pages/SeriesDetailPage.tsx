@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { SERIES_API } from '../utils/api';
+import { formatDateShort } from '../utils/format';
 import { SeriesDetail } from '../types';
 import './SeriesDetailPage.css';
 
@@ -77,21 +78,21 @@ export default function SeriesDetailPage() {
         return (
             <div className="series-detail-page">
                 <div className="series-header">
-                    <div className="skeleton skeleton-text-sm" style={{ width: 100, marginBottom: 16 }} />
-                    <div className="skeleton skeleton-text-lg" style={{ width: '60%', height: 28 }} />
-                    <div className="skeleton skeleton-text" style={{ width: '80%', marginTop: 12 }} />
-                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                        <div className="skeleton skeleton-text-sm" style={{ width: 60 }} />
-                        <div className="skeleton skeleton-text-sm" style={{ width: 50 }} />
+                    <div className="skeleton skeleton-text-sm skeleton-w-100 skeleton-mb-16" />
+                    <div className="skeleton skeleton-text-lg skeleton-w-60p skeleton-h-28" />
+                    <div className="skeleton skeleton-text skeleton-w-80p skeleton-mt-12" />
+                    <div className="skeleton-flex-row skeleton-mt-12">
+                        <div className="skeleton skeleton-text-sm skeleton-w-60" />
+                        <div className="skeleton skeleton-text-sm skeleton-w-50" />
                     </div>
                 </div>
                 <div className="series-post-list">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="series-post-item" style={{ pointerEvents: 'none' }}>
-                            <div className="skeleton skeleton-circle" style={{ width: 28, height: 28, flexShrink: 0 }} />
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: 4 }}>
-                                <div className="skeleton skeleton-text" style={{ width: '70%' }} />
-                                <div className="skeleton skeleton-text-sm" style={{ width: 80 }} />
+                        <div key={i} className="series-post-item skeleton-no-pointer">
+                            <div className="skeleton skeleton-circle skeleton-h-28 skeleton-shrink-0" />
+                            <div className="skeleton-flex-col">
+                                <div className="skeleton skeleton-text skeleton-w-70p" />
+                                <div className="skeleton skeleton-text-sm skeleton-w-80" />
                             </div>
                         </div>
                     ))}
@@ -143,9 +144,7 @@ export default function SeriesDetailPage() {
                             <div className="series-post-info">
                                 <span className="series-post-title">{post.title}</span>
                                 <span className="series-post-date">
-                                    {new Date(post.created_at).toLocaleDateString('ko-KR', {
-                                        year: 'numeric', month: 'short', day: 'numeric'
-                                    })}
+                                    {formatDateShort(post.created_at)}
                                 </span>
                             </div>
                         </Link>

@@ -159,6 +159,7 @@ export default function HomePage() {
                                 type="button"
                                 className="home-popular-tag"
                                 onClick={() => setSearchParams({ tag: t.name })}
+                                aria-label={`${t.name} 태그로 필터링 (${t.count}개)`}
                             >
                                 {t.name} <span className="home-popular-tag-count">{t.count}</span>
                             </button>
@@ -200,13 +201,13 @@ export default function HomePage() {
                     <div className="home-skeleton-list">
                         {Array.from({ length: 4 }).map((_, i) => (
                             <div key={i} className="skeleton-card">
-                                <div className="skeleton skeleton-text-lg" style={{ width: '70%' }} />
+                                <div className="skeleton skeleton-text-lg skeleton-w-70p" />
                                 <div className="skeleton-meta-row">
-                                    <div className="skeleton skeleton-text-sm" style={{ width: 60 }} />
-                                    <div className="skeleton skeleton-text-sm" style={{ width: 80 }} />
+                                    <div className="skeleton skeleton-text-sm skeleton-w-60" />
+                                    <div className="skeleton skeleton-text-sm skeleton-w-80" />
                                 </div>
-                                <div className="skeleton skeleton-text" style={{ width: '100%' }} />
-                                <div className="skeleton skeleton-text" style={{ width: '60%' }} />
+                                <div className="skeleton skeleton-text skeleton-w-full" />
+                                <div className="skeleton skeleton-text skeleton-w-60p" />
                             </div>
                         ))}
                     </div>

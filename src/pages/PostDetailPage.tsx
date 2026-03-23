@@ -4,10 +4,12 @@ import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { invalidateCache } from '../utils/apiCache';
 import { renderMarkdown } from '../utils/markdown';
+import { formatDateLong } from '../utils/format';
 import { Post } from '../types';
 import { useTOC, TocItem } from '../hooks/useTOC';
 import { useSeriesNav } from '../hooks/useSeriesNav';
 import { useLike } from '../hooks/useLike';
+import { useCopyCodeBlock } from '../hooks/useCopyCodeBlock';
 import CommentSection from '../components/CommentSection';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
@@ -48,31 +50,7 @@ export default function PostDetailPage() {
     const renderedHtml = useMemo(() => ({ __html: post ? renderMarkdown(post.content) : '' }), [post]);
 
     // 코드 블록 복사 버튼 이벤트 위임
-    useEffect(() => {
-        const container = contentRef.current;
-        if (!container) return;
-        const handleClick = (e: Event) => {
-            const btn = (e.target as HTMLElement).closest('.code-copy-btn') as HTMLElement | null;
-            if (!btn) return;
-            const code = btn.getAttribute('data-code')
-                ?.replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'");
-            if (code) {
-                navigator.clipboard.writeText(code).then(() => {
-                    btn.textContent = '복사됨!';
-                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
-                }).catch(() => {
-                    btn.textContent = '복사 실패';
-                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
-                });
-            }
-        };
-        container.addEventListener('click', handleClick);
-        return () => container.removeEventListener('click', handleClick);
-    }, [post]);
+    useCopyCodeBlock(contentRef, !!post);
 
     // 글 로드
     useEffect(() => {
@@ -195,8 +173,8 @@ export default function PostDetailPage() {
     }
 
     const isOwner = userId && userId === post.user_id;
-    const createdAt = new Date(post.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-    const updatedAt = post.updated_at ? new Date(post.updated_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+    const createdAt = formatDateLong(post.created_at);
+    const updatedAt = formatDateLong(post.updated_at);
 
     return (
         <div className="post-detail-page">

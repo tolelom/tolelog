@@ -116,6 +116,13 @@
     border-radius: 8px;
 }
 
+.image-resize-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
 .image-resize-handle {
     position: absolute;
     top: 0;

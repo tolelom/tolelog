@@ -172,22 +172,22 @@ export default function UserProfilePage() {
         return (
             <div className="profile-page">
                 <div className="profile-info">
-                    <div className="skeleton skeleton-circle" style={{ width: 80, height: 80, margin: '0 auto 16px' }} />
-                    <div className="skeleton skeleton-text-lg" style={{ width: 120, margin: '0 auto 16px' }} />
+                    <div className="skeleton skeleton-circle skeleton-h-80 skeleton-mx-auto skeleton-mb-16" />
+                    <div className="skeleton skeleton-text-lg skeleton-w-120 skeleton-mx-auto skeleton-mb-16" />
                     <div className="skeleton-stats-row">
-                        <div className="skeleton" style={{ width: 40, height: 28 }} />
-                        <div className="skeleton" style={{ width: 40, height: 28 }} />
+                        <div className="skeleton skeleton-w-40 skeleton-h-28" />
+                        <div className="skeleton skeleton-w-40 skeleton-h-28" />
                     </div>
                 </div>
                 <div className="skeleton-list">
                     {Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className="skeleton-card">
-                            <div className="skeleton skeleton-text-lg" style={{ width: '65%' }} />
+                            <div className="skeleton skeleton-text-lg skeleton-w-65p" />
                             <div className="skeleton-meta-row">
-                                <div className="skeleton skeleton-text-sm" style={{ width: 70 }} />
-                                <div className="skeleton skeleton-text-sm" style={{ width: 50 }} />
+                                <div className="skeleton skeleton-text-sm skeleton-w-70" />
+                                <div className="skeleton skeleton-text-sm skeleton-w-50" />
                             </div>
-                            <div className="skeleton skeleton-text" style={{ width: '90%' }} />
+                            <div className="skeleton skeleton-text skeleton-w-90p" />
                         </div>
                     ))}
                 </div>

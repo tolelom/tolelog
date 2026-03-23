@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { parseBlocks, renderBlock } from '../utils/markdownParser';
 import { validateImageFile, compressImage, uploadImageToServer } from '../utils/imageUpload';
+import { useCopyCodeBlock } from '../hooks/useCopyCodeBlock';
 import DOMPurify from 'dompurify';
 import './BlockEditor.css';
 import type { Block } from '../types';
@@ -362,32 +363,7 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
     }, [insertImage, onImageInsert]);
 
     // 코드 블록 복사 버튼 이벤트 위임
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-        const handleClick = (e: MouseEvent) => {
-            const btn = (e.target as HTMLElement).closest('.code-copy-btn') as HTMLElement | null;
-            if (!btn) return;
-            e.stopPropagation();
-            const code = btn.getAttribute('data-code')
-                ?.replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'");
-            if (code) {
-                navigator.clipboard.writeText(code).then(() => {
-                    btn.textContent = '복사됨!';
-                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
-                }).catch(() => {
-                    btn.textContent = '복사 실패';
-                    setTimeout(() => { btn.textContent = '복사'; }, 2000);
-                });
-            }
-        };
-        container.addEventListener('click', handleClick);
-        return () => container.removeEventListener('click', handleClick);
-    }, []);
+    useCopyCodeBlock(containerRef);
 
     // 드래그 앤 드롭 핸들러
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -468,7 +444,6 @@ const BlockEditor = forwardRef<BlockEditorHandle, BlockEditorProps>(function Blo
                                     <img
                                         src={imgMatch[2]}
                                         alt={imgMatch[1]}
-                                        style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '8px' }}
                                         draggable={false}
                                     />
                                     <div

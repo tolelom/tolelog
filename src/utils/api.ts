@@ -72,6 +72,7 @@ async function authenticatedFetch<T = unknown>(url: string, method: string, toke
                 err.status = retryResponse.status;
                 throw err;
             }
+            if (retryResponse.status === 204) return { status: 'success', data: null } as T;
             return retryResponse.json();
         }
         const err: ApiError = new Error('인증이 만료되었습니다');
@@ -87,6 +88,7 @@ async function authenticatedFetch<T = unknown>(url: string, method: string, toke
         throw err;
     }
 
+    if (response.status === 204) return { status: 'success', data: null } as T;
     return response.json();
 }
 
@@ -244,6 +246,7 @@ export const COMMENT_API = {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || errorData.error || `댓글 삭제에 실패했습니다`);
         }
+        if (response.status === 204) return { status: 'success', data: null };
         return response.json();
     },
 };
