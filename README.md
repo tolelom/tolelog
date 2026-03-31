@@ -1,7 +1,7 @@
 # Tolelog
 
 블로그 플랫폼의 React 프론트엔드.
-백엔드는 [fiber_api_server](https://github.com/tolelom/fiber_api_server) 참고.
+백엔드는 [tolelog-backend](https://github.com/tolelom/tolelog-backend) 참고.
 
 ## Tech Stack
 
