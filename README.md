@@ -1,51 +1,57 @@
 # Tolelog
 
-Tolelog 블로그 플랫폼의 React 프론트엔드입니다.
-백엔드는 [fiber_api_server](https://github.com/tolelom/fiber_api_server) 레포지토리를 참고하세요.
+블로그 플랫폼의 React 프론트엔드.
+백엔드는 [fiber_api_server](https://github.com/tolelom/fiber_api_server) 참고.
 
 ## Tech Stack
 
-- **Frontend**: React 19 + Vite 7 + React Router 7
+- **Frontend**: React 19 + Vite 7 + React Router 7 + TypeScript 5.8
 - **State Management**: React Context API (Auth, Theme)
-- **Markdown Editor**: Typora/Notion 스타일 블록 기반 인라인 마크다운 에디터
-- **Styling**: CSS Custom Properties (다크/라이트 테마 지원)
-- **Markdown Rendering**: 커스텀 마크다운 파서 + highlight.js + KaTeX
-- **Deployment**: GitHub Actions + SSH + Nginx
-- **Containerization**: Docker
+- **Editor**: Typora/Notion 스타일 블록 기반 마크다운 에디터
+- **Styling**: CSS Custom Properties (다크/라이트 테마)
+- **Markdown**: 커스텀 파서 + highlight.js + KaTeX + DOMPurify
+- **Test**: Vitest + 커버리지 리포트
+- **Deploy**: GitHub Actions → Docker (Nginx Alpine) → GHCR → SSH 배포
 
 ## Features
 
-- **마크다운 지원**: 헤딩, 리스트, 테이블, 코드블록, 블록인용, 수식(inline, block), 체크리스트, 각주
-- **Syntax Highlighting**: highlight.js를 통한 코드 블록 하이라이팅
-- **수식 렌더링**: KaTeX를 이용한 수학 수식 렌더링
-- **이미지 업로드**: 자동 압축 및 Base64 인코딩 (최대 5MB)
-- **테마 지원**: 다크/라이트 모드 토글 및 localStorage 영속화
-- **인증**: JWT 기반 로그인/회원가입
-- **자동 저장**: 포스트 작성 중 1초 디바운스로 임시 저장
-- **CI/CD**: GitHub Actions를 통한 자동 빌드 및 배포
-- **작성자 정보**: 포스트 목록에 작성자명 및 작성 날짜 표시
+### 에디터 / 마크다운
+- 블록 기반 인라인 마크다운 에디터
+- 헤딩, 리스트, 테이블, 코드블록, 블록인용, 체크리스트, 각주
+- highlight.js 코드 하이라이팅
+- KaTeX 수식 렌더링 (inline, block)
+- 이미지 업로드 (자동 압축, Canvas 기반, 최대 5MB)
+- 자동 저장 (1초 디바운스)
+- 임시저장/드래프트 관리
+
+### 소셜
+- 댓글
+- 좋아요
+- 태그 자동완성
+- 시리즈 (연재 묶기, 시리즈 내 네비게이션)
+
+### 사용자
+- JWT 인증 (로그인/회원가입/토큰 갱신)
+- 사용자 프로필 / 아바타
+- 설정 페이지
+- 다크/라이트 테마 토글
+
+### 인프라
+- GitHub Actions CI/CD (lint → test → build → deploy)
+- PR 커버리지 코멘트 자동 작성
+- Docker + Nginx (Gzip, 보안 헤더, 캐싱, SPA 라우팅)
+- API 캐싱 레이어
 
 ## Getting Started
 
-### 설치 및 실행
-
 ```bash
-# 의존성 설치
 npm install
 
-# 환경변수 설정
 cp .env.example .env
 # VITE_API_URL 설정 (기본값: http://localhost:3000)
 
-# 개발 서버 실행 (port 5173, /api → localhost:3000 프록시)
-npm run dev
-
-# 프로덕션 빌드
-npm run build
-
-# 프로덕션 빌드 미리보기
-npm run preview
-
-# 린트 검사
-npm run lint
+npm run dev       # 개발 서버 (port 5173)
+npm run build     # 프로덕션 빌드
+npm run lint      # 린트
+npm run test      # 테스트
 ```
