@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { STORAGE_KEYS, AUTO_SAVE_DELAY_MS } from '../utils/constants';
+import { notify } from '../utils/notify';
 import type { PostFormData, DraftData } from '../types';
 
 export type SaveStatus = 'saved' | 'saving' | 'error';
@@ -27,6 +28,7 @@ export function useAutoSave(
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedRef = useRef<DraftData | null>(null);
+    const hasNotifiedFailureRef = useRef(false);
 
     const saveDraft = useCallback((data: PostFormData) => {
         try {
@@ -76,8 +78,12 @@ export function useAutoSave(
         serverSaveTimeoutRef.current = setTimeout(async () => {
             try {
                 await serverSave.onSave(formData);
+                hasNotifiedFailureRef.current = false;
             } catch {
-                // server save failure is silent — localStorage backup is still valid
+                if (!hasNotifiedFailureRef.current) {
+                    notify.error('자동 저장 실패. 네트워크를 확인해주세요.');
+                    hasNotifiedFailureRef.current = true;
+                }
             }
         }, serverSave.delay ?? 5000);
 
