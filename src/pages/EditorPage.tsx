@@ -53,7 +53,7 @@ export default function EditorPage() {
         const controller = new AbortController();
         SERIES_API.getUserSeries(userId, { signal: controller.signal })
             .then(res => { if (res.status === 'success') setUserSeries(res.data || []); })
-            .catch(() => {});
+            .catch((err) => console.warn('editor: failed to load user series:', err));
         return () => controller.abort();
     }, [userId]);
 

@@ -12,7 +12,7 @@ export function useSeriesNav(postId: string | undefined) {
         const controller = new AbortController();
         SERIES_API.getSeriesNav(postId, { signal: controller.signal })
             .then(res => { if (res.data) setSeriesNav(res.data); else setSeriesNav(null); })
-            .catch(() => {});
+            .catch((err) => console.warn('series-nav: failed to load:', err));
         return () => controller.abort();
     }, [postId]);
 
@@ -22,7 +22,7 @@ export function useSeriesNav(postId: string | undefined) {
         if (next && !seriesDetail && seriesNav) {
             SERIES_API.getSeries(seriesNav.series_id)
                 .then(res => { if (res.data) setSeriesDetail(res.data); })
-                .catch(() => {});
+                .catch((err) => console.warn('series-nav: failed to load detail:', err));
         }
     };
 

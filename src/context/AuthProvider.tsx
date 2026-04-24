@@ -104,7 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const logout = () => {
         const currentToken = token;
         if (currentToken) {
-            AUTH_API.logout(currentToken).catch(() => {});
+            AUTH_API.logout(currentToken).catch((err) => console.warn('auth: logout request failed:', err));
         }
         setToken(null);
         setRefreshToken(null);

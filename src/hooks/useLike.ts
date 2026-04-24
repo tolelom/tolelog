@@ -16,7 +16,7 @@ export function useLike(postId: string | undefined, token: string | null, initia
         const controller = new AbortController();
         LIKE_API.getStatus(postId, { signal: controller.signal, token })
             .then(res => { if (res.data) setLiked(res.data.liked); })
-            .catch(() => {});
+            .catch((err) => console.warn('like: failed to load status:', err));
         return () => controller.abort();
     }, [postId, token]);
 

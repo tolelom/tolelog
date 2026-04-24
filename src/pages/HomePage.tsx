@@ -34,7 +34,7 @@ export default function HomePage() {
         const controller = new AbortController();
         SERIES_API.getUserSeries(BLOG_OWNER_ID, { signal: controller.signal })
             .then(res => { if (res.status === 'success') setSeriesList(res.data || []); })
-            .catch(() => {});
+            .catch((err) => console.warn('home: failed to load series:', err));
         return () => controller.abort();
     }, [page, tag, searchQuery]);
 
@@ -43,7 +43,7 @@ export default function HomePage() {
         const controller = new AbortController();
         USER_API.getProfile(BLOG_OWNER_ID, { signal: controller.signal })
             .then(res => { if (res.status === 'success') setOwnerProfile(res.data); })
-            .catch(() => {});
+            .catch((err) => console.warn('home: failed to load profile:', err));
         return () => controller.abort();
     }, []);
 
@@ -52,7 +52,7 @@ export default function HomePage() {
         const controller = new AbortController();
         TAG_API.getTags({ signal: controller.signal })
             .then(res => { if (res.status === 'success') setPopularTags((res.data || []).slice(0, 15)); })
-            .catch(() => {});
+            .catch((err) => console.warn('home: failed to load tags:', err));
         return () => controller.abort();
     }, []);
 

@@ -20,7 +20,7 @@ export default function TagAutocompleteInput({ value, onChange }: TagAutocomplet
         const controller = new AbortController();
         TAG_API.getTags({ signal: controller.signal })
             .then(res => { if (res.status === 'success') setAllTags(res.data || []); })
-            .catch(() => {});
+            .catch((err) => console.warn('tag-autocomplete: failed to load:', err));
         return () => controller.abort();
     }, []);
 
