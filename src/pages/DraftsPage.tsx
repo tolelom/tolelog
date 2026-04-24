@@ -50,7 +50,19 @@ export default function DraftsPage() {
         <div className="drafts-page">
             <h1 className="drafts-title">내 초안</h1>
 
-            {isLoading && <div className="drafts-loading" aria-label="불러오는 중" />}
+            {isLoading && (
+                <ul className="drafts-list" aria-busy="true" aria-label="불러오는 중">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <li key={i} className="drafts-item drafts-item-skeleton">
+                            <div className="drafts-item-link">
+                                <span className="skeleton skeleton-text skeleton-w-60p" />
+                                <span className="skeleton skeleton-text-sm skeleton-w-80" />
+                            </div>
+                            <div className="skeleton skeleton-h-28 skeleton-w-60" />
+                        </li>
+                    ))}
+                </ul>
+            )}
 
             {error && (
                 <div className="drafts-error">
