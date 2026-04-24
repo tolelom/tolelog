@@ -1,6 +1,6 @@
 // Note: spec referenced ref.insertImage but the component exposes image insertion via onImageInsert callback, tested in ImageUploadButton integration.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, fireEvent, act } from '@testing-library/react';
 import { useRef } from 'react';
 import BlockEditor, { type BlockEditorHandle } from '../BlockEditor';
 
