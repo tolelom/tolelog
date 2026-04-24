@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LIKE_API } from '../utils/api';
+import { notify } from '../utils/notify';
 
 export function useLike(postId: string | undefined, token: string | null, initialLikeCount: number) {
     const [liked, setLiked] = useState(false);
@@ -28,7 +29,9 @@ export function useLike(postId: string | undefined, token: string | null, initia
                 setLiked(res.data.liked);
                 setLikeCount(res.data.like_count);
             }
-        } catch { /* ignore */ }
+        } catch {
+            notify.error('좋아요 처리에 실패했습니다');
+        }
         finally { setLikeLoading(false); }
     };
 
