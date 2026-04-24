@@ -5,6 +5,7 @@ import { POST_API, SERIES_API } from '../utils/api';
 import { STORAGE_KEYS } from '../utils/constants';
 import { invalidateCache } from '../utils/apiCache';
 import { useAutoSave } from '../hooks/useAutoSave';
+import { useToast } from '../hooks/useToast';
 import BlockEditor from '../components/BlockEditor';
 import TagAutocompleteInput from '../components/TagAutocompleteInput';
 import EditorToolbar from '../components/EditorToolbar';
@@ -22,6 +23,7 @@ export default function EditorPage() {
     const navigate = useNavigate();
     const { postId } = useParams<{ postId: string }>();
     const { token, userId } = useContext(AuthContext);
+    const { toast } = useToast();
     const imageInsertRef = useRef<((base64Data: string, fileName: string) => void) | null>(null);
     const editorRef = useRef<EditorRef | null>(null);
     const [formData, setFormData] = useState<PostFormData>({
@@ -268,6 +270,7 @@ export default function EditorPage() {
 
             const successMsg = isEditMode ? '글이 수정되었습니다!' : '글이 저장되었습니다!';
             setSuccess(successMsg);
+            toast.success(successMsg);
             clearDraft();
 
             const postIdToNavigate = savedPostId;
@@ -279,7 +282,9 @@ export default function EditorPage() {
                 navigate('/login');
                 return;
             }
-            setError(err instanceof Error ? err.message : '글 저장에 실패했습니다');
+            const errMsg = err instanceof Error ? err.message : '글 저장에 실패했습니다';
+            setError(errMsg);
+            toast.error(errMsg);
             setIsSaving(false);
         }
     };
