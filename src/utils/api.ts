@@ -1,4 +1,5 @@
 import { API_BASE_URL, STORAGE_KEYS } from './constants';
+import { notify } from './notify';
 import type { SuccessResponse, AuthData, User, Post, PostListWithPagination, Comment as CommentType, CommentListResponse, Series, SeriesDetail, SeriesNav, TagInfo } from '../types';
 
 interface ApiError extends Error {
@@ -75,6 +76,7 @@ async function authenticatedFetch<T = unknown>(url: string, method: string, toke
             if (retryResponse.status === 204) return { status: 'success', data: null } as T;
             return retryResponse.json();
         }
+        notify.error('세션이 만료되었습니다. 다시 로그인해주세요.');
         const err: ApiError = new Error('인증이 만료되었습니다');
         err.status = 401;
         throw err;
