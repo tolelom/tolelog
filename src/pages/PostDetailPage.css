@@ -344,3 +344,14 @@
     .post-article { padding: 16px 12px; }
     .post-title { font-size: 20px; }
 }
+
+.post-meta-skeleton {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.post-content-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

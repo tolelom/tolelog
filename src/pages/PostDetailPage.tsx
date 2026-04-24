@@ -155,7 +155,21 @@ export default function PostDetailPage() {
     if (isLoading) {
         return (
             <div className="post-detail-page">
-                <div className="loading-container"><div className="spinner"></div><p>글을 불러오는 중...</p></div>
+                <article className="post-article" aria-busy="true">
+                    <div className="skeleton skeleton-text-lg skeleton-w-70p skeleton-mb-16" />
+                    <div className="post-meta-skeleton">
+                        <div className="skeleton skeleton-text-sm skeleton-w-80" />
+                        <div className="skeleton skeleton-text-sm skeleton-w-60" />
+                        <div className="skeleton skeleton-text-sm skeleton-w-50" />
+                    </div>
+                    <div className="post-content-skeleton">
+                        <div className="skeleton skeleton-text skeleton-w-full" />
+                        <div className="skeleton skeleton-text skeleton-w-90p" />
+                        <div className="skeleton skeleton-text skeleton-w-full" />
+                        <div className="skeleton skeleton-text skeleton-w-80p" />
+                        <div className="skeleton skeleton-text skeleton-w-65p" />
+                    </div>
+                </article>
             </div>
         );
     }
