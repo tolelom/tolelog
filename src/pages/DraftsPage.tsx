@@ -4,10 +4,12 @@ import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import type { Post } from '../types';
 import { formatDate } from '../utils/format';
+import { useToast } from '../hooks/useToast';
 import './DraftsPage.css';
 
 export default function DraftsPage() {
     const { token } = useContext(AuthContext);
+    const { toast } = useToast();
     const [drafts, setDrafts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -36,10 +38,13 @@ export default function DraftsPage() {
         if (!token || !window.confirm('이 초안을 삭제하시겠습니까?')) return;
         setDeletingId(id);
         POST_API.deletePost(id, token)
-            .then(() => setDrafts(prev => prev.filter(d => d.id !== id)))
-            .catch(() => alert('삭제에 실패했습니다.'))
+            .then(() => {
+                setDrafts(prev => prev.filter(d => d.id !== id));
+                toast.success('초안이 삭제되었습니다');
+            })
+            .catch(() => toast.error('초안 삭제에 실패했습니다'))
             .finally(() => setDeletingId(null));
-    }, [token]);
+    }, [token, toast]);
 
     return (
         <div className="drafts-page">
