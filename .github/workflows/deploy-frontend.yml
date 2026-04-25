@@ -115,6 +115,13 @@ jobs:
             ghcr.io/tolelom/tolelog:${{ github.sha }}
           platforms: linux/arm64
 
+      - name: Tailscale 연결
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
       - name: 서버에 배포
         uses: appleboy/ssh-action@v1
         with:
