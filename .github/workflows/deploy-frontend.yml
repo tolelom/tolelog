@@ -124,6 +124,6 @@ jobs:
           port: 22
           script: |
             export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin:$HOME/.docker/bin
-            cd ~/server
+            cd ~/server-config/m4/apps/tolelog
             docker compose pull tolelog
             docker compose up -d tolelog
