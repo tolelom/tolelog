@@ -112,6 +112,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/tolelom/tolelog:latest
+            ghcr.io/tolelom/tolelog:main
             ghcr.io/tolelom/tolelog:${{ github.sha }}
           platforms: linux/arm64
 
