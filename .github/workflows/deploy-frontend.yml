@@ -8,6 +8,13 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # 신규 게시글이 발행되면 SSG prerender 가 그것을 포함하도록 매시간 재빌드한다.
+  # 즉시 갱신이 필요하면 백엔드에서 repository_dispatch 호출로 트리거하거나 workflow_dispatch 를 수동 실행.
+  schedule:
+    - cron: '0 * * * *'
+  # 외부 시스템(백엔드 등)에서 즉시 트리거 가능. PAT 로 POST /repos/.../dispatches 호출, event_type='rebuild'.
+  repository_dispatch:
+    types: [rebuild]
 
 jobs:
   lint-test:
@@ -69,7 +76,8 @@ jobs:
           path: coverage/
 
   build-deploy:
-    if: github.event_name == 'push'
+    # PR 외의 모든 트리거(push/schedule/manual/외부 dispatch)에서 빌드+배포 수행.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     needs: lint-test
     permissions:

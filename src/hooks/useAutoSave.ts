@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { STORAGE_KEYS, AUTO_SAVE_DELAY_MS } from '../utils/constants';
 import { notify } from '../utils/notify';
+import { captureException } from '../utils/errorReporting';
 import type { PostFormData, DraftData } from '../types';
 
 export type SaveStatus = 'saved' | 'saving' | 'error';
@@ -43,7 +44,7 @@ export function useAutoSave(
             lastSavedRef.current = draftData;
             setSaveStatus('saved');
         } catch (error) {
-            console.error('저장 실패:', error);
+            captureException(error, { source: 'useAutoSave.save' });
             setSaveStatus('error');
         }
     }, [storageKey]);
@@ -102,7 +103,7 @@ export function useAutoSave(
             }
             return null;
         } catch (error) {
-            console.error('백업 로드 실패:', error);
+            captureException(error, { source: 'useAutoSave.load' });
             return null;
         }
     }, [storageKey]);
@@ -113,7 +114,7 @@ export function useAutoSave(
             lastSavedRef.current = null;
             setSaveStatus('saved');
         } catch (error) {
-            console.error('백업 초기화 실패:', error);
+            captureException(error, { source: 'useAutoSave.clear' });
         }
     }, [storageKey]);
 

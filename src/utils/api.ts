@@ -6,7 +6,12 @@ interface ApiError extends Error {
     status?: number;
 }
 
-async function tryRefreshToken(): Promise<string | null> {
+// 동시에 여러 요청이 401 을 받으면 refresh 가 중복 호출되어
+// 첫 호출에서 발급된 새 refresh_token 이 두 번째 호출 시 invalid 가 되는 race 가 있다.
+// in-flight Promise 를 캐싱해 refresh 엔드포인트를 한 번만 호출하도록 보장.
+let refreshInFlight: Promise<string | null> | null = null;
+
+async function doRefresh(): Promise<string | null> {
     const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
     if (!refreshToken) return null;
 
@@ -34,6 +39,14 @@ async function tryRefreshToken(): Promise<string | null> {
         localStorage.removeItem(STORAGE_KEYS.USER);
         return null;
     }
+}
+
+async function tryRefreshToken(): Promise<string | null> {
+    if (refreshInFlight) return refreshInFlight;
+    refreshInFlight = doRefresh().finally(() => {
+        refreshInFlight = null;
+    });
+    return refreshInFlight;
 }
 
 async function authenticatedFetch<T = unknown>(url: string, method: string, token: string, body: Record<string, unknown> | null = null): Promise<T> {

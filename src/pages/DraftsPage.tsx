@@ -5,6 +5,7 @@ import { POST_API } from '../utils/api';
 import type { Post } from '../types';
 import { formatDate } from '../utils/format';
 import { useToast } from '../hooks/useToast';
+import PageMeta from '../components/PageMeta';
 import './DraftsPage.css';
 
 export default function DraftsPage() {
@@ -15,10 +16,6 @@ export default function DraftsPage() {
     const [error, setError] = useState<string | null>(null);
     const [fetchKey, setFetchKey] = useState(0);
     const [deletingId, setDeletingId] = useState<number | null>(null);
-
-    useEffect(() => {
-        document.title = '내 초안 | Tolelog';
-    }, []);
 
     const fetchDrafts = useCallback(() => {
         if (!token) return;
@@ -48,6 +45,7 @@ export default function DraftsPage() {
 
     return (
         <div className="drafts-page">
+            <PageMeta title="내 초안" noindex />
             <h1 className="drafts-title">내 초안</h1>
 
             {isLoading && (

@@ -4,6 +4,9 @@ import { AuthContext } from '../context/AuthContext';
 import { SERIES_API } from '../utils/api';
 import { formatDateShort } from '../utils/format';
 import { SeriesDetail } from '../types';
+import PageMeta from '../components/PageMeta';
+import { BreadcrumbJsonLd } from '../components/StructuredData';
+import { postPath } from '../utils/slug';
 import './SeriesDetailPage.css';
 
 export default function SeriesDetailPage() {
@@ -23,7 +26,6 @@ export default function SeriesDetailPage() {
             const response = await SERIES_API.getSeries(seriesId, { signal });
             if (response.status === 'success') {
                 setSeries(response.data);
-                document.title = `${response.data.title} | Tolelog`;
             } else {
                 setError('시리즈를 찾을 수 없습니다.');
             }
@@ -113,8 +115,26 @@ export default function SeriesDetailPage() {
         );
     }
 
+    const seriesPath = `/series/${seriesId}`;
+    const seriesDescription = series?.description?.trim() || `${series?.title ?? '시리즈'} - Tolelog 시리즈`;
+
     return (
         <div className="series-detail-page">
+            {series && (
+                <>
+                    <PageMeta
+                        title={series.title}
+                        description={seriesDescription}
+                        canonical={seriesPath}
+                    />
+                    <BreadcrumbJsonLd
+                        items={[
+                            { name: '홈', url: '/' },
+                            { name: series.title, url: seriesPath },
+                        ]}
+                    />
+                </>
+            )}
             <div className="series-header">
                 <nav className="series-breadcrumb">
                     <Link to="/" className="breadcrumb-link">홈</Link>
@@ -139,7 +159,7 @@ export default function SeriesDetailPage() {
             <div className="series-post-list">
                 {series.posts.map((post, index) => (
                     <div key={post.id} className="series-post-item">
-                        <Link to={`/post/${post.id}`} className="series-post-item-link">
+                        <Link to={postPath(post)} className="series-post-item-link">
                             <span className="series-post-number">{index + 1}</span>
                             <div className="series-post-info">
                                 <span className="series-post-title">{post.title}</span>

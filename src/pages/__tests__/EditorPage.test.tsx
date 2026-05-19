@@ -39,6 +39,11 @@ vi.mock('../../utils/apiCache', () => ({
     invalidateCache: vi.fn(),
 }));
 
+// vite-react-ssg 의 Head 는 HelmetProvider 컨텍스트가 필요하므로 테스트에서는 children 만 렌더
+vi.mock('vite-react-ssg', () => ({
+    Head: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 const mockGetPost = vi.mocked(POST_API.getPost);
 const mockCreatePost = vi.mocked(POST_API.createPost);
 const mockUpdatePost = vi.mocked(POST_API.updatePost);
@@ -119,14 +124,16 @@ describe('EditorPage', () => {
         const saveBtn = screen.getByRole('button', { name: /글 발행|수정 완료/ });
         fireEvent.click(saveBtn);
 
-        // runAllTimersAsync flushes both timers and promise microtasks
+        // navigate 지연(800ms)까지만 진행 — 토스트 자동 닫힘 타이머는 실행하지 않아야
+        // '글이 저장되었습니다' 토스트가 아직 DOM에 남아 있다
         await act(async () => {
-            await vi.runAllTimersAsync();
+            await vi.advanceTimersByTimeAsync(800);
         });
 
         expect(mockCreatePost).toHaveBeenCalled();
-        expect(screen.getByText('글이 저장되었습니다!')).toBeInTheDocument();
-        expect(mockNavigate).toHaveBeenCalledWith('/post/101');
+        expect(screen.getByText('글이 저장되었습니다')).toBeInTheDocument();
+        // 슬러그 URL: postPath({ id: 101, title: '새 글' }) → /post/새-글-101
+        expect(mockNavigate).toHaveBeenCalledWith('/post/새-글-101');
     });
 
     it('저장 실패 (non-401) 시 inline error + toast.error', async () => {

@@ -5,6 +5,9 @@ import { stripMarkdown, formatDate } from '../utils/format';
 import { BLOG_OWNER_ID, API_BASE_URL } from '../utils/constants';
 import { cachedFetch } from '../utils/apiCache';
 import { PostListItem, Pagination, PostListWithPagination, Series, User, TagInfo } from '../types';
+import PageMeta from '../components/PageMeta';
+import { BlogJsonLd } from '../components/StructuredData';
+import { postPath } from '../utils/slug';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
@@ -26,7 +29,24 @@ export default function HomePage() {
     const [ownerProfile, setOwnerProfile] = useState<User | null>(null);
     const [popularTags, setPopularTags] = useState<TagInfo[]>([]);
 
-    useEffect(() => { document.title = 'Tolelog'; }, []);
+    // 페이지/태그/검색에 따라 SEO 메타를 계산
+    const metaTitle = searchQuery
+        ? `"${searchQuery}" 검색 결과`
+        : tag
+        ? `태그: ${tag}`
+        : undefined; // 홈 기본 = 사이트 이름만
+    const metaDescription = searchQuery
+        ? `"${searchQuery}"에 대한 글 검색 결과 — Tolelog`
+        : tag
+        ? `"${tag}" 태그가 달린 글 모음 — Tolelog`
+        : undefined;
+    const canonicalPath = tag
+        ? `/?tag=${encodeURIComponent(tag)}`
+        : page > 1
+        ? `/?page=${page}`
+        : '/';
+    // 검색 결과는 색인 비대상 (중복 콘텐츠/저품질 위험)
+    const noindex = !!searchQuery;
 
     // 시리즈 목록 로드 (첫 페이지, 검색/태그 없을 때만)
     useEffect(() => {
@@ -121,6 +141,14 @@ export default function HomePage() {
 
     return (
         <div className="home-page">
+            <PageMeta
+                title={metaTitle}
+                description={metaDescription}
+                canonical={canonicalPath}
+                noindex={noindex}
+            />
+            {/* Blog 구조화 데이터는 기본 홈에서만 — 필터/검색 페이지는 제외 */}
+            {!tag && !searchQuery && page === 1 && <BlogJsonLd />}
             {/* 미니 프로필 */}
             {ownerProfile && (
                 <div className="home-profile">
@@ -245,7 +273,7 @@ export default function HomePage() {
                 {!loading && !error && posts.map((post: PostListItem) => (
                     <Link
                         key={post.id}
-                        to={`/post/${post.id}`}
+                        to={postPath(post)}
                         className="home-post-card"
                     >
                         <h2 className="home-post-title">{post.title}</h2>

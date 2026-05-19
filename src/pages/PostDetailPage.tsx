@@ -1,5 +1,6 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { parsePostSlugId, postPath } from '../utils/slug';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { invalidateCache } from '../utils/apiCache';
@@ -10,7 +11,12 @@ import { useTOC, TocItem } from '../hooks/useTOC';
 import { useSeriesNav } from '../hooks/useSeriesNav';
 import { useLike } from '../hooks/useLike';
 import { useCopyCodeBlock } from '../hooks/useCopyCodeBlock';
+import { useReturnFocus } from '../hooks/useReturnFocus';
+import { useKatexReady } from '../hooks/useKatexReady';
+import { useToast } from '../hooks/useToast';
 import CommentSection from '../components/CommentSection';
+import PageMeta from '../components/PageMeta';
+import { ArticleJsonLd, BreadcrumbJsonLd } from '../components/StructuredData';
 import 'highlight.js/styles/atom-one-dark.css';
 import './PostDetailPage.css';
 
@@ -31,8 +37,12 @@ function getFirstHttpImage(content: string): string | null {
 }
 
 export default function PostDetailPage() {
-    const { postId } = useParams<{ postId: string }>();
+    // URL 의 :postId 는 "123" 또는 "hello-world-123" 모두 가능. 트레일링 숫자에서 실제 ID 추출.
+    const { postId: rawPostId } = useParams<{ postId: string }>();
+    const parsed = useMemo(() => parsePostSlugId(rawPostId), [rawPostId]);
+    const numericId = parsed ? String(parsed.id) : undefined;
     const navigate = useNavigate();
+    const location = useLocation();
     const { userId, token } = useContext(AuthContext);
     const [post, setPost] = useState<Post | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -44,24 +54,39 @@ export default function PostDetailPage() {
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
     const { toc, activeTocId, mobileTocOpen, setMobileTocOpen } = useTOC(post?.content ?? null);
-    const { seriesNav, seriesTocOpen, seriesDetail, toggleSeriesToc } = useSeriesNav(postId);
-    const { liked, likeCount, likeLoading, handleLike } = useLike(postId, token, post?.like_count || 0);
+    const { seriesNav, seriesTocOpen, seriesDetail, toggleSeriesToc } = useSeriesNav(numericId);
+    const { liked, likeCount, likeLoading, handleLike } = useLike(numericId, token, post?.like_count || 0);
+    const { toast } = useToast();
 
-    const renderedHtml = useMemo(() => ({ __html: post ? renderMarkdown(post.content) : '' }), [post]);
+    // 삭제 확인 모달 닫을 때 트리거 버튼으로 포커스 복원 (a11y)
+    useReturnFocus(deleteConfirm);
+
+    // KaTeX 로드 완료 시 재렌더 트리거 (수식 콘텐츠를 정상 표시하기 위해)
+    const katexVersion = useKatexReady();
+    const renderedHtml = useMemo(
+        () => ({ __html: post ? renderMarkdown(post.content) : '' }),
+        // katexVersion이 바뀌면 renderMarkdown 결과(수식 부분)가 달라지므로 의도된 의존성
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [post, katexVersion],
+    );
 
     // 코드 블록 복사 버튼 이벤트 위임
     useCopyCodeBlock(contentRef, !!post);
 
     // 글 로드
     useEffect(() => {
+        if (!numericId) {
+            setError('잘못된 게시글 주소입니다.');
+            setIsLoading(false);
+            return;
+        }
         const controller = new AbortController();
         const loadPost = async () => {
             try {
                 setIsLoading(true);
-                const response = await POST_API.getPost(postId!, { signal: controller.signal, token: token ?? undefined });
+                const response = await POST_API.getPost(numericId, { signal: controller.signal, token: token ?? undefined });
                 if (response.status === 'success') {
                     setPost(response.data);
-                    document.title = `${response.data.title} | Tolelog`;
                 } else {
                     setError('글을 찾을 수 없습니다.');
                 }
@@ -74,34 +99,17 @@ export default function PostDetailPage() {
         };
         loadPost();
         return () => controller.abort();
-    }, [postId, token]);
+    }, [numericId, token]);
 
-    // OG / SEO 메타 태그
+    // canonical URL 로 자동 정규화: /post/123 또는 슬러그가 어긋난 URL 이면
+    // canonical 슬러그 URL 로 history.replaceState 해서 주소창만 정리한다 (실제 네비게이션 없음).
     useEffect(() => {
         if (!post) return;
-        const description = getPlainText(post.content);
-        const ogImage = getFirstHttpImage(post.content);
-        const created: HTMLMetaElement[] = [];
-        const setMeta = (attr: string, attrValue: string, content: string | null) => {
-            if (!content) return;
-            let el = document.querySelector(`meta[${attr}="${attrValue}"]`) as HTMLMetaElement | null;
-            if (!el) {
-                el = document.createElement('meta');
-                el.setAttribute(attr, attrValue);
-                document.head.appendChild(el);
-                created.push(el);
-            }
-            el.setAttribute('content', content);
-        };
-        setMeta('name', 'description', description);
-        setMeta('property', 'og:title', post.title);
-        setMeta('property', 'og:description', description);
-        setMeta('property', 'og:url', window.location.href);
-        setMeta('property', 'og:type', 'article');
-        if (ogImage) setMeta('property', 'og:image', ogImage);
-        setMeta('name', 'twitter:card', ogImage ? 'summary_large_image' : 'summary');
-        return () => { created.forEach(el => el.parentNode?.removeChild(el)); };
-    }, [post]);
+        const canonical = postPath({ id: post.id, title: post.title });
+        if (location.pathname !== canonical) {
+            navigate(canonical + location.search + location.hash, { replace: true });
+        }
+    }, [post, location.pathname, location.search, location.hash, navigate]);
 
     // 모달 배경 스크롤 잠금
     useEffect(() => {
@@ -131,21 +139,26 @@ export default function PostDetailPage() {
     }, [deleteConfirm]);
 
     const handleDelete = async () => {
-        if (!postId || !token) return;
+        if (!numericId || !token) return;
         setIsDeleting(true);
         setDeleteError('');
         try {
-            const response = await POST_API.deletePost(postId, token);
+            const response = await POST_API.deletePost(numericId, token);
             if (response.status === 'success') {
                 invalidateCache('posts:');
                 invalidateCache('search:');
+                toast.success('글을 삭제했습니다.');
                 navigate('/');
             } else {
-                setDeleteError('글 삭제에 실패했습니다.');
+                const msg = '글 삭제에 실패했습니다.';
+                setDeleteError(msg);
+                toast.error(msg);
                 setDeleteConfirm(false);
             }
         } catch (err: unknown) {
-            setDeleteError(err instanceof Error ? err.message : '글 삭제에 실패했습니다.');
+            const msg = err instanceof Error ? err.message : '글 삭제에 실패했습니다.';
+            setDeleteError(msg);
+            toast.error(msg);
             setDeleteConfirm(false);
         } finally {
             setIsDeleting(false);
@@ -190,8 +203,47 @@ export default function PostDetailPage() {
     const createdAt = formatDateLong(post.created_at);
     const updatedAt = formatDateLong(post.updated_at);
 
+    const metaDescription = getPlainText(post.content);
+    const ogImage = getFirstHttpImage(post.content) ?? undefined;
+    const tagList = post.tags ? post.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const postCanonical = postPath({ id: post.id, title: post.title });
+
     return (
         <div className="post-detail-page">
+            <PageMeta
+                title={post.title}
+                description={metaDescription}
+                canonical={postCanonical}
+                ogImage={ogImage}
+                ogType="article"
+                noindex={!post.is_public}
+                article={{
+                    publishedTime: post.created_at,
+                    modifiedTime: post.updated_at,
+                    author: post.author,
+                    tags: tagList,
+                }}
+            />
+            {post.is_public && (
+                <>
+                    <ArticleJsonLd
+                        url={postCanonical}
+                        title={post.title}
+                        description={metaDescription}
+                        authorName={post.author}
+                        datePublished={post.created_at}
+                        dateModified={post.updated_at}
+                        image={ogImage}
+                        tags={tagList}
+                    />
+                    <BreadcrumbJsonLd
+                        items={[
+                            { name: '홈', url: '/' },
+                            { name: post.title, url: postCanonical },
+                        ]}
+                    />
+                </>
+            )}
             {toc.length > 0 && (
                 <nav className="toc-panel" aria-label="목차">
                     <p className="toc-title">목차</p>
@@ -272,19 +324,19 @@ export default function PostDetailPage() {
                             <ul className="series-toc-list">
                                 {seriesDetail.posts.map((p, i) => (
                                     <li key={p.id} className={p.id === post.id ? 'series-toc-current' : ''}>
-                                        <Link to={`/post/${p.id}`}><span className="series-toc-num">{i + 1}.</span> {p.title}</Link>
+                                        <Link to={postPath({ id: p.id, title: p.title })}><span className="series-toc-num">{i + 1}.</span> {p.title}</Link>
                                     </li>
                                 ))}
                             </ul>
                         )}
                         <div className="series-nav-buttons">
                             {seriesNav.prev_post ? (
-                                <Link to={`/post/${seriesNav.prev_post.id}`} className="series-nav-btn series-nav-prev">
+                                <Link to={postPath(seriesNav.prev_post)} className="series-nav-btn series-nav-prev">
                                     <span className="series-nav-arrow">&larr;</span><span className="series-nav-label">{seriesNav.prev_post.title}</span>
                                 </Link>
                             ) : <div />}
                             {seriesNav.next_post ? (
-                                <Link to={`/post/${seriesNav.next_post.id}`} className="series-nav-btn series-nav-next">
+                                <Link to={postPath(seriesNav.next_post)} className="series-nav-btn series-nav-next">
                                     <span className="series-nav-label">{seriesNav.next_post.title}</span><span className="series-nav-arrow">&rarr;</span>
                                 </Link>
                             ) : <div />}
@@ -294,7 +346,7 @@ export default function PostDetailPage() {
 
                 {isOwner && (
                     <div className="post-actions">
-                        <Link to={`/editor/${postId}`} className="btn-edit">수정</Link>
+                        <Link to={`/editor/${post.id}`} className="btn-edit">수정</Link>
                         <button className="btn-delete" onClick={() => setDeleteConfirm(true)}>삭제</button>
                         {deleteError && <span className="delete-error">{deleteError}</span>}
                     </div>

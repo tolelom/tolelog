@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Series } from '../types';
+import { useReturnFocus } from '../hooks/useReturnFocus';
 import './SeriesFormModal.css';
 
 interface SeriesFormModalProps {
@@ -16,6 +17,9 @@ export default function SeriesFormModal({ series, onSubmit, onClose }: SeriesFor
     const [isSubmitting, setIsSubmitting] = useState(false);
     const titleRef = useRef<HTMLInputElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
+
+    // 모달 닫을 때 트리거 버튼으로 포커스 복원 (titleRef.focus()가 호출되기 전에 캡처)
+    useReturnFocus(true);
 
     useEffect(() => {
         titleRef.current?.focus();

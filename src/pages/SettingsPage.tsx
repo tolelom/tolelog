@@ -1,7 +1,9 @@
-import { useState, useContext, useEffect, FormEvent } from 'react';
+import { useState, useContext, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { notify as toast } from '../utils/notify';
 import { AuthContext } from '../context/AuthContext';
 import { AUTH_API } from '../utils/api';
+import PageMeta from '../components/PageMeta';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
@@ -16,10 +18,6 @@ export default function SettingsPage() {
     const [deleteConfirm, setDeleteConfirm] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
-
-    useEffect(() => {
-        document.title = '설정 | Tolelog';
-    }, []);
 
     const validate = (): boolean => {
         const errors: Record<string, string> = {};
@@ -46,13 +44,15 @@ export default function SettingsPage() {
         setIsSubmitting(true);
         try {
             await AUTH_API.changePassword(currentPassword, newPassword, token);
-            setMessage({ type: 'success', text: '비밀번호가 변경되었습니다' });
+            toast.success('비밀번호가 변경되었습니다.');
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
             setFieldErrors({});
         } catch (err) {
-            setMessage({ type: 'error', text: err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다' });
+            const msg = err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다';
+            setMessage({ type: 'error', text: msg });
+            toast.error(msg);
         } finally {
             setIsSubmitting(false);
         }
@@ -64,10 +64,13 @@ export default function SettingsPage() {
         setDeleteError(null);
         try {
             await AUTH_API.deleteAccount(token);
+            toast.success('계정이 삭제되었습니다.');
             logout();
             navigate('/');
         } catch (err) {
-            setDeleteError(err instanceof Error ? err.message : '계정 삭제에 실패했습니다');
+            const msg = err instanceof Error ? err.message : '계정 삭제에 실패했습니다';
+            setDeleteError(msg);
+            toast.error(msg);
         } finally {
             setIsDeleting(false);
         }
@@ -75,6 +78,7 @@ export default function SettingsPage() {
 
     return (
         <div className="settings-page">
+            <PageMeta title="설정" noindex />
             <h1 className="settings-title">설정</h1>
 
             {message && (

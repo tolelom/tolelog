@@ -6,6 +6,10 @@ import { STORAGE_KEYS } from '../utils/constants';
 import { invalidateCache } from '../utils/apiCache';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useToast } from '../hooks/useToast';
+import { useReturnFocus } from '../hooks/useReturnFocus';
+import { useKatexReady } from '../hooks/useKatexReady';
+import PageMeta from '../components/PageMeta';
+import { postPath } from '../utils/slug';
 import BlockEditor from '../components/BlockEditor';
 import TagAutocompleteInput from '../components/TagAutocompleteInput';
 import EditorToolbar from '../components/EditorToolbar';
@@ -35,7 +39,6 @@ export default function EditorPage() {
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(!!postId);
     const [error, setError] = useState<string>('');
-    const [success, setSuccess] = useState<string>('');
     const [showRestorePrompt, setShowRestorePrompt] = useState<boolean>(false);
     const [draftInfo, setDraftInfo] = useState<DraftData | null>(null);
     const [userSeries, setUserSeries] = useState<Series[]>([]);
@@ -43,9 +46,12 @@ export default function EditorPage() {
     const [showPreview, setShowPreview] = useState<boolean>(false);
     const isEditMode = !!postId;
 
-    useEffect(() => {
-        document.title = isEditMode ? '글 수정 | Tolelog' : '새 글 작성 | Tolelog';
-    }, [isEditMode]);
+    // 모달 닫을 때 트리거 버튼으로 포커스 복원 (a11y)
+    useReturnFocus(showRestorePrompt);
+    useReturnFocus(showPreview);
+
+    // 미리보기에서 수식이 등장하면 KaTeX 로드 후 재렌더
+    useKatexReady();
 
     // 사용자의 시리즈 목록 로드
     useEffect(() => {
@@ -103,7 +109,7 @@ export default function EditorPage() {
                         const post = response.data;
                         // 본인 글이 아니면 상세 페이지로 리다이렉트
                         if (userId && post.user_id !== userId) {
-                            navigate(`/post/${postId}`, { replace: true });
+                            navigate(postPath(post), { replace: true });
                             return;
                         }
                         setFormData({
@@ -228,7 +234,6 @@ export default function EditorPage() {
 
         setIsSaving(true);
         setError('');
-        setSuccess('');
 
         try {
             let response;
@@ -268,30 +273,35 @@ export default function EditorPage() {
             invalidateCache('posts:');
             invalidateCache('search:');
 
-            const successMsg = isEditMode ? '글이 수정되었습니다!' : '글이 저장되었습니다!';
-            setSuccess(successMsg);
+            const successMsg = isEditMode ? '글이 수정되었습니다' : '글이 저장되었습니다';
             toast.success(successMsg);
             clearDraft();
 
             const postIdToNavigate = savedPostId;
-            setTimeout(() => navigate(`/post/${postIdToNavigate}`), 1500);
+            const targetPath = postIdToNavigate
+                ? postPath({ id: Number(postIdToNavigate), title: formData.title })
+                : '/';
+            // 토스트가 잠깐 보이도록 짧은 지연 후 이동
+            setTimeout(() => navigate(targetPath), 800);
         } catch (err: unknown) {
             const apiErr = err as { status?: number; message?: string };
             if (apiErr.status === 401) {
-                setError('로그인이 만료되었습니다. 다시 로그인해주세요.');
+                // 세션 만료 토스트는 api.ts(authenticatedFetch)가 띄우므로 여기서는 이동만 한다
                 navigate('/login');
                 return;
             }
-            const errMsg = err instanceof Error ? err.message : '글 저장에 실패했습니다';
-            setError(errMsg);
-            toast.error(errMsg);
+            const msg = err instanceof Error ? err.message : '글 저장에 실패했습니다';
+            toast.error(msg);
+            setError(msg); // 폼 영역에도 표시해 사용자가 입력값을 잃지 않게
             setIsSaving(false);
         }
     };
 
     const handleCancel = () => {
-        if (isEditMode) {
-            navigate(`/post/${postId}`);
+        if (isEditMode && postId) {
+            // 현재 편집 중인 제목 기준으로 canonical URL 생성.
+            // 만약 사용자가 제목을 수정했다가 취소한 경우 PostDetailPage 가 다시 정규화한다.
+            navigate(postPath({ id: Number(postId), title: formData.title }));
         } else {
             navigate('/');
         }
@@ -310,6 +320,7 @@ export default function EditorPage() {
 
     return (
         <div className="editor-page">
+            <PageMeta title={isEditMode ? '글 수정' : '새 글 작성'} noindex />
             {/* 백업 복구 프롬프트 */}
             {showRestorePrompt && draftInfo && (
                 <div className="restore-prompt" role="dialog" aria-modal="true" aria-label="임시 저장 복구" onKeyDown={(e) => { if (e.key === 'Escape') handleDiscardDraft(); }}>
@@ -329,7 +340,6 @@ export default function EditorPage() {
             )}
 
             {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
 
             <form className="editor-form" onSubmit={(e) => e.preventDefault()}>
                 {/* 제목 입력 */}

@@ -6,7 +6,10 @@ import { stripMarkdown, formatDate } from '../utils/format';
 import { validateImageFile, compressImage } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
 import SeriesFormModal from '../components/SeriesFormModal';
+import PageMeta from '../components/PageMeta';
+import { notify as toast } from '../utils/notify';
 import { User, PostListItem, Pagination, PostListWithPagination, Series } from '../types';
+import { postPath } from '../utils/slug';
 import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
@@ -69,7 +72,9 @@ export default function UserProfilePage() {
 
         const validation = validateImageFile(file);
         if (!validation.valid) {
-            setAvatarError(validation.error || '유효하지 않은 이미지입니다.');
+            const msg = validation.error || '유효하지 않은 이미지입니다.';
+            setAvatarError(msg);
+            toast.error(msg);
             return;
         }
 
@@ -81,8 +86,11 @@ export default function UserProfilePage() {
             const newAvatarUrl: string = result.data.avatar_url;
             setProfile((prev: User | null) => prev ? { ...prev, avatar_url: newAvatarUrl } : prev);
             setGlobalAvatarUrl(newAvatarUrl);
+            toast.success('프로필 이미지를 변경했습니다.');
         } catch (err: unknown) {
-            setAvatarError(err instanceof Error ? err.message : '프로필 이미지 업로드에 실패했습니다');
+            const msg = err instanceof Error ? err.message : '프로필 이미지 업로드에 실패했습니다';
+            setAvatarError(msg);
+            toast.error(msg);
         } finally {
             setAvatarUploading(false);
             e.target.value = '';
@@ -99,8 +107,11 @@ export default function UserProfilePage() {
 
     const handleCreateSeries = async (title: string, description: string) => {
         if (!token) return;
+        // SeriesFormModal 의 에러는 자체 인라인으로 표시되므로 throw 는 모달이 받아 처리.
+        // 성공 시 모달이 닫히고 토스트로 결과 알림.
         await SERIES_API.createSeries(title, description, token);
         setSeriesModalOpen(false);
+        toast.success('시리즈를 만들었습니다.');
         await refreshSeriesList();
     };
 
@@ -108,6 +119,7 @@ export default function UserProfilePage() {
         if (!token || !editingSeries) return;
         await SERIES_API.updateSeries(editingSeries.id, title, description, token);
         setEditingSeries(null);
+        toast.success('시리즈를 수정했습니다.');
         await refreshSeriesList();
     };
 
@@ -117,9 +129,12 @@ export default function UserProfilePage() {
         try {
             await SERIES_API.deleteSeries(seriesId, token);
             setDeletingSeriesId(null);
+            toast.success('시리즈를 삭제했습니다.');
             await refreshSeriesList();
         } catch (err: unknown) {
-            setSeriesError(err instanceof Error ? err.message : '시리즈 삭제에 실패했습니다.');
+            const msg = err instanceof Error ? err.message : '시리즈 삭제에 실패했습니다.';
+            setSeriesError(msg);
+            toast.error(msg);
             setDeletingSeriesId(null);
         }
     };
@@ -137,7 +152,6 @@ export default function UserProfilePage() {
             .then(([profileRes, postsRes, seriesRes]) => {
                 if (profileRes.status === 'success') {
                     setProfile(profileRes.data);
-                    document.title = `${profileRes.data.username} | Tolelog`;
                 }
 
                 if (seriesRes.status === 'success') {
@@ -206,8 +220,24 @@ export default function UserProfilePage() {
         );
     }
 
+    const profileDescription = profile
+        ? `${profile.username}님의 Tolelog 프로필 — ${totalPosts}개의 글`
+        : undefined;
+    const profileOgImage = profile?.avatar_url
+        ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${API_BASE_URL}${profile.avatar_url}`)
+        : undefined;
+
     return (
         <div className="profile-page">
+            {profile && (
+                <PageMeta
+                    title={profile.username}
+                    description={profileDescription}
+                    canonical={`/user/${profile.id}`}
+                    ogImage={profileOgImage}
+                    ogType="profile"
+                />
+            )}
             {profile && (
                 <div className="profile-info">
                     <div
@@ -398,7 +428,7 @@ export default function UserProfilePage() {
                 {posts.map((post: PostListItem) => (
                     <Link
                         key={post.id}
-                        to={`/post/${post.id}`}
+                        to={postPath(post)}
                         className="profile-post-card"
                     >
                         <h3 className="profile-post-title">{post.title}</h3>

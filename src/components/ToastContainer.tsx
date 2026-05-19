@@ -13,6 +13,9 @@ export function ToastContainer({ toasts, onDismiss, onHoverStart, onHoverEnd }: 
     const polite = toasts.filter(t => t.type !== 'error');
     const assertive = toasts.filter(t => t.type === 'error');
 
+    // SSG prerender 시에는 document 가 없으므로 렌더하지 않는다 (토스트는 클라이언트 전용)
+    if (typeof document === 'undefined') return null;
+
     return createPortal(
         <div className="toast-container">
             <div aria-live="polite" aria-atomic="false" className="toast-region">

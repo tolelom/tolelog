@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# 비공개/인증 영역 차단
+Disallow: /editor
+Disallow: /editor/
+Disallow: /editor_private
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://blog.tolelom.xyz/api/v1/sitemap.xml

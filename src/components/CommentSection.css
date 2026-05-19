@@ -138,6 +138,28 @@
     text-align: center;
     padding: 24px 0;
 }
+.comment-load-error {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--error-text);
+    font-size: 14px;
+}
+.comment-load-error p {
+    margin: 0 0 12px 0;
+}
+.comment-retry-btn {
+    background: transparent;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.comment-retry-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
 .comment-login-prompt {
     text-align: center;
     padding: 16px;

@@ -2,6 +2,7 @@ import React, { useRef, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { validateImageFile, compressImage, uploadImageToServer } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
+import { captureException } from '../utils/errorReporting';
 import './ImageUploadButton.css';
 
 interface ImageUploadButtonProps {
@@ -53,8 +54,8 @@ export default function ImageUploadButton({ onImageInsert }: ImageUploadButtonPr
             }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : '이미지 업로드 중 오류가 발생했습니다.';
-            setError(message);
-            console.error(err);
+            setError(message); // 인라인 에러로만 표시 (토스트 중복 방지)
+            captureException(err, { source: 'ImageUploadButton' });
         } finally {
             setIsLoading(false);
         }

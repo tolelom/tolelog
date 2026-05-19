@@ -28,6 +28,11 @@ vi.mock('../../utils/api', () => ({
     SERIES_API: { getSeriesNav: vi.fn(), getSeries: vi.fn() },
 }));
 
+// vite-react-ssg 의 Head 는 HelmetProvider 컨텍스트가 필요하므로 테스트에서는 children 만 렌더
+vi.mock('vite-react-ssg', () => ({
+    Head: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 const mockGetPost = vi.mocked(POST_API.getPost);
 const mockGetStatus = vi.mocked(LIKE_API.getStatus);
 const mockToggle = vi.mocked(LIKE_API.toggle);

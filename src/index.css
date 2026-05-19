@@ -517,6 +517,30 @@ button.tag-chip-btn {
 /* 수식 */
 .md-body .math-block { text-align: center; overflow-x: auto; }
 
+/* KaTeX 로딩 중 임시 표시 — 로드 완료 시 자동 재렌더되어 사라짐 */
+.md-body .math-pending {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+/* KaTeX 다크모드 색상 조정 — KaTeX는 currentColor를 쓰지만 일부 선/박스는 명시 색을 가짐 */
+[data-theme="dark"] .katex,
+[data-theme="dark"] .katex-display,
+[data-theme="dark"] .md-body .math-block,
+[data-theme="dark"] .md-body .math-inline { color: var(--text-primary); }
+[data-theme="dark"] .katex .frac-line,
+[data-theme="dark"] .katex .overline .overline-line,
+[data-theme="dark"] .katex .underline .underline-line,
+[data-theme="dark"] .katex .hline,
+[data-theme="dark"] .katex .hdashline,
+[data-theme="dark"] .katex .rule,
+[data-theme="dark"] .katex .sqrt > .root,
+[data-theme="dark"] .katex .sqrt > .sqrt-line {
+  border-color: var(--text-primary);
+  background-color: var(--text-primary);
+}
+
 /* 코드 블록 언어 레이블 */
 .md-body .code-lang-label {
   position: absolute; top: 10px; left: 14px;
