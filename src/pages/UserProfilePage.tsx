@@ -1,15 +1,14 @@
-import { useState, useEffect, useContext, useMemo, useRef, useCallback, ChangeEvent, MouseEvent } from 'react';
+import { useState, useEffect, useContext, useMemo, useRef, useCallback, ChangeEvent } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API, SERIES_API } from '../utils/api';
-import { stripMarkdown, formatDate } from '../utils/format';
 import { validateImageFile, compressImage } from '../utils/imageUpload';
 import { API_BASE_URL } from '../utils/constants';
-import SeriesFormModal from '../components/SeriesFormModal';
 import PageMeta from '../components/PageMeta';
 import { notify as toast } from '../utils/notify';
 import { User, PostListItem, Pagination, PostListWithPagination, Series } from '../types';
-import { postPath } from '../utils/slug';
+import ProfileSeriesSection from '../components/profile/ProfileSeriesSection';
+import ProfilePostList from '../components/profile/ProfilePostList';
 import './UserProfilePage.css';
 
 const PAGE_SIZE = 10;
@@ -38,13 +37,9 @@ export default function UserProfilePage() {
     const [avatarError, setAvatarError] = useState<string>('');
     const [seriesList, setSeriesList] = useState<Series[]>([]);
     const [activeTab, setActiveTab] = useState<'posts' | 'series'>('posts');
-    const [seriesModalOpen, setSeriesModalOpen] = useState(false);
-    const [editingSeries, setEditingSeries] = useState<Series | null>(null);
-    const [deletingSeriesId, setDeletingSeriesId] = useState<number | null>(null);
-    const [seriesError, setSeriesError] = useState('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const isOwnProfile = currentUserId && String(currentUserId) === String(userId);
+    const isOwner = !!(currentUserId && String(currentUserId) === String(userId));
 
     // 현재 보이는 글에서 태그 집계
     const tagCloud = useMemo<[string, number][]>(() => {
@@ -61,7 +56,7 @@ export default function UserProfilePage() {
     }, [posts]);
 
     const handleAvatarClick = () => {
-        if (isOwnProfile && fileInputRef.current) {
+        if (isOwner && fileInputRef.current) {
             fileInputRef.current.click();
         }
     };
@@ -97,47 +92,26 @@ export default function UserProfilePage() {
         }
     };
 
-    const refreshSeriesList = useCallback(async () => {
-        if (!userId) return;
-        try {
-            const res = await SERIES_API.getUserSeries(userId);
-            if (res.status === 'success') setSeriesList(res.data || []);
-        } catch { /* ignore */ }
-    }, [userId]);
+    const handlePrevPage = useCallback(() => {
+        const params: Record<string, string> = {};
+        if (tag) params.tag = tag;
+        if (page - 1 > 1) params.page = String(page - 1);
+        setSearchParams(params);
+    }, [page, tag, setSearchParams]);
 
-    const handleCreateSeries = async (title: string, description: string) => {
-        if (!token) return;
-        // SeriesFormModal 의 에러는 자체 인라인으로 표시되므로 throw 는 모달이 받아 처리.
-        // 성공 시 모달이 닫히고 토스트로 결과 알림.
-        await SERIES_API.createSeries(title, description, token);
-        setSeriesModalOpen(false);
-        toast.success('시리즈를 만들었습니다.');
-        await refreshSeriesList();
-    };
+    const handleNextPage = useCallback(() => {
+        const params: Record<string, string> = { page: String(page + 1) };
+        if (tag) params.tag = tag;
+        setSearchParams(params);
+    }, [page, tag, setSearchParams]);
 
-    const handleUpdateSeries = async (title: string, description: string) => {
-        if (!token || !editingSeries) return;
-        await SERIES_API.updateSeries(editingSeries.id, title, description, token);
-        setEditingSeries(null);
-        toast.success('시리즈를 수정했습니다.');
-        await refreshSeriesList();
-    };
+    const handleTagClick = useCallback((clickedTag: string) => {
+        setSearchParams(tag === clickedTag ? {} : { tag: clickedTag });
+    }, [tag, setSearchParams]);
 
-    const handleDeleteSeries = async (seriesId: number) => {
-        if (!token) return;
-        setSeriesError('');
-        try {
-            await SERIES_API.deleteSeries(seriesId, token);
-            setDeletingSeriesId(null);
-            toast.success('시리즈를 삭제했습니다.');
-            await refreshSeriesList();
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : '시리즈 삭제에 실패했습니다.';
-            setSeriesError(msg);
-            toast.error(msg);
-            setDeletingSeriesId(null);
-        }
-    };
+    const handleClearTagFilter = useCallback(() => {
+        setSearchParams({});
+    }, [setSearchParams]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -241,12 +215,12 @@ export default function UserProfilePage() {
             {profile && (
                 <div className="profile-info">
                     <div
-                        className={`profile-avatar${isOwnProfile ? ' profile-avatar-editable' : ''}`}
+                        className={`profile-avatar${isOwner ? ' profile-avatar-editable' : ''}`}
                         onClick={handleAvatarClick}
-                        role={isOwnProfile ? 'button' : undefined}
-                        tabIndex={isOwnProfile ? 0 : undefined}
-                        aria-label={isOwnProfile ? '프로필 사진 변경' : undefined}
-                        onKeyDown={isOwnProfile ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAvatarClick(); } } : undefined}
+                        role={isOwner ? 'button' : undefined}
+                        tabIndex={isOwner ? 0 : undefined}
+                        aria-label={isOwner ? '프로필 사진 변경' : undefined}
+                        onKeyDown={isOwner ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAvatarClick(); } } : undefined}
                     >
                         {profile.avatar_url ? (
                             <img
@@ -257,12 +231,12 @@ export default function UserProfilePage() {
                         ) : (
                             profile.username.charAt(0).toUpperCase()
                         )}
-                        {isOwnProfile && (
+                        {isOwner && (
                             <div className="profile-avatar-overlay">
                                 {avatarUploading ? '...' : '변경'}
                             </div>
                         )}
-                        {isOwnProfile && (
+                        {isOwner && (
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -328,176 +302,32 @@ export default function UserProfilePage() {
 
             {/* 시리즈 탭 */}
             {activeTab === 'series' && (
-                <div className="profile-series-section">
-                    {isOwnProfile && (
-                        <div className="profile-series-header">
-                            <button
-                                className="btn btn-primary profile-series-create-btn"
-                                onClick={() => setSeriesModalOpen(true)}
-                            >
-                                + 새 시리즈
-                            </button>
-                        </div>
-                    )}
-
-                    {seriesError && (
-                        <p className="profile-series-error">{seriesError}</p>
-                    )}
-
-                    {seriesList.length === 0 ? (
-                        <div className="profile-status">
-                            <p>아직 시리즈가 없습니다.</p>
-                        </div>
-                    ) : (
-                        seriesList.map((s: Series) => (
-                            <div key={s.id} className="profile-series-card">
-                                <Link to={`/series/${s.id}`} className="profile-series-card-link">
-                                    <h3 className="profile-series-title">{s.title}</h3>
-                                    {s.description && (
-                                        <p className="profile-series-desc">{s.description}</p>
-                                    )}
-                                    <span className="profile-series-count">{s.post_count}개의 글</span>
-                                </Link>
-                                {isOwnProfile && (
-                                    <div className="profile-series-card-actions">
-                                        {deletingSeriesId === s.id ? (
-                                            <div className="profile-series-delete-confirm">
-                                                <span>삭제하시겠습니까?</span>
-                                                <button className="profile-series-confirm-yes" onClick={() => handleDeleteSeries(s.id)}>확인</button>
-                                                <button className="profile-series-confirm-no" onClick={() => setDeletingSeriesId(null)}>취소</button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    className="profile-series-edit-btn"
-                                                    onClick={() => setEditingSeries(s)}
-                                                >
-                                                    편집
-                                                </button>
-                                                <button
-                                                    className="profile-series-delete-btn"
-                                                    onClick={() => setDeletingSeriesId(s.id)}
-                                                >
-                                                    삭제
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))
-                    )}
-                </div>
-            )}
-
-            {/* 시리즈 생성/수정 모달 */}
-            {seriesModalOpen && (
-                <SeriesFormModal
-                    onSubmit={handleCreateSeries}
-                    onClose={() => setSeriesModalOpen(false)}
-                />
-            )}
-            {editingSeries && (
-                <SeriesFormModal
-                    series={editingSeries}
-                    onSubmit={handleUpdateSeries}
-                    onClose={() => setEditingSeries(null)}
+                <ProfileSeriesSection
+                    seriesList={seriesList}
+                    isOwner={isOwner}
+                    token={token}
+                    userId={userId!}
+                    onSeriesChange={setSeriesList}
                 />
             )}
 
             {/* 글 탭 */}
-            {activeTab === 'posts' && <div className="profile-posts-section">
-                <h2 className="profile-posts-title">
-                    {isOwnProfile ? '내 글' : `${profile?.username || ''}의 글`}
-                    {totalPosts > 0 && <span className="profile-posts-count">{totalPosts}</span>}
-                </h2>
-
-                {tag && (
-                    <div className="profile-tag-filter">
-                        <span>태그: <strong>{tag}</strong></span>
-                        <button className="profile-tag-clear" onClick={() => setSearchParams({})}>×</button>
-                    </div>
-                )}
-
-                {posts.length === 0 && (
-                    <div className="profile-status">
-                        <p>{tag ? `'${tag}' 태그가 포함된 글이 없습니다.` : '아직 작성된 글이 없습니다.'}</p>
-                    </div>
-                )}
-
-                {posts.map((post: PostListItem) => (
-                    <Link
-                        key={post.id}
-                        to={postPath(post)}
-                        className="profile-post-card"
-                    >
-                        <h3 className="profile-post-title">{post.title}</h3>
-                        {post.series && (
-                            <div className="profile-post-series-badge">
-                                {post.series.series_title}
-                            </div>
-                        )}
-                        <div className="profile-post-meta">
-                            <span className="profile-post-date">{formatDate(post.created_at)}</span>
-                            {post.view_count > 0 && (
-                                <span className="profile-post-views">조회 {post.view_count}</span>
-                            )}
-                            {post.tags && post.tags.split(',').map((t: string) => {
-                                const trimmed = t.trim();
-                                return trimmed ? (
-                                    <button
-                                        key={trimmed}
-                                        type="button"
-                                        className={`tag-chip tag-chip-btn${tag === trimmed ? ' tag-chip-active' : ''}`}
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSearchParams(tag === trimmed ? {} : { tag: trimmed }); }}
-                                    >
-                                        {trimmed}
-                                    </button>
-                                ) : null;
-                            })}
-                            {!post.is_public && (
-                                <span className="profile-post-private">비공개</span>
-                            )}
-                        </div>
-                        {'content' in post && (post as PostListItem & { content?: string }).content && (
-                            <p className="profile-post-preview">
-                                {stripMarkdown((post as PostListItem & { content?: string }).content!).slice(0, 150)}
-                            </p>
-                        )}
-                    </Link>
-                ))}
-
-                {(posts.length > 0 || page > 1) && (
-                    <nav className="pagination profile-pagination" aria-label="페이지 탐색">
-                        <button
-                            className="page-btn"
-                            disabled={page <= 1}
-                            onClick={() => {
-                                const params: Record<string, string> = {};
-                                if (tag) params.tag = tag;
-                                if (page - 1 > 1) params.page = String(page - 1);
-                                setSearchParams(params);
-                            }}
-                        >
-                            &larr; 이전
-                        </button>
-                        <span className="page-info">
-                            {totalPages > 0 ? `${page} / ${totalPages}` : page}
-                        </span>
-                        <button
-                            className="page-btn"
-                            disabled={!hasMore}
-                            onClick={() => {
-                                const params: Record<string, string> = { page: String(page + 1) };
-                                if (tag) params.tag = tag;
-                                setSearchParams(params);
-                            }}
-                        >
-                            다음 &rarr;
-                        </button>
-                    </nav>
-                )}
-            </div>}
+            {activeTab === 'posts' && (
+                <ProfilePostList
+                    posts={posts}
+                    totalPosts={totalPosts}
+                    page={page}
+                    totalPages={totalPages}
+                    hasMore={hasMore}
+                    tagFilter={tag || null}
+                    isOwner={isOwner}
+                    profileUsername={profile?.username || ''}
+                    onClearTagFilter={handleClearTagFilter}
+                    onTagClick={handleTagClick}
+                    onPrevPage={handlePrevPage}
+                    onNextPage={handleNextPage}
+                />
+            )}
         </div>
     );
 }
