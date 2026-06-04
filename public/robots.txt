@@ -8,4 +8,4 @@ Disallow: /editor_private
 Disallow: /login
 Disallow: /register
 
-Sitemap: https://blog.tolelom.xyz/api/v1/sitemap.xml
+Sitemap: https://api.tolelom.xyz/sitemap.xml

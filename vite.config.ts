@@ -25,7 +25,8 @@ async function discoverDynamicRoutes(): Promise<string[]> {
     process.env.VITE_SSG_API_URL
     || process.env.VITE_API_URL
     || 'https://api.tolelom.xyz';
-  const url = `${apiBase.replace(/\/$/, '')}/api/v1/sitemap.xml`;
+  // 백엔드는 sitemap 을 /api/v1 프리픽스 없이 루트(/sitemap.xml)에 노출한다 (router.go 참고)
+  const url = `${apiBase.replace(/\/$/, '')}/sitemap.xml`;
 
   try {
     const res = await fetch(url);
