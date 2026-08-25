@@ -11,7 +11,7 @@
 - **Styling**: CSS Custom Properties (다크/라이트 테마)
 - **Markdown**: 커스텀 파서 + highlight.js + KaTeX + DOMPurify
 - **Test**: Vitest + 커버리지 리포트
-- **Deploy**: GitHub Actions → Docker (Nginx Alpine) → GHCR → SSH 배포
+- **Deploy**: GitHub Actions → Docker (Nginx Alpine) → GHCR → GitOps 배포 (Renovate digest 핀 + git-sync-deploy)
 
 ## Features
 
@@ -37,7 +37,7 @@
 - 다크/라이트 테마 토글
 
 ### 인프라
-- GitHub Actions CI/CD (lint → test → build → deploy)
+- GitHub Actions CI/CD (lint → test → build → GHCR 이미지 푸시)
 - PR 커버리지 코멘트 자동 작성
 - Docker + Nginx (Gzip, 보안 헤더, 캐싱, SPA 라우팅)
 - API 캐싱 레이어
