@@ -84,4 +84,6 @@ Response format: `{ status, data, error }`
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/deploy-frontend.yml`): on push to `main`, runs lint → build → Docker image (linux/arm64) → push to GHCR → deploy via SSH + docker-compose.
+GitHub Actions (`.github/workflows/deploy-frontend.yml`): on push to `main`, runs lint → test → build → Docker image (linux/arm64) → push to GHCR as `:latest`, `:main`, `:<sha>`. Also runs hourly on a schedule so SSG prerender picks up newly published posts.
+
+**The workflow ends at the GHCR push — it does not deploy.** Deployment is GitOps: Renovate watches the `:main` tag and auto-pins the new digest into the `server-config` repo's compose file, and `git-sync-deploy` applies it on the server. SSH 22 is not exposed externally per security policy, so do not add an SSH deploy step back (see `751ca51`).
