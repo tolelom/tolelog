@@ -365,3 +365,73 @@ describe('renderBlock', () => {
     expect(html).toBe('');
   });
 });
+
+describe('parseBlocks - always makes progress', () => {
+  // 아래 입력들은 어떤 블록 규칙에도 잡히지 않아 문단 fallback 으로 떨어진다.
+  // 문단 루프가 한 줄도 소비하지 못하면 인덱스가 멈춰 무한 루프가 된다.
+  const FALLTHROUGH_LINES: [string, string][] = [
+    ['pipe line that does not end with a pipe', '|a'],
+    ['heading without a space', '#hashtag'],
+    ['indented heading', '   # heading'],
+    ['seven hashes', '#######'],
+    ['footnote definition without body', '[^a]: '],
+  ];
+
+  for (const [name, input] of FALLTHROUGH_LINES) {
+    it(`consumes ${name} as a paragraph`, () => {
+      const blocks = parseBlocks(input);
+      expect(blocks).toHaveLength(1);
+      expect(blocks[0].type).toBe('paragraph');
+    });
+  }
+
+  it('merges consecutive fallthrough lines into one paragraph', () => {
+    const blocks = parseBlocks('|a\n|b');
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].type).toBe('paragraph');
+    if (blocks[0].type === 'paragraph') {
+      expect(blocks[0].text).toBe('|a\n|b');
+    }
+  });
+
+  it('merges pipe lines without a delimiter row into one paragraph', () => {
+    const blocks = parseBlocks('| a | b |\n| c | d |');
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].type).toBe('paragraph');
+    if (blocks[0].type === 'paragraph') {
+      expect(blocks[0].text).toBe('| a | b |\n| c | d |');
+    }
+  });
+
+  it('parses pasted ASCII art without hanging', () => {
+    const art = [
+      ' _        _      _                ',
+      ' | |_ ___ | | ___| | ___  _ __ ___ ',
+      " | __/ _ \\| |/ _ \\ |/ _ \\| '_ ` _ \\",
+      ' | || (_) | |  __/ | (_) | | | | | |',
+      '  \\__\\___/|_|\\___|_|\\___/|_| |_| |_|',
+    ].join('\n');
+    const blocks = parseBlocks(art);
+    // 첫 줄은 `_ _ _` 형태라 CommonMark 규격상 hr, 나머지는 하나의 문단
+    expect(blocks.map(b => b.type)).toEqual(['hr', 'paragraph']);
+    if (blocks[1].type === 'paragraph') {
+      expect(blocks[1].text.split('\n')).toHaveLength(4);
+    }
+  });
+});
+
+describe('parseBlocks - horizontal rule', () => {
+  it('requires three or more of the same character', () => {
+    expect(parseBlocks('- - -')[0].type).toBe('hr');
+    expect(parseBlocks('_        _      _')[0].type).toBe('hr');
+  });
+
+  it('does not treat mixed rule characters as a horizontal rule', () => {
+    expect(parseBlocks('-*-')[0].type).toBe('paragraph');
+    expect(parseBlocks('_-_')[0].type).toBe('paragraph');
+  });
+
+  it('does not treat two characters as a horizontal rule', () => {
+    expect(parseBlocks('--')[0].type).toBe('paragraph');
+  });
+});

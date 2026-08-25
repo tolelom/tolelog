@@ -1,5 +1,47 @@
 import type { Block } from '../../types';
 
+const FOOTNOTE_DEF_RE = /^\[\^([\w-]+)\]:\s+(.+)$/;
+// 수평선은 같은 문자가 3개 이상이어야 한다 (CommonMark). `-*-` 같은 혼용은 문단이다.
+const HR_RE = /^\s*([-*_])(\s*\1){2,}\s*$/;
+const HEADING_RE = /^(#{1,6})\s+(.*)$/;
+const IMAGE_LINE_RE = /^!\[([^\]]*)\]\(([^)]+)\)(\{width=([^}]+)\})?$/;
+const TABLE_DELIMITER_RE = /^\|[\s:-]+\|/;
+const CHECKLIST_RE = /^\s*[-*+]\s+\[[ xX]\]\s/;
+const CHECKLIST_ITEM_RE = /^\s*[-*+]\s+\[([ xX])\]\s+(.*)$/;
+const UNORDERED_RE = /^\s*[-*+]\s+/;
+const ORDERED_RE = /^\s*\d+\.\s+/;
+
+function isTableLine(line: string): boolean {
+    const trimmed = line.trim();
+    return trimmed.startsWith('|') && trimmed.endsWith('|');
+}
+
+// 구분선(| --- |)이 뒤따를 때만 테이블이다. 아니면 그냥 문단 텍스트.
+function startsTable(lines: string[], index: number): boolean {
+    return isTableLine(lines[index])
+        && index + 1 < lines.length
+        && isTableLine(lines[index + 1])
+        && TABLE_DELIMITER_RE.test(lines[index + 1].trim());
+}
+
+// parseBlocks 의 블록 디스패치 조건과 정확히 같아야 한다.
+// 어긋나면 문단 fallback 이 한 줄도 소비하지 못해 무한 루프가 된다.
+function isBlockStart(lines: string[], index: number): boolean {
+    const line = lines[index];
+    return line.trim() === ''
+        || FOOTNOTE_DEF_RE.test(line)
+        || line.trim().startsWith('$$')
+        || line.trimStart().startsWith('```')
+        || HR_RE.test(line)
+        || HEADING_RE.test(line)
+        || IMAGE_LINE_RE.test(line.trim())
+        || startsTable(lines, index)
+        || line.trimStart().startsWith('>')
+        || CHECKLIST_RE.test(line)
+        || UNORDERED_RE.test(line)
+        || ORDERED_RE.test(line);
+}
+
 export function parseBlocks(text: string): Block[] {
     if (!text) return [];
 
@@ -17,7 +59,7 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 각주 정의: [^id]: text (블록으로 수집)
-        const footnoteDefMatch = line.match(/^\[\^([\w-]+)\]:\s+(.+)$/);
+        const footnoteDefMatch = line.match(FOOTNOTE_DEF_RE);
         if (footnoteDefMatch) {
             const id = footnoteDefMatch[1];
             const fnText = footnoteDefMatch[2];
@@ -73,14 +115,14 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 수평선: ---, ***, ___
-        if (/^(\s*[-*_]\s*){3,}$/.test(line)) {
+        if (HR_RE.test(line)) {
             blocks.push({ type: 'hr', raw: line });
             i++;
             continue;
         }
 
         // 헤더: # ~ ######
-        const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+        const headingMatch = line.match(HEADING_RE);
         if (headingMatch) {
             blocks.push({
                 type: 'heading',
@@ -93,7 +135,7 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 이미지 단독 라인: ![alt](src) 또는 ![alt](src){width=50%}
-        const imgMatch = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)(\{width=([^}]+)\})?$/);
+        const imgMatch = line.trim().match(IMAGE_LINE_RE);
         if (imgMatch) {
             blocks.push({
                 type: 'image',
@@ -107,28 +149,22 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 테이블: | ... |
-        if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+        if (startsTable(lines, i)) {
             const tableLines: string[] = [];
-            while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+            while (i < lines.length && isTableLine(lines[i])) {
                 tableLines.push(lines[i]);
                 i++;
             }
-            // 최소 2줄 (헤더 + 구분선)이어야 테이블
-            if (tableLines.length >= 2 && /^\|[\s:-]+\|/.test(tableLines[1].trim())) {
-                const headerCells = parseTableRow(tableLines[0]);
-                const alignments = parseTableAlignments(tableLines[1]);
-                const bodyRows = tableLines.slice(2).map(parseTableRow);
-                blocks.push({
-                    type: 'table',
-                    headers: headerCells,
-                    alignments,
-                    rows: bodyRows,
-                    raw: tableLines.join('\n'),
-                });
-            } else {
-                // 테이블이 아니면 문단으로
-                blocks.push({ type: 'paragraph', text: tableLines.join('\n'), raw: tableLines.join('\n') });
-            }
+            const headerCells = parseTableRow(tableLines[0]);
+            const alignments = parseTableAlignments(tableLines[1]);
+            const bodyRows = tableLines.slice(2).map(parseTableRow);
+            blocks.push({
+                type: 'table',
+                headers: headerCells,
+                alignments,
+                rows: bodyRows,
+                raw: tableLines.join('\n'),
+            });
             continue;
         }
 
@@ -149,10 +185,10 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 체크리스트: - [ ] 또는 - [x]
-        if (/^\s*[-*+]\s+\[[ xX]\]\s/.test(line)) {
+        if (CHECKLIST_RE.test(line)) {
             const checkItems: { checked: boolean; text: string }[] = [];
-            while (i < lines.length && /^\s*[-*+]\s+\[[ xX]\]\s/.test(lines[i])) {
-                const match = lines[i].match(/^\s*[-*+]\s+\[([ xX])\]\s+(.*)$/);
+            while (i < lines.length && CHECKLIST_RE.test(lines[i])) {
+                const match = lines[i].match(CHECKLIST_ITEM_RE);
                 if (match) {
                     checkItems.push({
                         checked: match[1].toLowerCase() === 'x',
@@ -169,7 +205,7 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 순서 없는 리스트: - 또는 * 또는 +
-        if (/^\s*[-*+]\s+/.test(line)) {
+        if (UNORDERED_RE.test(line)) {
             const listResult = parseList(lines, i, 'unordered');
             blocks.push(listResult.block);
             i = listResult.nextIndex;
@@ -177,7 +213,7 @@ export function parseBlocks(text: string): Block[] {
         }
 
         // 순서 있는 리스트: 1. 2. 등
-        if (/^\s*\d+\.\s+/.test(line)) {
+        if (ORDERED_RE.test(line)) {
             const listResult = parseList(lines, i, 'ordered');
             blocks.push(listResult.block);
             i = listResult.nextIndex;
@@ -186,27 +222,21 @@ export function parseBlocks(text: string): Block[] {
 
         // 문단: 그 외 텍스트 (연속된 비어있지 않은 줄 합침)
         const paraLines: string[] = [];
-        while (i < lines.length && lines[i].trim() !== '' &&
-            !lines[i].trimStart().startsWith('#') &&
-            !lines[i].trimStart().startsWith('```') &&
-            !lines[i].trimStart().startsWith('$$') &&
-            !lines[i].trimStart().startsWith('>') &&
-            !lines[i].trimStart().startsWith('|') &&
-            !/^\s*[-*+]\s+/.test(lines[i]) &&
-            !/^\s*\d+\.\s+/.test(lines[i]) &&
-            !/^(\s*[-*_]\s*){3,}$/.test(lines[i]) &&
-            !lines[i].trim().match(/^!\[([^\]]*)\]\(([^)]+)\)(\{width=[^}]+\})?$/) &&
-            !lines[i].match(/^\[\^[\w-]+\]:\s+/)) {
+        while (i < lines.length && !isBlockStart(lines, i)) {
             paraLines.push(lines[i]);
             i++;
         }
-        if (paraLines.length > 0) {
-            blocks.push({
-                type: 'paragraph',
-                text: paraLines.join('\n'),
-                raw: paraLines.join('\n'),
-            });
+        if (paraLines.length === 0) {
+            // 도달 불가 — isBlockStart 가 위 디스패치 조건과 어긋났을 때의 안전장치.
+            // 무한 루프 대신 해당 줄을 문단으로 소비한다.
+            paraLines.push(line);
+            i++;
         }
+        blocks.push({
+            type: 'paragraph',
+            text: paraLines.join('\n'),
+            raw: paraLines.join('\n'),
+        });
     }
 
     return blocks;
@@ -233,7 +263,7 @@ interface ListParseResult {
 function parseList(lines: string[], startIndex: number, type: 'ordered' | 'unordered'): ListParseResult {
     const items: string[] = [];
     let i = startIndex;
-    const pattern = type === 'ordered' ? /^\s*\d+\.\s+/ : /^\s*[-*+]\s+/;
+    const pattern = type === 'ordered' ? ORDERED_RE : UNORDERED_RE;
 
     while (i < lines.length) {
         const line = lines[i];
