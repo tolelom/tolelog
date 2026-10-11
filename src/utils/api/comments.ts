@@ -1,9 +1,10 @@
 import { API_BASE_URL } from '../constants';
+import { optionalAuthHeaders } from './client';
 import type { SuccessResponse, Comment as CommentType, CommentListResponse } from '../../types';
 
 export const COMMENT_API = {
-    getComments: async (postId: number | string, { signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<CommentListResponse>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/comments`, { signal });
+    getComments: async (postId: number | string, { signal, token }: { signal?: AbortSignal; token?: string } = {}): Promise<SuccessResponse<CommentListResponse>> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/comments`, { signal, headers: optionalAuthHeaders(token) });
         if (!response.ok) throw new Error(`댓글을 불러오지 못했습니다 (${response.status})`);
         return response.json();
     },

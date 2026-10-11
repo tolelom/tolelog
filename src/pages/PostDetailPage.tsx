@@ -54,7 +54,7 @@ export default function PostDetailPage() {
     const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
     const { toc, activeTocId, mobileTocOpen, setMobileTocOpen } = useTOC(post?.content ?? null);
-    const { seriesNav, seriesTocOpen, seriesDetail, toggleSeriesToc } = useSeriesNav(numericId);
+    const { seriesNav, seriesTocOpen, seriesDetail, toggleSeriesToc } = useSeriesNav(numericId, token ?? undefined);
     const { liked, likeCount, likeLoading, handleLike } = useLike(numericId, token, post?.like_count || 0);
     const { toast } = useToast();
 

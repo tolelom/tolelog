@@ -23,7 +23,7 @@ export default function SeriesDetailPage() {
         if (!seriesId) return;
         try {
             setIsLoading(true);
-            const response = await SERIES_API.getSeries(seriesId, { signal });
+            const response = await SERIES_API.getSeries(seriesId, { signal, token: token ?? undefined });
             if (response.status === 'success') {
                 setSeries(response.data);
             } else {
@@ -35,7 +35,7 @@ export default function SeriesDetailPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [seriesId]);
+    }, [seriesId, token]);
 
     useEffect(() => {
         const controller = new AbortController();
