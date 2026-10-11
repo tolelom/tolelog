@@ -78,12 +78,13 @@ export const POST_API = {
         );
     },
 
+    // 편집기의 저장은 곧 발행이므로 draft 를 열어 저장해도 published 가 된다
     updatePost: async (postId: number | string, title: string, content: string, isPublic: boolean = true, token: string, tags: string = ''): Promise<SuccessResponse<{ id: number }>> => {
         return authenticatedFetch<SuccessResponse<{ id: number }>>(
             `${API_BASE_URL}/api/v1/posts/${postId}`,
             'PUT',
             token,
-            { title, content, is_public: isPublic, tags }
+            { title, content, is_public: isPublic, tags, status: 'published' }
         );
     },
 

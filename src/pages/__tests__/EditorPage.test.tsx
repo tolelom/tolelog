@@ -47,6 +47,9 @@ vi.mock('vite-react-ssg', () => ({
 const mockGetPost = vi.mocked(POST_API.getPost);
 const mockCreatePost = vi.mocked(POST_API.createPost);
 const mockUpdatePost = vi.mocked(POST_API.updatePost);
+const mockCreateDraft = vi.mocked(POST_API.createDraft);
+const mockSaveDraft = vi.mocked(POST_API.saveDraft);
+const SERVER_SAVE_DELAY_MS = 5000;
 const mockGetUserSeries = vi.mocked(SERIES_API.getUserSeries);
 const mockGetTags = vi.mocked(TAG_API.getTags);
 
@@ -246,6 +249,84 @@ describe('EditorPage', () => {
         await waitFor(() => expect(mockCreatePost).toHaveBeenCalled());
 
         await waitFor(() => expect(localStorage.getItem(STORAGE_KEYS.DRAFT)).toBeNull());
+    });
+});
+
+describe('EditorPage 서버 자동저장과 발행', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockNavigate.mockReset();
+        mockUseParams = () => ({});
+        mockGetUserSeries.mockResolvedValue({ status: 'success', data: [] });
+        mockGetTags.mockResolvedValue({ status: 'success', data: [] });
+        mockUpdatePost.mockResolvedValue({ status: 'success', data: { id: 77 } } as any);
+        mockCreatePost.mockResolvedValue({ status: 'success', data: { id: 99 } } as any);
+        mockSaveDraft.mockResolvedValue({ status: 'success', data: { id: 77 } } as any);
+        localStorage.clear();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    // 실제 타이머로 제목·본문을 입력한 뒤 가짜 타이머로 서버 자동저장 1회를 실행한다
+    async function typeAndRunServerAutoSave(title: string) {
+        renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+        const titleInput = await screen.findByPlaceholderText(/제목/);
+        fireEvent.change(titleInput, { target: { value: title } });
+        await typeBlockContent('본문');
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        fireEvent.change(titleInput, { target: { value: title + '!' } });
+        await act(async () => { await vi.advanceTimersByTimeAsync(SERVER_SAVE_DELAY_MS); });
+        return titleInput;
+    }
+
+    function clickPublish() {
+        fireEvent.click(screen.getByRole('button', { name: /글 발행|수정 완료/ }));
+    }
+
+    it('자동저장이 만든 draft 가 있으면 새 글을 만들지 않고 그 draft 를 발행한다', async () => {
+        mockCreateDraft.mockResolvedValue({ status: 'success', data: { id: 77 } } as any);
+        await typeAndRunServerAutoSave('새 글');
+        expect(mockCreateDraft).toHaveBeenCalledTimes(1);
+
+        await act(async () => { clickPublish(); await vi.advanceTimersByTimeAsync(0); });
+
+        expect(mockCreatePost).not.toHaveBeenCalled();
+        expect(mockUpdatePost).toHaveBeenCalledWith(77, '새 글!', '본문', true, 'T', '');
+    });
+
+    it('자동저장 요청이 진행 중일 때 발행하면 그 응답을 기다렸다가 같은 draft 를 발행한다', async () => {
+        let resolveDraft: (v: unknown) => void = () => {};
+        mockCreateDraft.mockReturnValue(new Promise(r => { resolveDraft = r; }) as any);
+        await typeAndRunServerAutoSave('새 글');
+
+        await act(async () => { clickPublish(); await vi.advanceTimersByTimeAsync(0); });
+        expect(mockCreatePost).not.toHaveBeenCalled();
+
+        await act(async () => { resolveDraft({ status: 'success', data: { id: 77 } }); await vi.advanceTimersByTimeAsync(0); });
+        expect(mockCreatePost).not.toHaveBeenCalled();
+        expect(mockUpdatePost).toHaveBeenCalledWith(77, '새 글!', '본문', true, 'T', '');
+    });
+
+    it('발행 직전에 예약된 자동저장이 발행 후에 draft 로 되돌리지 않는다', async () => {
+        mockCreateDraft.mockResolvedValue({ status: 'success', data: { id: 77 } } as any);
+        const titleInput = await typeAndRunServerAutoSave('새 글');
+        fireEvent.change(titleInput, { target: { value: '고친 제목' } }); // 자동저장 타이머 재예약
+
+        await act(async () => { clickPublish(); await vi.advanceTimersByTimeAsync(SERVER_SAVE_DELAY_MS); });
+
+        expect(mockUpdatePost).toHaveBeenCalled();
+        expect(mockSaveDraft).not.toHaveBeenCalled();
+    });
+
+    it('본문이 비어 있으면 서버 자동저장을 하지 않는다 (서버가 빈 본문을 거부)', async () => {
+        renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+        const titleInput = await screen.findByPlaceholderText(/제목/);
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        fireEvent.change(titleInput, { target: { value: '제목만' } });
+        await act(async () => { await vi.advanceTimersByTimeAsync(SERVER_SAVE_DELAY_MS); });
+        expect(mockCreateDraft).not.toHaveBeenCalled();
     });
 });
 

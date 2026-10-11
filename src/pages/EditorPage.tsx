@@ -63,16 +63,28 @@ export default function EditorPage() {
         return () => controller.abort();
     }, [userId]);
 
-    // 서버 draft 자동 저장 (새 글 작성 시에만)
+    // 서버 draft 자동 저장 (새 글 작성 시에만). 발행할 때는 이 draft 를 발행해 고아 draft 를 남기지 않는다.
     const serverDraftIdRef = useRef<number | null>(null);
+    const serverSaveInFlightRef = useRef<Promise<void> | null>(null);
+    const isPublishingRef = useRef(false);
 
     const handleServerSave = useCallback(async (data: PostFormData) => {
-        if (!token) return;
-        if (serverDraftIdRef.current) {
-            await POST_API.saveDraft(serverDraftIdRef.current, data.title, data.content, data.tags || '', token);
-        } else {
-            const result = await POST_API.createDraft(data.title || '제목 없음', data.content, data.tags || '', token);
-            serverDraftIdRef.current = result.data.id;
+        // 서버는 빈 본문을 거부하고, 발행 중에 draft 로 저장하면 발행한 글이 draft 로 되돌아간다
+        if (!token || !data.content.trim() || isPublishingRef.current) return;
+        const title = data.title.trim() || '제목 없음';
+        const save = (async () => {
+            if (serverDraftIdRef.current) {
+                await POST_API.saveDraft(serverDraftIdRef.current, title, data.content, data.tags || '', token);
+            } else {
+                const result = await POST_API.createDraft(title, data.content, data.tags || '', token);
+                serverDraftIdRef.current = result.data.id;
+            }
+        })();
+        serverSaveInFlightRef.current = save;
+        try {
+            await save;
+        } finally {
+            if (serverSaveInFlightRef.current === save) serverSaveInFlightRef.current = null;
         }
     }, [token]);
 
@@ -234,12 +246,17 @@ export default function EditorPage() {
 
         setIsSaving(true);
         setError('');
+        isPublishingRef.current = true;
 
         try {
+            // 진행 중인 자동저장이 draft 를 만들고 있으면 그 id 를 받은 뒤 발행한다
+            await serverSaveInFlightRef.current?.catch(() => {});
+            const targetPostId = isEditMode ? postId : serverDraftIdRef.current;
+
             let response;
-            if (isEditMode) {
+            if (targetPostId) {
                 response = await POST_API.updatePost(
-                    postId,
+                    targetPostId,
                     formData.title,
                     formData.content,
                     formData.is_public,
@@ -260,7 +277,7 @@ export default function EditorPage() {
                 throw new Error('글 저장에 실패했습니다');
             }
 
-            const savedPostId = isEditMode ? Number(postId) : response.data?.id;
+            const savedPostId = targetPostId ? Number(targetPostId) : response.data?.id;
 
             // 시리즈에 추가/변경
             if (selectedSeriesId && savedPostId && token) {
@@ -285,6 +302,7 @@ export default function EditorPage() {
             setTimeout(() => navigate(targetPath), 800);
         } catch (err: unknown) {
             const apiErr = err as { status?: number; message?: string };
+            isPublishingRef.current = false;
             if (apiErr.status === 401) {
                 // 세션 만료 토스트는 api.ts(authenticatedFetch)가 띄우므로 여기서는 이동만 한다
                 navigate('/login');
