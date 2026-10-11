@@ -1,10 +1,10 @@
 import { API_BASE_URL } from '../constants';
-import { authenticatedFetch } from './client';
+import { authenticatedFetch, optionalAuthHeaders } from './client';
 import type { SuccessResponse, Series, SeriesDetail, SeriesNav } from '../../types';
 
 export const SERIES_API = {
-    getSeries: async (seriesId: number | string, { signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<SeriesDetail>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/series/${seriesId}`, { signal });
+    getSeries: async (seriesId: number | string, { signal, token }: { signal?: AbortSignal; token?: string } = {}): Promise<SuccessResponse<SeriesDetail>> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/series/${seriesId}`, { signal, headers: optionalAuthHeaders(token) });
         if (!response.ok) throw new Error(`시리즈를 불러오지 못했습니다 (${response.status})`);
         return response.json();
     },
@@ -31,8 +31,8 @@ export const SERIES_API = {
     reorderPosts: async (seriesId: number | string, postIds: number[], token: string): Promise<SuccessResponse<null>> => {
         return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/series/${seriesId}/reorder`, 'PUT', token, { post_ids: postIds });
     },
-    getSeriesNav: async (postId: number | string, { signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<SeriesNav | null>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/series-nav`, { signal });
+    getSeriesNav: async (postId: number | string, { signal, token }: { signal?: AbortSignal; token?: string } = {}): Promise<SuccessResponse<SeriesNav | null>> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/posts/${postId}/series-nav`, { signal, headers: optionalAuthHeaders(token) });
         if (!response.ok) throw new Error(`시리즈 네비게이션 조회 실패 (${response.status})`);
         return response.json();
     },

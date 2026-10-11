@@ -49,6 +49,11 @@ async function tryRefreshToken(): Promise<string | null> {
     return refreshInFlight;
 }
 
+// 로그인했으면 토큰을 실어 보내는 공개 읽기용 헤더. 서버는 토큰이 있으면 작성자 전용 데이터까지 돌려준다.
+export function optionalAuthHeaders(token?: string): Record<string, string> {
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 export async function authenticatedFetch<T = unknown>(url: string, method: string, token: string, body: Record<string, unknown> | null = null): Promise<T> {
     if (!token) {
         const err: ApiError = new Error('로그인이 필요합니다');

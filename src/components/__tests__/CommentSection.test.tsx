@@ -49,6 +49,13 @@ describe('CommentSection', () => {
         expect(screen.queryByRole('textbox')).toBeNull();
     });
 
+    it('로그인 상태면 댓글 조회에 토큰을 함께 보낸다', async () => {
+        renderWithProviders(<CommentSection postId={1} />, {
+            authValue: { token: 'T', userId: 99 },
+        });
+        await waitFor(() => expect(mockGetComments).toHaveBeenCalledWith(1, expect.objectContaining({ token: 'T' })));
+    });
+
     it('빈 목록이면 "아직 댓글이 없습니다" 메시지를 표시한다', async () => {
         renderWithProviders(<CommentSection postId={1} />);
         expect(await screen.findByText('아직 댓글이 없습니다.')).toBeInTheDocument();

@@ -25,7 +25,7 @@ export default memo(function CommentSection({ postId }: CommentSectionProps) {
     const fetchComments = useCallback(async (signal?: AbortSignal) => {
         try {
             setLoadError(null);
-            const response = await COMMENT_API.getComments(postId, { signal });
+            const response = await COMMENT_API.getComments(postId, { signal, token: token ?? undefined });
             if (response.status === 'success') {
                 setComments(response.data.comments);
                 setTotal(response.data.total);
@@ -36,7 +36,7 @@ export default memo(function CommentSection({ postId }: CommentSectionProps) {
             // toast 는 작성/삭제 같은 사용자 액션에만 쓰고, 페이지 진입 시 silent fetch 실패는 인라인으로.
             setLoadError(err instanceof Error ? err.message : '댓글을 불러오지 못했습니다.');
         }
-    }, [postId]);
+    }, [postId, token]);
 
     useEffect(() => {
         const controller = new AbortController();
