@@ -1,12 +1,12 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useLoaderData, Link } from 'react-router-dom';
 import { parsePostSlugId, postPath } from '../utils/slug';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { invalidateCache } from '../utils/apiCache';
 import { renderMarkdown } from '../utils/markdown';
 import { formatDateLong } from '../utils/format';
-import { Post } from '../types';
+import { Post, PostListItem } from '../types';
 import { useTOC, TocItem } from '../hooks/useTOC';
 import { useSeriesNav } from '../hooks/useSeriesNav';
 import { useLike } from '../hooks/useLike';
@@ -44,6 +44,7 @@ export default function PostDetailPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { userId, token, ready } = useContext(AuthContext);
+    const prerenderedMeta = useLoaderData() as PostListItem | null | undefined;
     const [post, setPost] = useState<Post | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
@@ -169,6 +170,20 @@ export default function PostDetailPage() {
     if (isLoading) {
         return (
             <div className="post-detail-page">
+                {prerenderedMeta && (
+                    <PageMeta
+                        title={prerenderedMeta.title}
+                        description={prerenderedMeta.excerpt}
+                        canonical={postPath(prerenderedMeta)}
+                        ogType="article"
+                        article={{
+                            publishedTime: prerenderedMeta.created_at,
+                            modifiedTime: prerenderedMeta.updated_at,
+                            author: prerenderedMeta.author,
+                            tags: prerenderedMeta.tags ? prerenderedMeta.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+                        }}
+                    />
+                )}
                 <article className="post-article" aria-busy="true">
                     <div className="skeleton skeleton-text-lg skeleton-w-70p skeleton-mb-16" />
                     <div className="post-meta-skeleton">
