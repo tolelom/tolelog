@@ -7,7 +7,7 @@ import PageMeta from '../components/PageMeta';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
-    const { token, username, logout } = useContext(AuthContext);
+    const { token, username, login, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -43,7 +43,16 @@ export default function SettingsPage() {
 
         setIsSubmitting(true);
         try {
-            await AUTH_API.changePassword(currentPassword, newPassword, token);
+            const res = await AUTH_API.changePassword(currentPassword, newPassword, token);
+            if (res.data?.access_token && res.data.refresh_token) {
+                login({
+                    token: res.data.access_token,
+                    refreshToken: res.data.refresh_token,
+                    username: res.data.username,
+                    userId: res.data.user_id,
+                    avatarUrl: res.data.avatar_url,
+                });
+            }
             toast.success('비밀번호가 변경되었습니다.');
             setCurrentPassword('');
             setNewPassword('');

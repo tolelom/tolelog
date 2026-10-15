@@ -42,8 +42,9 @@ export const AUTH_API = {
         return response.json();
     },
 
-    changePassword: async (currentPassword: string, newPassword: string, token: string): Promise<SuccessResponse<null>> => {
-        return authenticatedFetch<SuccessResponse<null>>(`${API_BASE_URL}/api/v1/users/password`, 'PUT', token, {
+    // 서버는 다른 기기의 세션을 끊고 이 기기용 새 토큰 쌍을 돌려준다.
+    changePassword: async (currentPassword: string, newPassword: string, token: string): Promise<SuccessResponse<AuthData>> => {
+        return authenticatedFetch<SuccessResponse<AuthData>>(`${API_BASE_URL}/api/v1/users/password`, 'PUT', token, {
             current_password: currentPassword,
             new_password: newPassword,
         });
