@@ -99,8 +99,15 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // 로컬 .env.local 의 사이트 주소가 canonical·구조화 데이터 테스트를 흔들지 않게 고정한다.
+    env: { VITE_SITE_URL: 'https://blog.tolelom.xyz' },
     coverage: {
       reporter: ['text', 'json-summary', 'lcov'],
+      // import 되지 않은 파일도 0% 로 잡아야 실제 범위가 보인다.
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/__tests__/**', 'src/test/**', 'src/test-utils/**', 'src/main.tsx', 'src/vite-env.d.ts', 'src/types/**'],
+      // 낮은 바닥값. 커버리지가 오르면 함께 올린다.
+      thresholds: { lines: 58, branches: 50 },
     },
   },
 })
