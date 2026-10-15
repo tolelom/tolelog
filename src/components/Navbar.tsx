@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { API_BASE_URL } from '../utils/constants';
+import { resolveAssetUrl } from '../utils/assetUrl';
 import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
@@ -91,7 +91,7 @@ export default function Navbar() {
                                 >
                                     {avatarUrl ? (
                                         <img
-                                            src={`${API_BASE_URL}${avatarUrl}`}
+                                            src={resolveAssetUrl(avatarUrl)}
                                             alt={username || ''}
                                             className="navbar-avatar-img"
                                         />

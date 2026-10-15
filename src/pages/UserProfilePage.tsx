@@ -3,7 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { USER_API, POST_API, SERIES_API } from '../utils/api';
 import { validateImageFile, compressImage } from '../utils/imageUpload';
-import { API_BASE_URL } from '../utils/constants';
+import { resolveAssetUrl } from '../utils/assetUrl';
 import PageMeta from '../components/PageMeta';
 import { notify as toast } from '../utils/notify';
 import { User, PostListItem, Pagination, PostListWithPagination, Series } from '../types';
@@ -199,7 +199,7 @@ export default function UserProfilePage() {
         ? `${profile.username}님의 Tolelog 프로필 — ${totalPosts}개의 글`
         : undefined;
     const profileOgImage = profile?.avatar_url
-        ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${API_BASE_URL}${profile.avatar_url}`)
+        ? resolveAssetUrl(profile.avatar_url)
         : undefined;
 
     return (
@@ -225,7 +225,7 @@ export default function UserProfilePage() {
                     >
                         {profile.avatar_url ? (
                             <img
-                                src={`${API_BASE_URL}${profile.avatar_url}`}
+                                src={resolveAssetUrl(profile.avatar_url)}
                                 alt={profile.username}
                                 className="profile-avatar-img"
                             />

@@ -37,7 +37,7 @@ describe('ImageUploadButton', () => {
     });
 
     it('업로드 성공 시 onImageInsert를 fullUrl과 파일명으로 호출한다', async () => {
-        vi.mocked(imageUpload.uploadImageToServer).mockResolvedValueOnce('/uploads/abc.png');
+        vi.mocked(imageUpload.uploadImageToServer).mockResolvedValueOnce('https://api.example.com/uploads/abc.png');
         const onImageInsert = vi.fn();
 
         const { container } = renderWithProviders(
@@ -49,7 +49,7 @@ describe('ImageUploadButton', () => {
 
         await waitFor(() => expect(onImageInsert).toHaveBeenCalled());
         const [fullUrl, fileName] = onImageInsert.mock.calls[0];
-        expect(fullUrl.endsWith('/uploads/abc.png')).toBe(true);
+        expect(fullUrl).toBe('https://api.example.com/uploads/abc.png');
         expect(fileName).toBe('pic.png');
     });
 });

@@ -1,6 +1,7 @@
 import { IMAGE_CONSTRAINTS } from './constants';
 import { IMAGE_API } from './api';
 import type { ImageValidationResult } from '../types';
+import { resolveAssetUrl } from './assetUrl';
 
 export const validateImageFile = (file: File): ImageValidationResult => {
     if (!(IMAGE_CONSTRAINTS.ALLOWED_TYPES as readonly string[]).includes(file.type)) {
@@ -61,7 +62,7 @@ export const compressImage = async (
 export const uploadImageToServer = async (file: File, token: string): Promise<string> => {
     const response = await IMAGE_API.upload(file, token);
     if (response.status === 'success') {
-        return response.data.url;
+        return resolveAssetUrl(response.data.url);
     }
     throw new Error('이미지 업로드에 실패했습니다');
 };

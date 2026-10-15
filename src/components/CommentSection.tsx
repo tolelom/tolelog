@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { notify as toast } from '../utils/notify';
 import { AuthContext } from '../context/AuthContext';
 import { COMMENT_API } from '../utils/api';
-import { API_BASE_URL } from '../utils/constants';
+import { resolveAssetUrl } from '../utils/assetUrl';
 import { formatDate } from '../utils/format';
 import type { Comment } from '../types';
 import './CommentSection.css';
@@ -124,7 +124,7 @@ export default memo(function CommentSection({ postId }: CommentSectionProps) {
                             <div className="comment-header">
                                 <div className="comment-avatar" aria-hidden="true">
                                     {cm.avatar_url ? (
-                                        <img src={`${API_BASE_URL}${cm.avatar_url}`} alt="" />
+                                        <img src={resolveAssetUrl(cm.avatar_url)} alt="" />
                                     ) : (
                                         cm.author.charAt(0).toUpperCase()
                                     )}

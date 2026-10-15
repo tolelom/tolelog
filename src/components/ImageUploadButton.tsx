@@ -1,7 +1,6 @@
 import React, { useRef, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { validateImageFile, compressImage, uploadImageToServer } from '../utils/imageUpload';
-import { API_BASE_URL } from '../utils/constants';
 import { captureException } from '../utils/errorReporting';
 import './ImageUploadButton.css';
 
@@ -39,11 +38,7 @@ export default function ImageUploadButton({ onImageInsert }: ImageUploadButtonPr
                 setIsLoading(false);
                 return;
             }
-            const imageUrl = await uploadImageToServer(compressedFile, token);
-
-            // API_BASE_URL에서 /api/v1 부분을 제거하여 서버 origin 추출
-            const serverOrigin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
-            const fullUrl = `${serverOrigin}${imageUrl}`;
+            const fullUrl = await uploadImageToServer(compressedFile, token);
 
             if (onImageInsert) {
                 onImageInsert(fullUrl, file.name);

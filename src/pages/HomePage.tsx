@@ -2,7 +2,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, MouseEvent } from 'react';
 import { POST_API, SERIES_API, TAG_API, USER_API } from '../utils/api';
 import { formatDate } from '../utils/format';
-import { BLOG_OWNER_ID, API_BASE_URL } from '../utils/constants';
+import { BLOG_OWNER_ID } from '../utils/constants';
+import { resolveAssetUrl } from '../utils/assetUrl';
 import { cachedFetch } from '../utils/apiCache';
 import { PostListItem, Pagination, PostListWithPagination, Series, User, TagInfo } from '../types';
 import PageMeta from '../components/PageMeta';
@@ -154,7 +155,7 @@ export default function HomePage() {
                 <div className="home-profile">
                     {ownerProfile.avatar_url ? (
                         <img
-                            src={ownerProfile.avatar_url.startsWith('http') ? ownerProfile.avatar_url : `${API_BASE_URL}${ownerProfile.avatar_url}`}
+                            src={resolveAssetUrl(ownerProfile.avatar_url)}
                             alt={ownerProfile.username}
                             className="home-profile-avatar"
                         />

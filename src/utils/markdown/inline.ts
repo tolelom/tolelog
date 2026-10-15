@@ -1,5 +1,6 @@
 import { escapeHtml } from './text';
 import { renderKatex } from './katex';
+import { resolveContentImageUrl } from '../assetUrl';
 
 export function parseInlineWithRefs(text: string, refs: Set<string>): string {
     if (!text) return '';
@@ -23,7 +24,7 @@ export function parseInlineWithRefs(text: string, refs: Set<string>): string {
                         widthStyle = `width: ${widthMatch[1]}; height: auto; max-width: 100%;`;
                         endIdx = urlEnd + 1 + widthMatch[0].length;
                     }
-                    result += `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="${widthStyle}" loading="lazy" />`;
+                    result += `<img src="${escapeHtml(resolveContentImageUrl(url))}" alt="${escapeHtml(alt)}" style="${widthStyle}" loading="lazy" />`;
                     i = endIdx;
                     continue;
                 }

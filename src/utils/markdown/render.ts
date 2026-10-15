@@ -5,6 +5,7 @@ import { escapeHtml, slugifyHeading } from './text';
 import { parseInlineWithRefs } from './inline';
 import { parseBlocks } from './blocks';
 import { renderKatex } from './katex';
+import { resolveContentImageUrl } from '../assetUrl';
 
 function renderBlockWithRefs(block: Block, refs: Set<string>): string {
     const inline = (text: string) => parseInlineWithRefs(text, refs);
@@ -66,7 +67,7 @@ function renderBlockWithRefs(block: Block, refs: Set<string>): string {
             const widthStyle = block.width
                 ? `width: ${block.width}; height: auto; max-width: 100%;`
                 : 'max-width: 100%; height: auto;';
-            return `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="${widthStyle}" loading="lazy" />`;
+            return `<img src="${escapeHtml(resolveContentImageUrl(block.src))}" alt="${escapeHtml(block.alt)}" style="${widthStyle}" loading="lazy" />`;
         }
 
         case 'footnote_def':

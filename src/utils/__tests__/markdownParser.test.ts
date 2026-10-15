@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseBlocks, parseInline, renderBlock, slugifyHeading } from '../markdownParser';
+import { API_BASE_URL } from '../constants';
 
 describe('slugifyHeading', () => {
   it('converts spaces to hyphens', () => {
@@ -434,4 +435,21 @@ describe('parseBlocks - horizontal rule', () => {
   it('does not treat two characters as a horizontal rule', () => {
     expect(parseBlocks('--')[0].type).toBe('paragraph');
   });
+});
+
+describe('업로드 이미지 주소', () => {
+    // 예전 에디터는 드래그·붙여넣기 이미지를 /uploads/... 경로로만 넣어 블로그 도메인에서 깨졌다.
+    it('블록 이미지의 /uploads 경로에 API 주소를 붙인다', () => {
+        const html = parseBlocks('![사진](/uploads/images/a.png)').map(renderBlock).join('');
+        expect(html).toContain(`src="${API_BASE_URL}/uploads/images/a.png"`);
+    });
+
+    it('문장 안 이미지도 같다', () => {
+        expect(parseInline('앞 ![사진](/uploads/images/a.png) 뒤')).toContain(`src="${API_BASE_URL}/uploads/images/a.png"`);
+    });
+
+    it('다른 주소는 그대로 둔다', () => {
+        expect(parseInline('![x](https://cdn.example.com/a.png)')).toContain('src="https://cdn.example.com/a.png"');
+        expect(parseInline('![x](/vite.svg)')).toContain('src="/vite.svg"');
+    });
 });

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../constants';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../api', () => ({
@@ -73,14 +74,15 @@ describe('createMarkdownImage', () => {
 });
 
 describe('uploadImageToServer', () => {
-    it('returns the URL on success', async () => {
+    it('returns the full URL on success', async () => {
         (IMAGE_API.upload as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             status: 'success',
             data: { url: '/uploads/img-1.png' },
         });
         const file = makeFile('x.png', 100, 'image/png');
         const url = await uploadImageToServer(file, 'token-abc');
-        expect(url).toBe('/uploads/img-1.png');
+        // 에디터가 어느 경로로 넣든(버튼·드래그·붙여넣기) 블로그 도메인에서 깨지지 않게 전체 주소를 돌려준다
+        expect(url).toBe(`${API_BASE_URL}/uploads/img-1.png`);
         expect(IMAGE_API.upload).toHaveBeenCalledWith(file, 'token-abc');
     });
 
