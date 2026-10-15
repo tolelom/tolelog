@@ -236,6 +236,7 @@
 @media (max-width: 768px) {
     .editor-page { padding: 12px; }
     .title-input { font-size: 20px; }
+    .editor-toolbar { flex-wrap: wrap; overflow-x: visible; }
     .toolbar-btn { width: 40px; height: 40px; }
     .toolbar-btn-preview { width: auto; }
     .button-section { flex-direction: column; align-items: stretch; bottom: 8px; }
