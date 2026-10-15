@@ -45,6 +45,7 @@ export const TAG_API = {
     getTags: async ({ signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<TagInfo[]>> => {
         const response = await fetch(`${API_BASE_URL}/api/v1/tags`, { signal });
         if (!response.ok) throw new Error(`태그 목록을 불러오지 못했습니다 (${response.status})`);
-        return response.json();
+        const body: SuccessResponse<{ tags: { name: string; post_count: number }[] }> = await response.json();
+        return { ...body, data: (body.data?.tags ?? []).map((t) => ({ name: t.name, count: t.post_count })) };
     },
 };

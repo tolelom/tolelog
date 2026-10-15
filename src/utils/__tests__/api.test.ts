@@ -222,3 +222,22 @@ describe('AUTH_API.login', () => {
         await expect(AUTH_API.login('u', 'p')).rejects.toThrow('로그인에 실패했습니다');
     });
 });
+
+describe('TAG_API.getTags', () => {
+    const originalFetch = globalThis.fetch;
+    afterEach(() => {
+        globalThis.fetch = originalFetch;
+    });
+
+    it('백엔드 응답({tags: [{name, post_count}]})을 태그 배열로 바꾼다', async () => {
+        globalThis.fetch = vi.fn(() => Promise.resolve(new Response(JSON.stringify({
+            status: 'success',
+            data: { tags: [{ name: 'C', post_count: 11 }, { name: 'go', post_count: 1 }], total: 2 },
+        }), { status: 200 }))) as typeof fetch;
+
+        const { TAG_API } = await import('../api');
+        const res = await TAG_API.getTags();
+
+        expect(res.data).toEqual([{ name: 'C', count: 11 }, { name: 'go', count: 1 }]);
+    });
+});
