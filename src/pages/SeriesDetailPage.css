@@ -1,5 +1,5 @@
 .series-detail-page {
-    max-width: 720px; margin: 0 auto; padding: 40px 20px;
+    max-width: var(--content-width); margin: 0 auto; padding: 40px 20px;
 }
 
 .series-loading, .series-error {

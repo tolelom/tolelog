@@ -1,7 +1,7 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, MouseEvent } from 'react';
 import { POST_API, SERIES_API, TAG_API, USER_API } from '../utils/api';
-import { stripMarkdown, formatDate } from '../utils/format';
+import { formatDate } from '../utils/format';
 import { BLOG_OWNER_ID, API_BASE_URL } from '../utils/constants';
 import { cachedFetch } from '../utils/apiCache';
 import { PostListItem, Pagination, PostListWithPagination, Series, User, TagInfo } from '../types';
@@ -318,10 +318,8 @@ export default function HomePage() {
                                 })}
                             </div>
                         )}
-                        {'content' in post && (post as PostListItem & { content?: string }).content && (
-                            <p className="home-post-preview">
-                                {stripMarkdown((post as PostListItem & { content?: string }).content!).slice(0, 150)}
-                            </p>
+                        {post.excerpt && (
+                            <p className="home-post-preview">{post.excerpt}</p>
                         )}
                     </Link>
                 ))}
