@@ -119,6 +119,42 @@ describe('HomePage', () => {
         expect(screen.getByText('가비지', { selector: 'strong' })).toBeInTheDocument();
     });
 
+    it('검색어 끝의 공백을 지우지 않아 여러 단어를 이어 칠 수 있다', async () => {
+        renderWithProviders(<HomePage />);
+        await screen.findByText('아직 작성된 글이 없습니다.');
+        const input = screen.getByPlaceholderText('글 검색...') as HTMLInputElement;
+
+        fireEvent.change(input, { target: { value: 'mark ' } });
+        await waitFor(() => expect(mockSearchPosts).toHaveBeenCalledWith('mark', 1, 10, expect.anything()), { timeout: 2000 });
+
+        expect(input.value).toBe('mark ');
+    });
+
+    it('한 글자 검색어는 서버에 보내지 않고 두 글자 이상 입력하라고 알린다', async () => {
+        renderWithProviders(<HomePage />);
+        await screen.findByText('아직 작성된 글이 없습니다.');
+
+        fireEvent.change(screen.getByPlaceholderText('글 검색...'), { target: { value: 'C' } });
+
+        expect(await screen.findByText('두 글자 이상 입력해 주세요.')).toBeInTheDocument();
+        await new Promise(r => setTimeout(r, 500));
+        expect(mockSearchPosts).not.toHaveBeenCalled();
+        expect(screen.queryByText(/오류가 발생했습니다/)).not.toBeInTheDocument();
+    });
+
+    it('검색어를 한 글자로 지워도 입력한 글자를 남긴다', async () => {
+        renderWithProviders(<HomePage />);
+        await screen.findByText('아직 작성된 글이 없습니다.');
+        const input = screen.getByPlaceholderText('글 검색...') as HTMLInputElement;
+        fireEvent.change(input, { target: { value: 'ma' } });
+        await waitFor(() => expect(mockSearchPosts).toHaveBeenCalledWith('ma', 1, 10, expect.anything()), { timeout: 2000 });
+
+        fireEvent.change(input, { target: { value: 'm' } });
+        await new Promise(r => setTimeout(r, 600));
+
+        expect(input.value).toBe('m');
+    });
+
     it('다음 페이지로 넘어가고 마지막 페이지에서는 다음 버튼을 막는다', async () => {
         mockGetPublicPosts.mockImplementation(async (page = 1) =>
             listResponse([item({ id: page, title: `${page}쪽 글` })], page, 2));

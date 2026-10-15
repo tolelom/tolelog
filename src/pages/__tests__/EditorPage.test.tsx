@@ -29,6 +29,7 @@ vi.mock('../../utils/api', () => ({
     SERIES_API: {
         getUserSeries: vi.fn(),
         addPost: vi.fn(),
+        removePost: vi.fn(),
     },
     TAG_API: {
         getTags: vi.fn(),
@@ -51,6 +52,8 @@ const mockCreateDraft = vi.mocked(POST_API.createDraft);
 const mockSaveDraft = vi.mocked(POST_API.saveDraft);
 const SERVER_SAVE_DELAY_MS = 5000;
 const mockGetUserSeries = vi.mocked(SERIES_API.getUserSeries);
+const mockAddPost = vi.mocked(SERIES_API.addPost);
+const mockRemovePost = vi.mocked(SERIES_API.removePost);
 const mockGetTags = vi.mocked(TAG_API.getTags);
 
 /**
@@ -137,6 +140,43 @@ describe('EditorPage', () => {
         expect(screen.getByText('글이 저장되었습니다')).toBeInTheDocument();
         // 슬러그 URL: postPath({ id: 101, title: '새 글' }) → /post/새-글-101
         expect(mockNavigate).toHaveBeenCalledWith('/post/새-글-101');
+    });
+
+    describe('시리즈 반영', () => {
+        const series = [{ id: 3, title: 'C 언어 기초', description: '', user_id: 42, author: 'me', post_count: 1, created_at: '', updated_at: '' }];
+
+        async function openPostInSeries() {
+            mockUseParams = () => ({ postId: '5' });
+            mockGetUserSeries.mockResolvedValue({ status: 'success', data: series });
+            mockGetPost.mockResolvedValueOnce({
+                status: 'success',
+                data: makePost({ id: 5, title: '글', content: '본문', user_id: 42, series: { series_id: 3, series_title: 'C 언어 기초', series_order: 1 } }),
+            });
+            mockUpdatePost.mockResolvedValueOnce({ status: 'success', data: { id: 5 } } as any);
+            renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+            await screen.findByDisplayValue('글');
+            await waitFor(() => expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('3'));
+        }
+
+        it('시리즈 없음으로 바꿔 저장하면 시리즈에서 뺀다', async () => {
+            await openPostInSeries();
+            fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } });
+
+            fireEvent.click(screen.getByRole('button', { name: /수정 완료/ }));
+
+            await waitFor(() => expect(mockRemovePost).toHaveBeenCalledWith('3', 5, 'T'));
+            expect(mockAddPost).not.toHaveBeenCalled();
+        });
+
+        it('시리즈 반영에 실패하면 글은 저장됐다고 알리면서 실패를 보여 준다', async () => {
+            await openPostInSeries();
+            mockAddPost.mockRejectedValueOnce(new Error('시리즈를 찾을 수 없습니다'));
+
+            fireEvent.click(screen.getByRole('button', { name: /수정 완료/ }));
+
+            expect(await screen.findByText(/시리즈를 찾을 수 없습니다/)).toBeInTheDocument();
+            expect(mockUpdatePost).toHaveBeenCalled();
+        });
     });
 
     it('저장 실패 (non-401) 시 inline error + toast.error', async () => {

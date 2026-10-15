@@ -42,6 +42,8 @@ export default function EditorPage() {
     const [draftInfo, setDraftInfo] = useState<DraftData | null>(null);
     const [userSeries, setUserSeries] = useState<Series[]>([]);
     const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
+    // 불러온 글이 속해 있던 시리즈. 저장할 때 "시리즈 없음"으로 바뀌었으면 여기서 뺀다.
+    const [loadedSeriesId, setLoadedSeriesId] = useState<string>('');
     const [showPreview, setShowPreview] = useState<boolean>(false);
     const isEditMode = !!postId;
 
@@ -133,6 +135,7 @@ export default function EditorPage() {
                         setBaseline(loaded);
                         if (post.series) {
                             setSelectedSeriesId(String(post.series.series_id));
+                            setLoadedSeriesId(String(post.series.series_id));
                         }
                         // 수정 모드 임시저장 확인
                         if (hasDraft()) {
@@ -280,11 +283,18 @@ export default function EditorPage() {
 
             const savedPostId = targetPostId ? Number(targetPostId) : response.data?.id;
 
-            // 시리즈에 추가/변경
-            if (selectedSeriesId && savedPostId && token) {
+            // 시리즈 추가·변경·해제. 실패해도 글은 이미 저장됐으므로 알리고 넘어간다.
+            if (savedPostId && token) {
                 try {
-                    await SERIES_API.addPost(selectedSeriesId, savedPostId, 0, token);
-                } catch { /* 시리즈 추가 실패는 무시 */ }
+                    if (selectedSeriesId) {
+                        await SERIES_API.addPost(selectedSeriesId, savedPostId, 0, token);
+                    } else if (loadedSeriesId) {
+                        await SERIES_API.removePost(loadedSeriesId, savedPostId, token);
+                    }
+                } catch (seriesErr: unknown) {
+                    const reason = seriesErr instanceof Error ? seriesErr.message : '';
+                    toast.error(`글은 저장했지만 시리즈에 반영하지 못했습니다${reason ? `: ${reason}` : ''}`);
+                }
             }
 
             // 홈 캐시 무효화

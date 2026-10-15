@@ -1,5 +1,5 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useState, useEffect, MouseEvent } from 'react';
+import { useState, useEffect, useRef, MouseEvent } from 'react';
 import { POST_API, SERIES_API, TAG_API, USER_API } from '../utils/api';
 import { formatDate } from '../utils/format';
 import { BLOG_OWNER_ID } from '../utils/constants';
@@ -12,6 +12,8 @@ import { postPath } from '../utils/slug';
 import './HomePage.css';
 
 const PAGE_SIZE = 10;
+// 백엔드 검색은 두 글자 이상만 받는다.
+const MIN_SEARCH_LENGTH = 2;
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -77,15 +79,21 @@ export default function HomePage() {
         return () => controller.abort();
     }, []);
 
+    const trimmedSearch = searchInput.trim();
+    const ownQueryRef = useRef(searchQuery);
+    const searchTooShort = trimmedSearch.length > 0 && trimmedSearch.length < MIN_SEARCH_LENGTH;
+
     // Debounce search input into URL params
     useEffect(() => {
         const timer = setTimeout(() => {
             const currentQ = searchParams.get('q') || '';
-            if (searchInput.trim() !== currentQ) {
+            const nextQ = trimmedSearch.length >= MIN_SEARCH_LENGTH ? trimmedSearch : '';
+            if (nextQ !== currentQ) {
+                ownQueryRef.current = nextQ;
                 setSearchParams(prev => {
                     const next = new URLSearchParams(prev);
-                    if (searchInput.trim()) {
-                        next.set('q', searchInput.trim());
+                    if (nextQ) {
+                        next.set('q', nextQ);
                     } else {
                         next.delete('q');
                     }
@@ -97,10 +105,13 @@ export default function HomePage() {
         return () => clearTimeout(timer);
     }, [searchInput]);
 
-    // Sync searchInput when URL q param changes externally
+    // 주소의 q 가 밖에서 바뀌면(뒤로 가기, 검색 지우기 등) 입력창을 맞춘다. 입력창이 바꾼 q 면 사용자가 친 그대로 둔다.
+    const urlQuery = searchParams.get('q') || '';
     useEffect(() => {
-        setSearchInput(searchParams.get('q') || '');
-    }, [searchParams.get('q')]);
+        if (urlQuery === ownQueryRef.current) return;
+        ownQueryRef.current = urlQuery;
+        setSearchInput(urlQuery);
+    }, [urlQuery]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -205,6 +216,9 @@ export default function HomePage() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                 />
+                {searchTooShort && (
+                    <p className="home-search-hint">두 글자 이상 입력해 주세요.</p>
+                )}
                 {searchInput && (
                     <button className="home-search-clear" onClick={() => { setSearchInput(''); setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('q'); next.delete('page'); return next; }); }} aria-label="검색어 지우기">×</button>
                 )}

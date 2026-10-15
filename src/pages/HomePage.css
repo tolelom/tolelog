@@ -466,3 +466,9 @@
         padding: 14px 12px;
     }
 }
+
+.home-search-hint {
+    margin: 6px 4px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
