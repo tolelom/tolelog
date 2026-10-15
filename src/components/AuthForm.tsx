@@ -5,6 +5,7 @@ interface AuthFormField {
     name: string;
     label: string;
     type?: string;
+    autoComplete?: string;
 }
 
 interface AuthFormErrors {
@@ -67,8 +68,10 @@ export default function AuthForm({ title, fields, submitLabel, loadingLabel, onS
             <form onSubmit={handleSubmit}>
                 {fields.map((field, index) => (
                     <div className="input-group" key={field.name}>
-                        <label>{field.label}</label>
+                        <label htmlFor={`auth-${field.name}`}>{field.label}</label>
                         <input
+                            id={`auth-${field.name}`}
+                            autoComplete={field.autoComplete}
                             ref={index === 0 ? firstInputRef : undefined}
                             type={field.type || 'text'}
                             name={field.name}

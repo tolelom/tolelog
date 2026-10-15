@@ -5,8 +5,8 @@ import { AUTH_API } from "../utils/api";
 import AuthForm from './AuthForm';
 
 const LOGIN_FIELDS = [
-    { name: 'username', label: '아이디', type: 'text' },
-    { name: 'password', label: '비밀번호', type: 'password' },
+    { name: 'username', label: '아이디', type: 'text', autoComplete: 'username' },
+    { name: 'password', label: '비밀번호', type: 'password', autoComplete: 'current-password' },
 ];
 
 function validateLogin(formData: Record<string, string>): Record<string, string> {

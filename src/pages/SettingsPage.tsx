@@ -131,7 +131,7 @@ export default function SettingsPage() {
 
                     <button
                         type="submit"
-                        className="btn btn-secondary settings-submit"
+                        className="btn btn-primary settings-submit"
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? '변경 중...' : '비밀번호 변경'}
