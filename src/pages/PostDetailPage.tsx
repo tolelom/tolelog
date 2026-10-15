@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useLocation, useLoaderData, Link, type LoaderFunctionArgs } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useLoaderData, Link } from 'react-router-dom';
 import { parsePostSlugId, postPath } from '../utils/slug';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
@@ -7,7 +7,6 @@ import { invalidateCache } from '../utils/apiCache';
 import { renderMarkdown } from '../utils/markdown';
 import { formatDateLong } from '../utils/format';
 import { Post, PostListItem } from '../types';
-import { findPublicPostMeta } from '../utils/postMeta';
 import { useTOC, TocItem } from '../hooks/useTOC';
 import { useSeriesNav } from '../hooks/useSeriesNav';
 import { useLike } from '../hooks/useLike';
@@ -35,12 +34,6 @@ function getPlainText(content: string, maxLength: number = 160): string {
 function getFirstHttpImage(content: string): string | null {
     const match = content.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
     return match ? match[1] : null;
-}
-
-// prerender 때만 실행된다. 글 상세의 제목·설명·og 태그를 정적 HTML 에 넣는다(본문은 브라우저에서 그린다).
-export async function loader({ params }: LoaderFunctionArgs): Promise<PostListItem | null> {
-    const parsed = parsePostSlugId(params.postId);
-    return parsed ? findPublicPostMeta(parsed.id) : null;
 }
 
 export default function PostDetailPage() {

@@ -20,8 +20,8 @@ export const routes: RouteRecord[] = [
         children: [
             { index: true, lazy: async () => ({ Component: (await import('./pages/HomePage')).default }), entry: 'src/pages/HomePage.tsx' },
             { path: 'post/:postId', lazy: async () => {
-                const m = await import('./pages/PostDetailPage');
-                return { Component: m.default, loader: m.loader };
+                const [page, data] = await Promise.all([import('./pages/PostDetailPage'), import('./pages/postDetailLoader')]);
+                return { Component: page.default, loader: data.loader };
             }, entry: 'src/pages/PostDetailPage.tsx' },
             { path: 'user/:userId', lazy: async () => ({ Component: (await import('./pages/UserProfilePage')).default }), entry: 'src/pages/UserProfilePage.tsx' },
             { path: 'series/:seriesId', lazy: async () => ({ Component: (await import('./pages/SeriesDetailPage')).default }), entry: 'src/pages/SeriesDetailPage.tsx' },

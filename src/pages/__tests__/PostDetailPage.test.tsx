@@ -18,6 +18,7 @@ vi.mock('react-router-dom', async () => {
     return {
         ...actual,
         useParams: () => ({ postId: '1' }),
+        useLoaderData: () => null,
     };
 });
 
