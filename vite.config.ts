@@ -2,11 +2,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// 빌드 시 prerender 에서 제외할 비공개/인증 라우트 (보안 + 크롤 예산 절약)
+// 빌드 시 prerender 에서 제외할 인증 라우트. 로그인·회원가입은 공개 폼이라 prerender 한다(noindex 는 PageMeta 가 단다).
+// prerender 하지 않은 경로는 nginx 가 홈 HTML 로 폴백해 하이드레이션이 어긋난다.
 // vite-react-ssg 가 paths 를 leading-slash 없이 전달하므로 ('login' vs '/login') 정규화 후 비교.
 const PRIVATE_ROUTES = new Set<string>([
-  'login',
-  'register',
   'settings',
   'drafts',
   'editor',

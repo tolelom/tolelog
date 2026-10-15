@@ -14,6 +14,7 @@ export interface AuthContextType {
     username: string | null;
     userId: number | null;
     avatarUrl: string | null;
+    ready: boolean;
     login: (params: LoginParams) => void;
     logout: () => void;
     setAvatarUrl: (url: string | null) => void;
@@ -25,6 +26,7 @@ export const AuthContext = createContext<AuthContextType>({
     username: null,
     userId: null,
     avatarUrl: null,
+    ready: true,
     login: () => {},
     logout: () => {},
     setAvatarUrl: () => {},

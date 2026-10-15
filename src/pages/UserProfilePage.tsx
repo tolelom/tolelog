@@ -22,7 +22,7 @@ function getMemberDays(createdAt: string | undefined): number {
 
 export default function UserProfilePage() {
     const { userId } = useParams<{ userId: string }>();
-    const { userId: currentUserId, token, setAvatarUrl: setGlobalAvatarUrl } = useContext(AuthContext);
+    const { userId: currentUserId, token, ready, setAvatarUrl: setGlobalAvatarUrl } = useContext(AuthContext);
     const [searchParams, setSearchParams] = useSearchParams();
     const page: number = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const tag: string = searchParams.get('tag') || '';
@@ -114,6 +114,7 @@ export default function UserProfilePage() {
     }, [setSearchParams]);
 
     useEffect(() => {
+        if (!ready) return;
         const controller = new AbortController();
         setLoading(true);
         setError(null);
@@ -154,7 +155,7 @@ export default function UserProfilePage() {
             });
 
         return () => controller.abort();
-    }, [userId, page, tag, token]);
+    }, [userId, page, tag, token, ready]);
 
     if (loading) {
         return (

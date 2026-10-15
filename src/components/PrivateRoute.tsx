@@ -7,7 +7,8 @@ interface PrivateRouteProps {
 }
 
 export default function PrivateRoute({ children }: PrivateRouteProps) {
-    const { token } = useContext(AuthContext);
+    const { token, ready } = useContext(AuthContext);
     const location = useLocation();
+    if (!ready) return null;
     return token ? <>{children}</> : <Navigate to="/login" state={{ from: location }} replace />;
 }
