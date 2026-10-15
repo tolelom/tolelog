@@ -4,8 +4,8 @@ import { STORAGE_KEYS } from '../utils/constants';
 
 const isBrowser = typeof window !== 'undefined';
 
-// SSG 단계에서는 'light'로 통일 렌더링. 클라이언트 마운트 후 localStorage / prefers-color-scheme 으로 보정.
-// FOUC 가 신경 쓰일 정도면 index.html 에 인라인 스크립트로 data-theme 을 미리 세팅하는 패턴을 추가.
+// SSG 와 하이드레이션 첫 렌더는 'light'로 같게 두고, 마운트 뒤 localStorage / prefers-color-scheme 으로 보정한다.
+// 첫 페인트의 색은 index.html 인라인 스크립트가 data-theme 을 미리 세팅해 맞춘다.
 function resolveInitialTheme(): Theme {
     if (!isBrowser) return 'light';
     try {
@@ -20,20 +20,19 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-    const [theme, setTheme] = useState<Theme>(resolveInitialTheme);
+    const [theme, setTheme] = useState<Theme>('light');
+    const [resolved, setResolved] = useState(false);
 
-    // 마운트 직후 SSR 기본값('light')과 실제 사용자 선호도가 다르면 보정.
     useEffect(() => {
-        const actual = resolveInitialTheme();
-        if (actual !== theme) setTheme(actual);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        setTheme(resolveInitialTheme());
+        setResolved(true);
     }, []);
 
     useEffect(() => {
-        if (!isBrowser) return;
+        if (!isBrowser || !resolved) return;
         document.documentElement.setAttribute('data-theme', theme);
         try { localStorage.setItem(STORAGE_KEYS.THEME, theme); } catch { /* ignore */ }
-    }, [theme]);
+    }, [theme, resolved]);
 
     const toggleTheme = useCallback(() => {
         setTheme(prev => prev === 'light' ? 'dark' : 'light');

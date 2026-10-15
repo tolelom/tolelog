@@ -38,6 +38,7 @@ export function makeAuthValue(overrides: Partial<AuthContextType> = {}): AuthCon
         username: null,
         userId: null,
         avatarUrl: null,
+        ready: true,
         login: () => {},
         logout: () => {},
         setAvatarUrl: () => {},

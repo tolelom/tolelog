@@ -11,7 +11,7 @@ import './SeriesDetailPage.css';
 
 export default function SeriesDetailPage() {
     const { seriesId } = useParams<{ seriesId: string }>();
-    const { userId, token } = useContext(AuthContext);
+    const { userId, token, ready } = useContext(AuthContext);
     const [series, setSeries] = useState<SeriesDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -38,10 +38,11 @@ export default function SeriesDetailPage() {
     }, [seriesId, token]);
 
     useEffect(() => {
+        if (!ready) return;
         const controller = new AbortController();
         loadSeries(controller.signal);
         return () => controller.abort();
-    }, [loadSeries]);
+    }, [loadSeries, ready]);
 
     const handleRemovePost = async (postId: number) => {
         if (!seriesId || !token) return;

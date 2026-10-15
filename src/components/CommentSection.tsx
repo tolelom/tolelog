@@ -13,7 +13,7 @@ interface CommentSectionProps {
 }
 
 export default memo(function CommentSection({ postId }: CommentSectionProps) {
-    const { token, userId } = useContext(AuthContext);
+    const { token, userId, ready } = useContext(AuthContext);
     const [comments, setComments] = useState<Comment[]>([]);
     const [total, setTotal] = useState(0);
     const [content, setContent] = useState('');
@@ -39,10 +39,11 @@ export default memo(function CommentSection({ postId }: CommentSectionProps) {
     }, [postId, token]);
 
     useEffect(() => {
+        if (!ready) return;
         const controller = new AbortController();
         fetchComments(controller.signal);
         return () => controller.abort();
-    }, [fetchComments, retryKey]);
+    }, [fetchComments, retryKey, ready]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

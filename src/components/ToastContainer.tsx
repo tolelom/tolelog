@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Toast } from './Toast';
 import type { ToastItem } from '../context/ToastContext';
@@ -13,8 +14,11 @@ export function ToastContainer({ toasts, onDismiss, onHoverStart, onHoverEnd }: 
     const polite = toasts.filter(t => t.type !== 'error');
     const assertive = toasts.filter(t => t.type === 'error');
 
-    // SSG prerender 시에는 document 가 없으므로 렌더하지 않는다 (토스트는 클라이언트 전용)
-    if (typeof document === 'undefined') return null;
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    // 토스트는 클라이언트 전용이다. SSG 와 하이드레이션 첫 렌더가 같도록 마운트 뒤에만 그린다.
+    if (!mounted) return null;
 
     return createPortal(
         <div className="toast-container">

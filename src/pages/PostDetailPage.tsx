@@ -43,7 +43,7 @@ export default function PostDetailPage() {
     const numericId = parsed ? String(parsed.id) : undefined;
     const navigate = useNavigate();
     const location = useLocation();
-    const { userId, token } = useContext(AuthContext);
+    const { userId, token, ready } = useContext(AuthContext);
     const [post, setPost] = useState<Post | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
@@ -75,6 +75,7 @@ export default function PostDetailPage() {
 
     // 글 로드
     useEffect(() => {
+        if (!ready) return;
         if (!numericId) {
             setError('잘못된 게시글 주소입니다.');
             setIsLoading(false);
@@ -99,7 +100,7 @@ export default function PostDetailPage() {
         };
         loadPost();
         return () => controller.abort();
-    }, [numericId, token]);
+    }, [numericId, token, ready]);
 
     // canonical URL 로 자동 정규화: /post/123 또는 슬러그가 어긋난 URL 이면
     // canonical 슬러그 URL 로 history.replaceState 해서 주소창만 정리한다 (실제 네비게이션 없음).

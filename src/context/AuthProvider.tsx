@@ -29,52 +29,50 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    // 서버 렌더 시에는 모두 null. 클라이언트 첫 effect 에서 localStorage 와 동기화 (아래 hydrate effect).
-    const [token, setToken] = useState<string | null>(() => readLocalStorage(STORAGE_KEYS.TOKEN));
-    const [refreshToken, setRefreshToken] = useState<string | null>(() => readLocalStorage(STORAGE_KEYS.REFRESH_TOKEN));
-    const [username, setUsername] = useState<string | null>(() => safeParseUser('username') as string | null);
-    const [userId, setUserId] = useState<number | null>(() => safeParseUser('user_id') as number | null);
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(() => safeParseUser('avatar_url') as string | null);
+    // SSG 와 하이드레이션 첫 렌더는 비로그인으로 같게 두고, 마운트 뒤 localStorage 에서 읽는다.
+    // 읽기 전(ready=false)에는 저장 effect 가 localStorage 를 지우지 않고, 로그인이 필요한 화면은 판단을 미룬다.
+    const [token, setToken] = useState<string | null>(null);
+    const [refreshToken, setRefreshToken] = useState<string | null>(null);
+    const [username, setUsername] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [ready, setReady] = useState(false);
 
-    // 서버에서 렌더된 HTML은 모두 비로그인 상태. 클라이언트 마운트 직후 localStorage 값으로 보정.
     useEffect(() => {
-        const t = readLocalStorage(STORAGE_KEYS.TOKEN);
-        const rt = readLocalStorage(STORAGE_KEYS.REFRESH_TOKEN);
-        if (t !== token) setToken(t);
-        if (rt !== refreshToken) setRefreshToken(rt);
-        const u = safeParseUser('username') as string | null;
-        const uid = safeParseUser('user_id') as number | null;
-        const a = safeParseUser('avatar_url') as string | null;
-        if (u !== username) setUsername(u);
-        if (uid !== userId) setUserId(uid);
-        if (a !== avatarUrl) setAvatarUrl(a);
-        // 마운트 시 1회만 실행
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        setToken(readLocalStorage(STORAGE_KEYS.TOKEN));
+        setRefreshToken(readLocalStorage(STORAGE_KEYS.REFRESH_TOKEN));
+        setUsername(safeParseUser('username') as string | null);
+        setUserId(safeParseUser('user_id') as number | null);
+        setAvatarUrl(safeParseUser('avatar_url') as string | null);
+        setReady(true);
     }, []);
 
     useEffect(() => {
+        if (!ready) return;
         if (token) {
             localStorage.setItem(STORAGE_KEYS.TOKEN, token);
         } else {
             localStorage.removeItem(STORAGE_KEYS.TOKEN);
         }
-    }, [token]);
+    }, [token, ready]);
 
     useEffect(() => {
+        if (!ready) return;
         if (refreshToken) {
             localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
         } else {
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         }
-    }, [refreshToken]);
+    }, [refreshToken, ready]);
 
     useEffect(() => {
+        if (!ready) return;
         if (username && userId) {
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify({ username, user_id: userId, avatar_url: avatarUrl || '' }));
         } else {
             localStorage.removeItem(STORAGE_KEYS.USER);
         }
-    }, [username, userId, avatarUrl]);
+    }, [username, userId, avatarUrl, ready]);
 
     // 다른 탭에서 로그아웃/로그인 시 동기화
     useEffect(() => {
@@ -140,7 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     return (
-        <AuthContext.Provider value={{ token, refreshToken, username, userId, avatarUrl, login, logout, setAvatarUrl }}>
+        <AuthContext.Provider value={{ token, refreshToken, username, userId, avatarUrl, ready, login, logout, setAvatarUrl }}>
             {children}
         </AuthContext.Provider>
     );
