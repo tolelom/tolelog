@@ -8,10 +8,11 @@ on:
     branches:
       - main
   workflow_dispatch:
-  # 신규 게시글이 발행되면 SSG prerender 가 그것을 포함하도록 매시간 재빌드한다.
+  # 신규 게시글이 SSG prerender 에 들어가도록 하루 한 번 재빌드한다. 운영 반영은 Renovate(03:00 KST)가
+  # 새 이미지 digest 를 고를 때라, 그 직전(02:30 KST = 17:30 UTC)에 빌드한다. 매시간 빌드해도 하루 한 번만 반영된다.
   # 즉시 갱신이 필요하면 백엔드에서 repository_dispatch 호출로 트리거하거나 workflow_dispatch 를 수동 실행.
   schedule:
-    - cron: '0 * * * *'
+    - cron: '30 17 * * *'
   # 외부 시스템(백엔드 등)에서 즉시 트리거 가능. PAT 로 POST /repos/.../dispatches 호출, event_type='rebuild'.
   repository_dispatch:
     types: [rebuild]
