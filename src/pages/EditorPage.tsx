@@ -56,11 +56,11 @@ export default function EditorPage() {
     useEffect(() => {
         if (!userId) return;
         const controller = new AbortController();
-        SERIES_API.getUserSeries(userId, { signal: controller.signal })
+        SERIES_API.getUserSeries(userId, { signal: controller.signal, token })
             .then(res => { if (res.status === 'success') setUserSeries(res.data || []); })
             .catch((err) => console.warn('editor: failed to load user series:', err));
         return () => controller.abort();
-    }, [userId]);
+    }, [userId, token]);
 
     // 서버 draft 자동 저장 (새 글 작성 시에만). 발행할 때는 이 draft 를 발행해 고아 draft 를 남기지 않는다.
     const serverDraftIdRef = useRef<number | null>(null);

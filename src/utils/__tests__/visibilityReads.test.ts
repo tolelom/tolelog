@@ -7,6 +7,7 @@ const reads = {
     'COMMENT_API.getComments': (token?: string) => COMMENT_API.getComments(1, { token }),
     'SERIES_API.getSeries': (token?: string) => SERIES_API.getSeries(1, { token }),
     'SERIES_API.getSeriesNav': (token?: string) => SERIES_API.getSeriesNav(1, { token }),
+    'SERIES_API.getUserSeries': (token?: string) => SERIES_API.getUserSeries(1, { token }),
 };
 
 describe.each(Object.entries(reads))('%s', (_name, read) => {

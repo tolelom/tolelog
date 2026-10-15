@@ -31,10 +31,10 @@ export default function ProfileSeriesSection({
     const refreshSeriesList = useCallback(async () => {
         if (!userId) return;
         try {
-            const res = await SERIES_API.getUserSeries(userId);
+            const res = await SERIES_API.getUserSeries(userId, { token });
             if (res.status === 'success') onSeriesChange(res.data || []);
         } catch { /* ignore */ }
-    }, [userId, onSeriesChange]);
+    }, [userId, token, onSeriesChange]);
 
     const handleCreateSeries = async (title: string, description: string) => {
         if (!token) return;

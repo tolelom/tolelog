@@ -122,7 +122,7 @@ export default function UserProfilePage() {
         Promise.all([
             USER_API.getProfile(userId!, { signal: controller.signal }),
             POST_API.getUserPosts(userId!, page, PAGE_SIZE, { signal: controller.signal, tag, token: token ?? undefined }),
-            SERIES_API.getUserSeries(userId!, { signal: controller.signal }),
+            SERIES_API.getUserSeries(userId!, { signal: controller.signal, token }),
         ])
             .then(([profileRes, postsRes, seriesRes]) => {
                 if (profileRes.status === 'success') {

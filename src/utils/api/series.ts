@@ -5,8 +5,9 @@ export const SERIES_API = {
     getSeries: async (seriesId: number | string, { signal, token }: { signal?: AbortSignal; token?: string } = {}): Promise<SuccessResponse<SeriesDetail>> => {
         return request(`/api/v1/series/${seriesId}`, { auth: 'optional', token, signal, errorMessage: '시리즈를 불러오지 못했습니다' });
     },
-    getUserSeries: async (userId: number | string, { signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<Series[]>> => {
-        return request(`/api/v1/users/${userId}/series`, { signal, errorMessage: '시리즈 목록을 불러오지 못했습니다' });
+    // 글 수는 작성자에게만 비공개·초안까지 센다.
+    getUserSeries: async (userId: number | string, { signal, token }: { signal?: AbortSignal; token?: string | null } = {}): Promise<SuccessResponse<Series[]>> => {
+        return request(`/api/v1/users/${userId}/series`, { auth: 'optional', token, signal, errorMessage: '시리즈 목록을 불러오지 못했습니다' });
     },
     createSeries: async (title: string, description: string, token: string): Promise<SuccessResponse<Series>> => {
         return request('/api/v1/series', { method: 'POST', auth: 'required', token, json: { title, description } });
