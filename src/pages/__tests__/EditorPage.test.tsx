@@ -223,6 +223,48 @@ describe('EditorPage', () => {
         expect(saved!).toContain('자동저장 제목');
     });
 
+    it('수정 모드 임시저장은 글마다 따로라 다른 글에서 복구하라고 묻지 않는다', async () => {
+        localStorage.setItem(`${STORAGE_KEYS.DRAFT_EDIT}:1`, JSON.stringify({ title: 'A 글 수정본', content: 'A', is_public: true, tags: '', savedAt: new Date().toISOString() }));
+        mockUseParams = () => ({ postId: '2' });
+        mockGetPost.mockResolvedValueOnce({ status: 'success', data: makePost({ id: 2, title: 'B 글', content: 'B', user_id: 42 }) });
+
+        renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+
+        await screen.findByDisplayValue('B 글');
+        expect(screen.queryByRole('dialog', { name: '임시 저장 복구' })).not.toBeInTheDocument();
+    });
+
+    it('수정 모드에서 같은 글의 임시저장은 복구하라고 묻는다', async () => {
+        localStorage.setItem(`${STORAGE_KEYS.DRAFT_EDIT}:2`, JSON.stringify({ title: 'B 글 수정본', content: 'B2', is_public: true, tags: '', savedAt: new Date().toISOString() }));
+        mockUseParams = () => ({ postId: '2' });
+        mockGetPost.mockResolvedValueOnce({ status: 'success', data: makePost({ id: 2, title: 'B 글', content: 'B', user_id: 42 }) });
+
+        renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+
+        expect(await screen.findByRole('dialog', { name: '임시 저장 복구' })).toBeInTheDocument();
+    });
+
+    it('글을 열기만 하고 고치지 않으면 임시저장하지 않는다', async () => {
+        mockUseParams = () => ({ postId: '2' });
+        mockGetPost.mockResolvedValueOnce({ status: 'success', data: makePost({ id: 2, title: 'B 글', content: 'B', user_id: 42 }) });
+        renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+        await screen.findByDisplayValue('B 글');
+
+        await new Promise(r => setTimeout(r, AUTO_SAVE_DELAY_MS + 100));
+
+        expect(localStorage.getItem(`${STORAGE_KEYS.DRAFT_EDIT}:2`)).toBeNull();
+        expect(localStorage.getItem(STORAGE_KEYS.DRAFT_EDIT)).toBeNull();
+    });
+
+    it('새 글을 열기만 하면 빈 임시저장을 남기지 않는다', async () => {
+        renderWithProviders(<EditorPage />, { authValue: { token: 'T', userId: 42 } });
+        await screen.findByPlaceholderText(/제목/);
+
+        await new Promise(r => setTimeout(r, AUTO_SAVE_DELAY_MS + 100));
+
+        expect(localStorage.getItem(STORAGE_KEYS.DRAFT)).toBeNull();
+    });
+
     it('저장 성공 후 clearDraft로 localStorage draft가 비워진다', async () => {
         mockCreatePost.mockResolvedValueOnce({ status: 'success', data: { id: 5 } } as any);
 

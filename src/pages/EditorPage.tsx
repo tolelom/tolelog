@@ -23,6 +23,8 @@ interface EditorRef {
     getActiveTextarea: () => HTMLTextAreaElement | HTMLDivElement | null;
 }
 
+const EMPTY_FORM: PostFormData = { title: '', content: '', is_public: true, tags: '' };
+
 export default function EditorPage() {
     const navigate = useNavigate();
     const { postId } = useParams<{ postId: string }>();
@@ -30,12 +32,9 @@ export default function EditorPage() {
     const { toast } = useToast();
     const imageInsertRef = useRef<((base64Data: string, fileName: string) => void) | null>(null);
     const editorRef = useRef<EditorRef | null>(null);
-    const [formData, setFormData] = useState<PostFormData>({
-        title: '',
-        content: '',
-        is_public: true,
-        tags: '',
-    });
+    const [formData, setFormData] = useState<PostFormData>(EMPTY_FORM);
+    // 불러온 글(새 글이면 빈 양식). 이것과 같으면 고친 게 없으므로 임시저장하지 않는다.
+    const [baseline, setBaseline] = useState<PostFormData>(EMPTY_FORM);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(!!postId);
     const [error, setError] = useState<string>('');
@@ -94,8 +93,8 @@ export default function EditorPage() {
     }), [isEditMode, token, handleServerSave]);
 
     // 자동 저장 훅 (수정 모드는 별도 키로 저장)
-    const draftKey = isEditMode ? STORAGE_KEYS.DRAFT_EDIT : STORAGE_KEYS.DRAFT;
-    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData, draftKey, serverSaveOptions);
+    const draftKey = isEditMode ? `${STORAGE_KEYS.DRAFT_EDIT}:${postId}` : STORAGE_KEYS.DRAFT;
+    const { saveStatus, loadDraft, clearDraft, hasDraft, getFormattedSaveTime } = useAutoSave(formData, draftKey, serverSaveOptions, baseline);
 
     // 편집 중 페이지 이탈 경고
     useEffect(() => {
@@ -124,12 +123,14 @@ export default function EditorPage() {
                             navigate(postPath(post), { replace: true });
                             return;
                         }
-                        setFormData({
+                        const loaded = {
                             title: post.title,
                             content: post.content,
                             is_public: post.is_public,
                             tags: post.tags || '',
-                        });
+                        };
+                        setFormData(loaded);
+                        setBaseline(loaded);
                         if (post.series) {
                             setSelectedSeriesId(String(post.series.series_id));
                         }

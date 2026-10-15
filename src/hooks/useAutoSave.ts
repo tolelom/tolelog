@@ -20,10 +20,15 @@ export interface UseAutoSaveReturn {
     getFormattedSaveTime: () => string;
 }
 
+function sameForm(a: PostFormData, b: PostFormData): boolean {
+    return a.title === b.title && a.content === b.content && a.is_public === b.is_public && (a.tags || '') === (b.tags || '');
+}
+
 export function useAutoSave(
     formData: PostFormData,
     storageKey: string = STORAGE_KEYS.DRAFT,
-    serverSave?: ServerSaveOptions
+    serverSave?: ServerSaveOptions,
+    baseline?: PostFormData
 ): UseAutoSaveReturn {
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,8 +54,9 @@ export function useAutoSave(
         }
     }, [storageKey]);
 
-    // localStorage auto-save
+    // localStorage auto-save. 불러온 내용 그대로면(고친 게 없으면) 저장하지 않는다.
     useEffect(() => {
+        if (baseline && sameForm(formData, baseline)) return;
         setSaveStatus('saving');
 
         if (saveTimeoutRef.current) {
@@ -66,7 +72,7 @@ export function useAutoSave(
                 clearTimeout(saveTimeoutRef.current);
             }
         };
-    }, [formData, saveDraft]);
+    }, [formData, saveDraft, baseline]);
 
     // server save side effect
     useEffect(() => {
