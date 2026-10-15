@@ -1,12 +1,13 @@
 import { useState, useContext, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useLoaderData, Link, type LoaderFunctionArgs } from 'react-router-dom';
 import { parsePostSlugId, postPath } from '../utils/slug';
 import { AuthContext } from '../context/AuthContext';
 import { POST_API } from '../utils/api';
 import { invalidateCache } from '../utils/apiCache';
 import { renderMarkdown } from '../utils/markdown';
 import { formatDateLong } from '../utils/format';
-import { Post } from '../types';
+import { Post, PostListItem } from '../types';
+import { findPublicPostMeta } from '../utils/postMeta';
 import { useTOC, TocItem } from '../hooks/useTOC';
 import { useSeriesNav } from '../hooks/useSeriesNav';
 import { useLike } from '../hooks/useLike';
@@ -36,6 +37,12 @@ function getFirstHttpImage(content: string): string | null {
     return match ? match[1] : null;
 }
 
+// prerender 때만 실행된다. 글 상세의 제목·설명·og 태그를 정적 HTML 에 넣는다(본문은 브라우저에서 그린다).
+export async function loader({ params }: LoaderFunctionArgs): Promise<PostListItem | null> {
+    const parsed = parsePostSlugId(params.postId);
+    return parsed ? findPublicPostMeta(parsed.id) : null;
+}
+
 export default function PostDetailPage() {
     // URL 의 :postId 는 "123" 또는 "hello-world-123" 모두 가능. 트레일링 숫자에서 실제 ID 추출.
     const { postId: rawPostId } = useParams<{ postId: string }>();
@@ -44,6 +51,7 @@ export default function PostDetailPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { userId, token, ready } = useContext(AuthContext);
+    const prerenderedMeta = useLoaderData() as PostListItem | null | undefined;
     const [post, setPost] = useState<Post | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
@@ -169,6 +177,20 @@ export default function PostDetailPage() {
     if (isLoading) {
         return (
             <div className="post-detail-page">
+                {prerenderedMeta && (
+                    <PageMeta
+                        title={prerenderedMeta.title}
+                        description={prerenderedMeta.excerpt}
+                        canonical={postPath(prerenderedMeta)}
+                        ogType="article"
+                        article={{
+                            publishedTime: prerenderedMeta.created_at,
+                            modifiedTime: prerenderedMeta.updated_at,
+                            author: prerenderedMeta.author,
+                            tags: prerenderedMeta.tags ? prerenderedMeta.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+                        }}
+                    />
+                )}
                 <article className="post-article" aria-busy="true">
                     <div className="skeleton skeleton-text-lg skeleton-w-70p skeleton-mb-16" />
                     <div className="post-meta-skeleton">
