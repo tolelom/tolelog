@@ -304,7 +304,7 @@ export default function EditorPage() {
             const apiErr = err as { status?: number; message?: string };
             isPublishingRef.current = false;
             if (apiErr.status === 401) {
-                // 세션 만료 토스트는 api.ts(authenticatedFetch)가 띄우므로 여기서는 이동만 한다
+                // 세션 만료 토스트는 api/client.ts(request)가 띄우므로 여기서는 이동만 한다
                 navigate('/login');
                 return;
             }

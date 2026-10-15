@@ -1,105 +1,50 @@
-import { API_BASE_URL } from '../constants';
-import { authenticatedFetch } from './client';
+import { STORAGE_KEYS } from '../constants';
+import { request } from './client';
 import type { SuccessResponse, AuthData, User } from '../../types';
 
 export const AUTH_API = {
     login: async (username: string, password: string): Promise<SuccessResponse<AuthData>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || errorData.message || '로그인에 실패했습니다');
-        }
-        return response.json();
+        return request('/api/v1/auth/login', { method: 'POST', json: { username, password }, errorMessage: '로그인에 실패했습니다' });
     },
 
     register: async (username: string, password: string): Promise<SuccessResponse<AuthData>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || errorData.message || '회원가입에 실패했습니다');
-        }
-        return response.json();
-    },
-
-    refresh: async (refreshToken: string): Promise<SuccessResponse<AuthData>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || errorData.message || '토큰 갱신에 실패했습니다');
-        }
-        return response.json();
+        return request('/api/v1/auth/register', { method: 'POST', json: { username, password }, errorMessage: '회원가입에 실패했습니다' });
     },
 
     // 서버는 다른 기기의 세션을 끊고 이 기기용 새 토큰 쌍을 돌려준다.
     changePassword: async (currentPassword: string, newPassword: string, token: string): Promise<SuccessResponse<AuthData>> => {
-        return authenticatedFetch<SuccessResponse<AuthData>>(`${API_BASE_URL}/api/v1/users/password`, 'PUT', token, {
-            current_password: currentPassword,
-            new_password: newPassword,
+        return request('/api/v1/users/password', {
+            method: 'PUT', auth: 'required', token, json: { current_password: currentPassword, new_password: newPassword },
+            errorMessage: '비밀번호 변경에 실패했습니다',
         });
     },
 
+    // 서버 에러여도 클라이언트 로그아웃은 진행한다. 진행 중에 토큰이 갱신돼 저장됐을 수 있어 끝나면 저장소를 비운다.
     logout: async (token: string): Promise<void> => {
         try {
-            await authenticatedFetch<unknown>(`${API_BASE_URL}/api/v1/auth/logout`, 'POST', token);
+            await request('/api/v1/auth/logout', { method: 'POST', auth: 'required', token });
         } catch {
-            // 서버 에러여도 클라이언트 로그아웃 진행
+            // 무시
+        } finally {
+            localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.USER);
         }
     },
 
     deleteAccount: async (token: string): Promise<void> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (response.status !== 204 && !response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || errorData.message || '계정 삭제에 실패했습니다');
-        }
+        await request('/api/v1/users/me', { method: 'DELETE', auth: 'required', token, errorMessage: '계정 삭제에 실패했습니다' });
     },
 };
 
 export const USER_API = {
     getProfile: async (userId: number | string, { signal }: { signal?: AbortSignal } = {}): Promise<SuccessResponse<User>> => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, { signal });
-        if (!response.ok) {
-            throw new Error(`사용자 프로필을 불러오지 못했습니다 (${response.status})`);
-        }
-        return response.json();
+        return request(`/api/v1/users/${userId}`, { signal, errorMessage: '사용자 프로필을 불러오지 못했습니다' });
     },
 
     uploadAvatar: async (file: File, token: string): Promise<SuccessResponse<{ avatar_url: string }>> => {
-        if (!token) {
-            throw new Error('토큰이 필요합니다');
-        }
-
         const formData = new FormData();
         formData.append('avatar', file);
-
-        const response = await fetch(`${API_BASE_URL}/api/v1/users/avatar`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `프로필 이미지 업로드 실패: ${response.status}`);
-        }
-
-        return response.json();
+        return request('/api/v1/users/avatar', { method: 'PUT', auth: 'required', token, formData, errorMessage: '프로필 이미지 업로드 실패' });
     },
 };

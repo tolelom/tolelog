@@ -3,7 +3,7 @@ import { notify } from '../notify';
 import { LIKE_API, AUTH_API } from '../api';
 import { STORAGE_KEYS } from '../constants';
 
-describe('authenticatedFetch 401 handling', () => {
+describe('request 401 handling', () => {
     const originalFetch = globalThis.fetch;
 
     beforeEach(() => {
@@ -41,7 +41,7 @@ describe('authenticatedFetch 401 handling', () => {
     });
 });
 
-// authenticatedFetch 는 비공개라 LIKE_API.toggle 을 통해 간접 테스트한다.
+// request 는 LIKE_API.toggle 을 통해 간접 테스트한다.
 
 type FetchMock = ReturnType<typeof vi.fn>;
 let fetchMock: FetchMock;
@@ -72,7 +72,7 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-describe('authenticatedFetch via LIKE_API.toggle', () => {
+describe('request via LIKE_API.toggle', () => {
     it('throws immediately when no token is given', async () => {
         await expect(LIKE_API.toggle(1, '')).rejects.toThrow('로그인이 필요합니다');
         expect(fetchMock).not.toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('authenticatedFetch via LIKE_API.toggle', () => {
     });
 
     it('throws with server message on 4xx', async () => {
-        fetchMock.mockResolvedValueOnce(jsonError(400, { error: '잘못된 요청' }));
+        fetchMock.mockResolvedValueOnce(jsonError(400, { error: 'bad_request', message: '잘못된 요청' }));
         await expect(LIKE_API.toggle(1, 'tok')).rejects.toThrow('잘못된 요청');
     });
 
@@ -148,7 +148,7 @@ describe('authenticatedFetch via LIKE_API.toggle', () => {
             status: 500,
             json: () => Promise.reject(new Error('not json')),
         } as unknown as Response);
-        await expect(LIKE_API.toggle(1, 'tok')).rejects.toThrow(/요청 실패 \(500\)/);
+        await expect(LIKE_API.toggle(1, 'tok')).rejects.toThrow(/요청에 실패했습니다 \(500\)/);
     });
 
     it('throws with retry response error when retry also fails', async () => {
@@ -160,7 +160,7 @@ describe('authenticatedFetch via LIKE_API.toggle', () => {
                 status: 'success',
                 data: { access_token: 'new-tok', refresh_token: 'new-refresh' },
             }))
-            .mockResolvedValueOnce(jsonError(403, { error: '권한 없음' }));
+            .mockResolvedValueOnce(jsonError(403, { error: 'forbidden', message: '권한 없음' }));
 
         await expect(LIKE_API.toggle(1, 'tok')).rejects.toThrow('권한 없음');
     });
@@ -209,7 +209,7 @@ describe('AUTH_API.login', () => {
     });
 
     it('throws with server error message', async () => {
-        fetchMock.mockResolvedValueOnce(jsonError(401, { error: '비밀번호가 틀렸습니다' }));
+        fetchMock.mockResolvedValueOnce(jsonError(401, { error: 'invalid_credentials', message: '비밀번호가 틀렸습니다' }));
         await expect(AUTH_API.login('user', 'wrong')).rejects.toThrow('비밀번호가 틀렸습니다');
     });
 

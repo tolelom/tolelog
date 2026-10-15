@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AuthContext, type LoginParams } from './AuthContext';
 import { AUTH_API } from '../utils/api';
+import { AUTH_TOKENS_EVENT, type AuthTokens } from '../utils/api/client';
 import { STORAGE_KEYS } from '../utils/constants';
 
 // SSG/SSR 빌드 단계에서는 window/localStorage 가 없으므로 안전 가드.
@@ -73,6 +74,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
             localStorage.removeItem(STORAGE_KEYS.USER);
         }
     }, [username, userId, avatarUrl, ready]);
+
+    // API 클라이언트가 토큰을 갱신하거나 갱신에 실패하면 상태를 맞춘다. 이미 로그아웃했으면 늦게 온 새 토큰은 버린다.
+    useEffect(() => {
+        const handleTokens = (e: Event) => {
+            const tokens = (e as CustomEvent<AuthTokens | null>).detail;
+            if (!tokens) {
+                setToken(null);
+                setRefreshToken(null);
+                setUsername(null);
+                setUserId(null);
+                setAvatarUrl(null);
+                return;
+            }
+            setToken(prev => (prev === null ? null : tokens.token));
+            setRefreshToken(prev => (prev === null ? null : tokens.refreshToken));
+        };
+        window.addEventListener(AUTH_TOKENS_EVENT, handleTokens);
+        return () => window.removeEventListener(AUTH_TOKENS_EVENT, handleTokens);
+    }, []);
 
     // 다른 탭에서 로그아웃/로그인 시 동기화
     useEffect(() => {
