@@ -1,5 +1,5 @@
 .home-page {
-    max-width: 800px;
+    max-width: var(--content-width);
     margin: 0 auto;
     padding: 40px 20px;
 }
@@ -316,17 +316,19 @@
 
 .home-post-card {
     display: block;
-    background: var(--bg-hover);
-    border-radius: 8px;
-    padding: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 22px 24px;
     margin-bottom: 12px;
     text-decoration: none;
     color: inherit;
-    transition: background 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .home-post-card:hover {
-    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-card);
 }
 
 .home-post-title {

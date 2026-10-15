@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { PostListItem } from '../../types';
-import { stripMarkdown, formatDate } from '../../utils/format';
+import { formatDate } from '../../utils/format';
 import { postPath } from '../../utils/slug';
 
 interface ProfilePostListProps {
@@ -88,10 +88,8 @@ export default function ProfilePostList({
                             <span className="profile-post-private">비공개</span>
                         )}
                     </div>
-                    {'content' in post && (post as PostListItem & { content?: string }).content && (
-                        <p className="profile-post-preview">
-                            {stripMarkdown((post as PostListItem & { content?: string }).content!).slice(0, 150)}
-                        </p>
+                    {post.excerpt && (
+                        <p className="profile-post-preview">{post.excerpt}</p>
                     )}
                 </Link>
             ))}

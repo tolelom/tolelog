@@ -1,5 +1,5 @@
 .drafts-page {
-    max-width: 720px;
+    max-width: var(--content-width);
     margin: 2rem auto;
     padding: 0 1rem;
 }
