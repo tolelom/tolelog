@@ -36,11 +36,16 @@ function getFirstHttpImage(content: string): string | null {
     return match ? match[1] : null;
 }
 
+// 같은 라우트에서 다른 글로 옮겨 가면 글 ID 를 key 로 새로 마운트해 이전 글의 상태(글·오류·좋아요·시리즈)를 버린다.
 export default function PostDetailPage() {
     // URL 의 :postId 는 "123" 또는 "hello-world-123" 모두 가능. 트레일링 숫자에서 실제 ID 추출.
     const { postId: rawPostId } = useParams<{ postId: string }>();
     const parsed = useMemo(() => parsePostSlugId(rawPostId), [rawPostId]);
     const numericId = parsed ? String(parsed.id) : undefined;
+    return <PostDetail key={numericId ?? 'invalid'} numericId={numericId} />;
+}
+
+function PostDetail({ numericId }: { numericId: string | undefined }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { userId, token, ready } = useContext(AuthContext);
