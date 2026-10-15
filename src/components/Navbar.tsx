@@ -145,8 +145,12 @@ export default function Navbar() {
                         </>
                     ) : (
                         <>
-                            <Link to="/login" className="navbar-link">로그인</Link>
-                            <Link to="/register" className="navbar-link navbar-link-register">회원가입</Link>
+                            {location.pathname !== '/login' && (
+                                <Link to="/login" className="navbar-link">로그인</Link>
+                            )}
+                            {location.pathname !== '/register' && (
+                                <Link to="/register" className="navbar-link navbar-link-register">회원가입</Link>
+                            )}
                         </>
                     )}
                 </div>

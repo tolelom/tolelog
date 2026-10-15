@@ -5,9 +5,9 @@ import { AUTH_API } from "../utils/api";
 import AuthForm from './AuthForm';
 
 const REGISTER_FIELDS = [
-    { name: 'username', label: '아이디', type: 'text' },
-    { name: 'password', label: '비밀번호', type: 'password' },
-    { name: 'confirmPassword', label: '비밀번호 확인', type: 'password' },
+    { name: 'username', label: '아이디', type: 'text', autoComplete: 'username' },
+    { name: 'password', label: '비밀번호', type: 'password', autoComplete: 'new-password' },
+    { name: 'confirmPassword', label: '비밀번호 확인', type: 'password', autoComplete: 'new-password' },
 ];
 
 function validateRegister(formData: Record<string, string>): Record<string, string> {

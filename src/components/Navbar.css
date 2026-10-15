@@ -68,11 +68,11 @@
 }
 
 .navbar-link-register {
-  color: #fff;
+  color: var(--bg-primary);
   background-color: var(--accent-color);
 }
 .navbar-link-register:hover {
-  color: #fff;
+  color: var(--bg-primary);
   background-color: var(--accent-hover);
 }
 

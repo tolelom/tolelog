@@ -1,19 +1,19 @@
 /* 인증 폼 공통 스타일 */
 .auth-box {
-    max-width: 360px;
-    margin: 0 auto;
-    padding: 24px 32px;
+    width: 100%;
+    padding: 40px 40px 36px;
     box-sizing: border-box;
     background-color: var(--bg-card);
     color: var(--text-primary);
-    border-radius: 10px;
-    box-shadow: var(--shadow-modal);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
 }
 
 .auth-box h1 {
-    margin-bottom: 24px;
-    font-weight: 600;
-    font-size: 1.8rem;
+    margin: 0 0 28px;
+    font-weight: 700;
+    font-size: 1.6rem;
     text-align: center;
 }
 
@@ -36,19 +36,27 @@
 }
 
 .auth-box .input-group label {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
 .auth-box .input-group input {
-    padding: 10px 12px;
-    border-radius: 6px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     color: var(--text-primary);
     font-size: 1rem;
-    transition: border-color 0.25s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-box .input-group input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--focus-glow);
 }
 
 
@@ -59,20 +67,20 @@
 
 .auth-box button[type="submit"] {
     width: 100%;
-    padding: 12px 0;
-    background-color: transparent;
-    border: 2px solid var(--text-primary);
+    height: 46px;
+    margin-top: 8px;
+    background-color: var(--accent-color);
+    border: none;
     border-radius: 8px;
-    color: var(--text-primary);
+    color: var(--bg-primary);
     font-weight: 600;
     cursor: pointer;
     font-size: 1rem;
-    transition: background-color 0.3s, color 0.3s;
+    transition: background-color 0.2s;
 }
 
 .auth-box button[type="submit"]:hover:not(:disabled) {
-    background-color: var(--text-primary);
-    color: var(--bg-card);
+    background-color: var(--accent-hover);
 }
 
 .auth-box button[type="submit"]:disabled {
@@ -82,8 +90,7 @@
 
 @media (max-width: 480px) {
     .auth-box {
-        margin: 0 auto;
-        padding: 20px 20px;
+        padding: 28px 20px 24px;
     }
 
     .auth-box h1 {
